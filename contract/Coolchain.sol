@@ -1,30 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-// EIP712 domain separator
-struct EIP712Domain {
-    string name;
-    string version;
-    uint256 chainId;
-    address verifyingContract;
-    bytes32 salt;
-}
-
-// Sensor measurement struct
-struct Measurement {
-    address from;
-    uint64 sensorId;
-    uint8 value;
-    uint64 timestamp;
-}
-
 contract Coolchain {
+
+    // EIP712 domain separator
+    struct EIP712Domain {
+        string name;
+        string version;
+        uint256 chainId;
+        address verifyingContract;
+        bytes32 salt;
+    }
+
+    // Sensor measurement struct
+    struct Measurement {
+        uint64 sensorId;
+        uint8 value;
+        uint64 timestamp;
+    }
 
     // EIP712 domain separator hash
     bytes32 private DOMAIN_SEPARATOR;
     bytes32 private constant SALT = 0x5e75394f31cc39406c2d33d400bb0a9d15ede58611e895e36e6642881aa1cae6;
 
-    mapping (uint64 => Measurement[]) measurements;
+    mapping (uint64 => Measurement[]) private measurements;
     
     // EIP712 domain separator setup
     constructor() {
@@ -52,7 +51,7 @@ contract Coolchain {
     // Hashes an EIP712 message struct
     function hashMessage(Measurement memory measurement) private pure returns (bytes32) {
         return keccak256(abi.encode(
-            keccak256(bytes("Measurement(address from,uint64 sensorId,uint8 value,uint64 timestamp)")),
+            keccak256(bytes("Measurement(uint64 sensorId,uint8 value,uint64 timestamp)")),
             measurement.sensorId, measurement.value, measurement.timestamp
         ));
     }
@@ -66,7 +65,7 @@ contract Coolchain {
         ));
 
         address recoveredAddress = ecrecover(digest, v, r, s);
-        return (recoveredAddress == measurement.from);
+        return (recoveredAddress == msg.sender);
     }
 
     // Sensor measurement

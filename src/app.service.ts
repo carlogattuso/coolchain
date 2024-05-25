@@ -4,21 +4,23 @@ import { PrismaService } from './prisma/prisma.service';
 
 @Injectable()
 export class AppService {
-  constructor(private prisma: PrismaService){}
+  constructor(private prisma: PrismaService) {}
+
   getHello(): string {
     return 'Hello World!';
   }
 
-  async setTemperature(userData): Promise<Temperature> {
-    const result = await this.prisma.temperature.create({
+  async sendTemperature(userData: {
+    sensorId: string;
+    value: number;
+  }): Promise<Temperature> {
+    return await this.prisma.temperature.create({
       data: {
         sensorId: userData.sensorId,
         timestamp: new Date(),
-        txHash: "",
+        txHash: '',
         value: userData.value,
-      }})
-      
-      
-    return result;
+      },
+    });
   }
 }

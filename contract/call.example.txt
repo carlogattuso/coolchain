@@ -1,0 +1,14 @@
+// Assuming you have an instance of the contract called `contractInstance`
+// and the following variables are defined:
+
+address sensorId = 0x1234567890123456789012345678901234567890;
+uint64 sensorId = 1234567890;
+uint8 value = 42;
+uint64 timestamp = 1685035200; // Unix timestamp representing 2023-05-25 12:00:00 UTC
+uint8 v = 28;
+bytes32 r = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
+bytes32 s = 0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba;
+
+// Call the function
+
+contractInstance.sendMeasurement(sensorId, value, timestamp, v, r, s);

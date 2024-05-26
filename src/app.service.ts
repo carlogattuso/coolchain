@@ -39,8 +39,6 @@ export class AppService {
         `Blockchain Chronicler: Sensor ${measurement.sensorId} under verification`,
       );
 
-      //TODO: Add proper values for v, r, s
-
       const receipt: ContractTransactionResponse =
         await this.moonBeam.sendMeasurement(
           measurement.sensorId,
@@ -49,7 +47,6 @@ export class AppService {
         );
 
       // TODO: send multiple transactions with batch [OPTIONAL, it is an optimization]
-      // TODO: set transaction hash properly
 
       const txHash: string = receipt.hash;
       this.logger.verbose(

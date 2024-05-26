@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
-import { ethers } from 'ethers';
+import { ethers, TypedDataDomain } from 'ethers';
+
 import contractFile from '../contract/compileContract';
 
 const CHAIN_NAME: string = 'moonbase-alpha';
@@ -12,6 +13,8 @@ export class MoonbeamService {
   private readonly provider: ethers.JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;
+  private readonly domain: TypedDataDomain;
+  private readonly types: any;
 
   constructor(private configService: ConfigService) {
     this.accountFrom = {
@@ -31,6 +34,22 @@ export class MoonbeamService {
       chainId: providerRPC.moonbase.chainId,
       name: providerRPC.moonbase.name,
     });
+
+    //Configure Smart Contract
+    this.domain = {
+      name: 'coolchain',
+      version: '1',
+      chainId: CHAIN_ID,
+      verifyingContract: this.contractAddress,
+    };
+
+    this.types = {
+      Measurement: [
+        { name: 'sensorId', type: 'uint64' },
+        { name: 'value', type: 'uint8' },
+        { name: 'timestamp', type: 'uint64' },
+      ],
+    };
   }
 
   async sendMeasurement(
@@ -39,20 +58,25 @@ export class MoonbeamService {
     value: number,
   ): Promise<any> {
     const measurement = {
-      sensorId,
-      timeStamp: timeStampDateTime.getTime(),
-      value,
-      v: 0,
-      r: '0x7465737400000000000000000000000000000000000000000000000000000000',
-      s: '0x7465737400000000000000000000000000000000000000000000000000000000',
+      sensorId: sensorId,
+      value: value,
+      timestamp: timeStampDateTime.getTime(),
     };
 
-    const wallet = new ethers.Wallet(
+    const wallet: ethers.Wallet = new ethers.Wallet(
       this.accountFrom.privateKey,
       this.provider,
     );
 
-    const coolChainContract = new ethers.Contract(
+    const signature: string = await wallet.signTypedData(
+      this.domain,
+      this.types,
+      measurement,
+    );
+
+    const { r, s, v } = ethers.Signature.from(signature);
+
+    const coolChainContract: ethers.Contract = new ethers.Contract(
       this.contractAddress,
       contractFile.abi,
       wallet,
@@ -61,10 +85,10 @@ export class MoonbeamService {
     const createReceipt = await coolChainContract.sendMeasurement(
       measurement.sensorId,
       measurement.value,
-      measurement.timeStamp,
-      measurement.v,
-      measurement.r,
-      measurement.s,
+      measurement.timestamp,
+      v,
+      r,
+      s,
     );
 
     createReceipt.wait();

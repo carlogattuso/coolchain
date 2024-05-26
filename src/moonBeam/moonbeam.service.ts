@@ -48,6 +48,7 @@ export class MoonbeamService {
       version: '1',
       chainId: CHAIN_ID,
       verifyingContract: this.contractAddress,
+      salt: '0x5e75394f31cc39406c2d33d400bb0a9d15ede58611e895e36e6642881aa1cae6',
     };
 
     this.types = {

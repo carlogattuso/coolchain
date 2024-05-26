@@ -43,7 +43,8 @@ export class AppService {
           '0x7465737400000000000000000000000000000000000000000000000000000000',
         );
       }
-      // TODO: set transaction hash
+      // TODO: send multiple transactions with batch [OPTIONAL, it is an optimization]
+      // TODO: set transaction hash properly
       const txHash: string =
         '0xa293af6faecaef71e542d78646870d20d26bacbbb5657f1231703b4a6d4c03d2';
       await this.prisma.verifyMeasurements(nonVerifiedMeasurements, txHash);

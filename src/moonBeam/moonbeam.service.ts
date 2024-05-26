@@ -3,6 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { ethers, TypedDataDomain } from 'ethers';
 
 import contractFile from '../contract/compileContract';
+import {
+  BATCH_PRECOMPILE_ABI,
+  BATCH_PRECOMPILE_ADDRESS,
+} from '../utils/contants';
 
 const CHAIN_NAME: string = 'moonbase-alpha';
 const CHAIN_RPC_URL: string = 'https://rpc.api.moonbase.moonbeam.network';
@@ -13,6 +17,7 @@ export class MoonbeamService {
   private readonly provider: ethers.JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;
+  private wallet: ethers.Wallet;
   private readonly domain: TypedDataDomain;
   private readonly types: any;
 
@@ -35,7 +40,9 @@ export class MoonbeamService {
       name: providerRPC.moonbase.name,
     });
 
-    //Configure Smart Contract
+    this.wallet = new ethers.Wallet(this.accountFrom.privateKey, this.provider);
+
+    //EIP712
     this.domain = {
       name: 'coolchain',
       version: '1',
@@ -63,12 +70,7 @@ export class MoonbeamService {
       timestamp: timeStampDateTime.getTime(),
     };
 
-    const wallet: ethers.Wallet = new ethers.Wallet(
-      this.accountFrom.privateKey,
-      this.provider,
-    );
-
-    const signature: string = await wallet.signTypedData(
+    const signature: string = await this.wallet.signTypedData(
       this.domain,
       this.types,
       measurement,
@@ -79,7 +81,7 @@ export class MoonbeamService {
     const coolChainContract: ethers.Contract = new ethers.Contract(
       this.contractAddress,
       contractFile.abi,
-      wallet,
+      this.wallet,
     );
 
     const createReceipt = await coolChainContract.sendMeasurement(
@@ -94,5 +96,56 @@ export class MoonbeamService {
     createReceipt.wait();
 
     return createReceipt;
+  }
+
+  async callBatchPrecompileContract(data): Promise<string> {
+    const batchPrecompiled = new ethers.Contract(
+      BATCH_PRECOMPILE_ADDRESS,
+      BATCH_PRECOMPILE_ABI,
+      this.wallet,
+    );
+
+    const callBatch = async (
+      measurementsData: Array<any>,
+      numberOfRequests: number = 1,
+    ): Promise<any> => {
+      console.log(`Calling the batch precompiled contract`);
+      const addresses = Array(numberOfRequests).fill(this.contractAddress);
+      const values = Array(numberOfRequests).fill(0);
+      const gasLimit = [];
+
+      const yourContractInterface = new ethers.Interface(contractFile.abi);
+      const callData = measurementsData.map((value) =>
+        yourContractInterface.encodeFunctionData('sendMeasurement', [
+          value.sensorId,
+          value.value,
+          value.timeStamp,
+          value.v,
+          value.r,
+          value.s,
+        ]),
+      );
+
+      console.log('Call batch with');
+      console.log(addresses);
+      console.log(values);
+      console.log(callData);
+      console.log(gasLimit);
+
+      const createReceipt = await batchPrecompiled.batchAll(
+        addresses,
+        values,
+        callData,
+        gasLimit,
+      );
+
+      console.log(createReceipt);
+      createReceipt.wait();
+      console.log(`Tx successful with hash: ${createReceipt.hash}`);
+      return createReceipt;
+    };
+    await callBatch(data.length, data);
+
+    return `${callBatch}`;
   }
 }

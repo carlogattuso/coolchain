@@ -8,8 +8,12 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   controllers: [AppController],
-  imports: [PrismaModule, MoonbeamModule, ScheduleModule.forRoot(), ConfigModule.forRoot({ isGlobal: true })],
+  imports: [
+    PrismaModule,
+    MoonbeamModule,
+    ScheduleModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
+  ],
   providers: [AppService],
 })
-export class AppModule {
-}
+export class AppModule {}

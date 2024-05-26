@@ -5,5 +5,4 @@ import { MoonbeamService } from './moonbeam.service';
   providers: [MoonbeamService],
   exports: [MoonbeamService],
 })
-export class MoonbeamModule {
-}
+export class MoonbeamModule {}

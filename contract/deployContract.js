@@ -1,6 +1,9 @@
 // 1. Import the contract file
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const contractFile = require('./compileContract');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const ethers = require('ethers');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const env = require('./.envWallet');
 
 // 2. Define network configurations
@@ -43,7 +46,7 @@ const deploy = async () => {
     const txReceipt = await contract.deploymentTransaction().wait();
     console.log(`Contract deployed at address: ${txReceipt.contractAddress}`);
   } catch (error) {
-    console.error("Error on contract deployment");
+    console.error('Error on contract deployment');
     console.error(error);
   }
 };

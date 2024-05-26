@@ -7,7 +7,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async createMeasurement(_userData: { sensorId: string; value: number }) {
+  async createMeasurement(_userData: { sensorId: number; value: number }) {
     return this.temperature.create({
       data: {
         sensorId: _userData.sensorId,

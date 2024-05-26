@@ -1,22 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Temperature } from '@prisma/client';
 import { PrismaService } from './prisma/prisma.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { MoonbeamService } from './moonBeam/moonbeam.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { ContractTransactionResponse } from 'ethers';
 
 @Injectable()
 export class AppService {
-  private readonly logger = new Logger(AppService.name);
+  private readonly logger: Logger = new Logger(AppService.name);
 
-  constructor(private prisma: PrismaService, private moonBeam: MoonbeamService) {
-  }
+  constructor(
+    private prisma: PrismaService,
+    private moonBeam: MoonbeamService,
+  ) {}
 
   getHello(): string {
     return 'Hello World!';
   }
 
   async sendTemperature(userData: {
-    sensorId: string;
+    sensorId: number;
     value: number;
   }): Promise<Temperature> {
     return await this.prisma.createMeasurement(userData);
@@ -30,23 +33,29 @@ export class AppService {
       await this.prisma.findUnverifiedMeasurements(1);
 
     if (nonVerifiedMeasurements) {
-      //TODO: Add proper values for v, r, s
-      console.log(nonVerifiedMeasurements);
+      const measurement: Temperature = nonVerifiedMeasurements[0];
 
-      for (const measurement of nonVerifiedMeasurements) {
+      this.logger.verbose(
+        `Blockchain Chronicler: Sensor ${measurement.sensorId} under verification`,
+      );
+
+      //TODO: Add proper values for v, r, s
+
+      const receipt: ContractTransactionResponse =
         await this.moonBeam.sendMeasurement(
           measurement.sensorId,
           measurement.timestamp,
           measurement.value,
-          0,
-          '0x7465737400000000000000000000000000000000000000000000000000000000',
-          '0x7465737400000000000000000000000000000000000000000000000000000000',
         );
-      }
+
       // TODO: send multiple transactions with batch [OPTIONAL, it is an optimization]
       // TODO: set transaction hash properly
-      const txHash: string =
-        '0xa293af6faecaef71e542d78646870d20d26bacbbb5657f1231703b4a6d4c03d2';
+
+      const txHash: string = receipt.hash;
+      this.logger.verbose(
+        `Blockchain Chronicler: Tx successful - hash ${txHash}`,
+      );
+
       await this.prisma.verifyMeasurements(nonVerifiedMeasurements, txHash);
     }
 

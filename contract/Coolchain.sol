@@ -19,11 +19,22 @@ contract Coolchain {
         uint64 timestamp;
     }
 
+    // Sensor metrics struct
+    struct Metrics {
+        uint64 minTemp;
+        uint64 maxTemp;        
+    }
+    
+    uint64 private constant minThreshold = 1;
+    uint64 private constant maxThreshold = 30;
+
     // EIP712 domain separator hash
     bytes32 private DOMAIN_SEPARATOR;
     bytes32 private constant SALT = 0x5e75394f31cc39406c2d33d400bb0a9d15ede58611e895e36e6642881aa1cae6;
 
     mapping (uint64 => Measurement[]) private measurements;
+
+    mapping (uint64 => Metrics) private metrics;
     
     // EIP712 domain separator setup
     constructor() {
@@ -73,6 +84,8 @@ contract Coolchain {
         Measurement memory measurement = Measurement({sensorId: sensorId, value: value, timestamp: timestamp});
         //require(verifyMessage(measurement, v, r, s), "Invalid signature");
         measurements[sensorId].push(measurement);
+        updateMetrics(sensorId, value);
+
         return measurements[sensorId].length;
     }
 
@@ -81,4 +94,30 @@ contract Coolchain {
         return measurements[sensorId];
     }
 
+    function getSensorMetrics(uint64 sensorId) public view returns (Metrics memory) {
+        return metrics[sensorId];
+    }
+
+    function isSensorValid(uint64 sensorId) public view returns (bool) {
+        if (metrics[sensorId].minTemp < minThreshold) {
+            return false;
+        }
+        if (metrics[sensorId].maxTemp > maxThreshold) {
+            return false;
+        }
+        return true;
+    }
+
+    function updateMetrics(uint64 sensorId, uint8 value) private {
+        if (metrics[sensorId].minTemp == 0 && metrics[sensorId].maxTemp == 0 ) {
+            metrics[sensorId].minTemp = value;
+            metrics[sensorId].maxTemp = value;
+        }
+        if (metrics[sensorId].minTemp > value) {
+            metrics[sensorId].minTemp = value;
+        }
+        if (metrics[sensorId].maxTemp < value) {
+            metrics[sensorId].maxTemp = value;
+        }
+    }
 }

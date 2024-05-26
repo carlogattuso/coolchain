@@ -1,0 +1,16 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Temperature {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  sensorId  String
+  timestamp DateTime
+  txHash    String
+  value     Int
+}

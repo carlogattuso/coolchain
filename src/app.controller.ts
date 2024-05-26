@@ -12,9 +12,38 @@ export class AppController {
   @Get() getHello(): string {
     return this.appService.getHello();
   }
-  @Get('test-batch') async testBach() {
+
+  @Get('test-batch')
+  async testBach() {
     // return this.appService.getHello();
-    return this.moonBeamService.callBatchPrecompileContract();
+    const batchData = [
+      {
+        sensorId: '12',
+        timeStamp: (new Date()).getTime(),
+        value: 11,
+        v: 0,
+        r: '0x7465737400000000000000000000000000000000000000000000000000000000',
+        s: '0x7465737400000000000000000000000000000000000000000000000000000000',
+      },
+      {
+        sensorId: '13',
+        timeStamp: (new Date()).getTime(),
+        value: 22,
+        v: 0,
+        r: '0x7465737400000000000000000000000000000000000000000000000000000000',
+        s: '0x7465737400000000000000000000000000000000000000000000000000000000',
+      },
+      {
+        sensorId: '14',
+        timeStamp: (new Date()).getTime(),
+        value: 44,
+        v: 0,
+        r: '0x7465737400000000000000000000000000000000000000000000000000000000',
+        s: '0x7465737400000000000000000000000000000000000000000000000000000000',
+      },
+    ];
+
+    return this.moonBeamService.callBatchPrecompileContract(batchData);
   }
 
   @Post()

@@ -83,7 +83,7 @@ export class MoonbeamService {
     return `${sendMeasurementToChain}`;
   }
 
-  async callBatchPrecompileContract(): Promise<string> {
+  async callBatchPrecompileContract(data): Promise<string> {
 
     const batchPrecompiled = new ethers.Contract(
       BATCH_PRECOMPILE_ADDRESS,
@@ -91,34 +91,24 @@ export class MoonbeamService {
       this.wallet,
     );
 
-    const callBatch = async (numberOfRequests: number = 1): Promise<any> => {
+    const callBatch = async (numberOfRequests: number = 1, measurementsData: Array<any>): Promise<any> => {
       console.log(`Calling the batch precompiled contract`);
       const addresses = Array(numberOfRequests).fill(this.contractAddress);
       const values = Array(numberOfRequests).fill(0);
       const gasLimit = [];
 
       const yourContractInterface = new ethers.Interface(contractFile.abi);
-
-      const _value = {
-        sensorId: '12',
-        timeStamp: (new Date()).getTime(),
-        value: 11,
-        v: 0,
-        r: '0x7465737400000000000000000000000000000000000000000000000000000000',
-        s: '0x7465737400000000000000000000000000000000000000000000000000000000',
-      };
-
-      const callData = [yourContractInterface.encodeFunctionData(
+      const callData = measurementsData.map(value => yourContractInterface.encodeFunctionData(
         'sendMeasurement',
         [
-          _value.sensorId,
-          _value.value,
-          _value.timeStamp,
-          _value.v,
-          _value.r,
-          _value.s,
+          value.sensorId,
+          value.value,
+          value.timeStamp,
+          value.v,
+          value.r,
+          value.s,
         ],
-      )];
+      ));
 
       console.log('Call batch with');
       console.log(addresses);
@@ -138,7 +128,7 @@ export class MoonbeamService {
       console.log(`Tx successful with hash: ${createReceipt.hash}`);
       return createReceipt;
     };
-    await callBatch();
+    await callBatch(data.length, data);
 
     return `${callBatch}`;
   }

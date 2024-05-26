@@ -34,21 +34,19 @@ export class MoonbeamService {
     });
   }
 
-  async sendMeasurement(): Promise<string> {
+  async sendMeasurement(sensorId: string, timeStampDateTime: Date, value: number, v: number, r: string, s: string): Promise<string> {
     // Example values
     const _value = {
-      sensorId: 1212,
-      timeStamp: (new Date()).getTime(),
-      value: 33,
+      sensorId,
+      timeStamp: timeStampDateTime.getTime(),
+      value, v, r, s,
     };
 
-    console.log(this.accountFrom);
     const wallet = new ethers.Wallet(
       this.accountFrom.privateKey,
       this.provider,
     );
-    const abi = contractFile.abi;
-    const coolChainContract = new ethers.Contract(this.contractAddress, abi, wallet);
+    const coolChainContract = new ethers.Contract(this.contractAddress, contractFile.abi, wallet);
 
     const sendMeasurementToChain = async (): Promise<any> => {
       console.log(
@@ -57,15 +55,26 @@ export class MoonbeamService {
 
       // 7. Sign and send tx and wait for receipt
       // sendMeasurement(uint64 sensorId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256)
+      const createReceipt = await coolChainContract.sendMeasurement(
+        _value.sensorId,
+        _value.value,
+        _value.timeStamp,
+        _value.v,
+        _value.r,
+        _value.s,
+      );
+
+      // Example request
       // const createReceipt = await coolChainContract.sendMeasurement(
       //   _value.sensorId,
       //   _value.value,
       //   _value.timeStamp,
-      //   0x00,
-      //   0x00,
-      //   0x00,
+      //   0,
+      //   "0x7465737400000000000000000000000000000000000000000000000000000000",
+      //   "0x7465737400000000000000000000000000000000000000000000000000000000",
       // );
-      const createReceipt = await coolChainContract.getSensorMeasurements(_value.sensorId);
+
+      console.log(createReceipt);
       createReceipt.wait();
 
       console.log(`Tx successful with hash: ${createReceipt.hash}`);

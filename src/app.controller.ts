@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import { MoonbeamService } from './moonBeam/moonbeam.service';
 import { Temperature } from '@prisma/client';
 
 
@@ -18,16 +17,5 @@ export class AppController {
     @Body() userData: { sensorId: string; value: number },
   ): Promise<Temperature> {
     return this.appService.sendTemperature(userData);
-  }
-}
-
-@Controller('process-data')
-export class ProcessDataController {
-  constructor(private readonly moonbeamService: MoonbeamService) {
-  }
-
-  @Get()
-  async sendMeasurement(): Promise<string> {
-    return await this.moonbeamService.sendMeasurement();
   }
 }

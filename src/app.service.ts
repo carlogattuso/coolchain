@@ -8,7 +8,8 @@ import { MoonbeamService } from './moonBeam/moonbeam.service';
 export class AppService {
   private readonly logger = new Logger(AppService.name);
 
-  constructor(private prisma: PrismaService, private moonBeam: MoonbeamService) {}
+  constructor(private prisma: PrismaService, private moonBeam: MoonbeamService) {
+  }
 
   getHello(): string {
     return 'Hello World!';
@@ -21,7 +22,7 @@ export class AppService {
     return await this.prisma.createMeasurement(userData);
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async blockchainChronicler() {
     this.logger.verbose('Blockchain Chronicler: Start');
 
@@ -29,9 +30,19 @@ export class AppService {
       await this.prisma.findUnverifiedMeasurements(1);
 
     if (nonVerifiedMeasurements) {
-      //TODO: send array of transactions to the Moonbase batch precompile
-      // await this.moonBeam.sendMeasurement(nonVerifiedMeasurements)
+      //TODO: Add proper values for v, r, s
+      console.log(nonVerifiedMeasurements);
 
+      for (const measurement of nonVerifiedMeasurements) {
+        await this.moonBeam.sendMeasurement(
+          measurement.sensorId,
+          measurement.timestamp,
+          measurement.value,
+          0,
+          '0x7465737400000000000000000000000000000000000000000000000000000000',
+          '0x7465737400000000000000000000000000000000000000000000000000000000',
+        );
+      }
       // TODO: set transaction hash
       const txHash: string =
         '0xa293af6faecaef71e542d78646870d20d26bacbbb5657f1231703b4a6d4c03d2';

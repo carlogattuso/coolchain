@@ -12,9 +12,9 @@ export class AppController {
   @Get() getHello(): string {
     return this.appService.getHello();
   }
-  @Get('test-batch') testBach(): string {
-    return this.appService.getHello();
-    // return this.moonBeamService.callBatchPrecompileContract();
+  @Get('test-batch') async testBach() {
+    // return this.appService.getHello();
+    return this.moonBeamService.callBatchPrecompileContract();
   }
 
   @Post()

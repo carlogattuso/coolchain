@@ -94,7 +94,7 @@ export class MoonbeamService {
     const callBatch = async (numberOfRequests: number = 1): Promise<any> => {
       console.log(`Calling the batch precompiled contract`);
       const addresses = Array(numberOfRequests).fill(this.contractAddress);
-      const values = Array(numberOfRequests).fill('0');
+      const values = Array(numberOfRequests).fill(0);
       const gasLimit = [];
 
       const yourContractInterface = new ethers.Interface(contractFile.abi);
@@ -104,11 +104,11 @@ export class MoonbeamService {
         timeStamp: (new Date()).getTime(),
         value: 11,
         v: 0,
-        r: '0x0123456789ABCD0123456789ABCD0123456789ABCD0123456789ABCD',
-        s: '0x0123456789ABCD0123456789ABCD0123456789ABCD0123456789ABCD',
+        r: '0x7465737400000000000000000000000000000000000000000000000000000000',
+        s: '0x7465737400000000000000000000000000000000000000000000000000000000',
       };
 
-      const callData = yourContractInterface.encodeFunctionData(
+      const callData = [yourContractInterface.encodeFunctionData(
         'sendMeasurement',
         [
           _value.sensorId,
@@ -117,8 +117,14 @@ export class MoonbeamService {
           _value.v,
           _value.r,
           _value.s,
-        ]
-      );
+        ],
+      )];
+
+      console.log('Call batch with');
+      console.log(addresses);
+      console.log(values);
+      console.log(callData);
+      console.log(gasLimit);
 
       const createReceipt = await batchPrecompiled.batchAll(
         addresses,

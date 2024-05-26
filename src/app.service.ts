@@ -30,23 +30,23 @@ export class AppService {
     this.logger.verbose('Blockchain Chronicler: Start');
 
     const nonVerifiedMeasurements: Temperature[] =
-      await this.prisma.findUnverifiedMeasurements(1);
+      await this.prisma.findUnverifiedMeasurements(3);
 
-    if (nonVerifiedMeasurements) {
-      const measurement: Temperature = nonVerifiedMeasurements[0];
-
+    if (nonVerifiedMeasurements.length > 0) {
       this.logger.verbose(
-        `Blockchain Chronicler: Sensor ${measurement.sensorId} under verification`,
+        `Blockchain Chronicler: Sensors ${nonVerifiedMeasurements.map((t) => t.sensorId)} under verification`,
       );
 
       const receipt: ContractTransactionResponse =
         await this.moonBeam.sendMeasurement(
-          measurement.sensorId,
-          measurement.timestamp,
-          measurement.value,
+          nonVerifiedMeasurements.map((temperature) => {
+            return {
+              sensorId: temperature.sensorId,
+              value: temperature.value,
+              timestamp: temperature.timestamp.getTime(),
+            };
+          }),
         );
-
-      // TODO: send multiple transactions with batch [OPTIONAL, it is an optimization]
 
       const txHash: string = receipt.hash;
       this.logger.verbose(

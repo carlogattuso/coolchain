@@ -17,7 +17,7 @@ export class MoonbeamService {
   private readonly provider: ethers.JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;
-  private wallet: ethers.Wallet;
+  private readonly wallet: ethers.Wallet;
   private readonly domain: TypedDataDomain;
   private readonly types: any;
 
@@ -60,38 +60,55 @@ export class MoonbeamService {
     };
   }
 
-  async sendMeasurement(
-    sensorId: number,
-    timeStampDateTime: Date,
-    value: number,
-  ): Promise<any> {
-    const measurement = {
-      sensorId: sensorId,
-      value: value,
-      timestamp: timeStampDateTime.getTime(),
-    };
-
-    const signature: string = await this.wallet.signTypedData(
-      this.domain,
-      this.types,
-      measurement,
-    );
-
-    const { r, s, v } = ethers.Signature.from(signature);
-
-    const coolChainContract: ethers.Contract = new ethers.Contract(
-      this.contractAddress,
-      contractFile.abi,
+  async sendMeasurement(data: Array<any>): Promise<any> {
+    const batchPrecompiled = new ethers.Contract(
+      BATCH_PRECOMPILE_ADDRESS,
+      BATCH_PRECOMPILE_ABI,
       this.wallet,
     );
 
-    const createReceipt = await coolChainContract.sendMeasurement(
-      measurement.sensorId,
-      measurement.value,
-      measurement.timestamp,
-      v,
-      r,
-      s,
+    const addresses = Array(data.length).fill(this.contractAddress);
+    const values = Array(data.length).fill(0);
+    const gasLimit = [];
+
+    const dataToSend: Array<any> = data.map(async (measurement) => {
+      const signature = await this.wallet.signTypedData(
+        this.domain,
+        this.types,
+        measurement,
+      );
+
+      const { r, s, v } = ethers.Signature.from(signature);
+
+      return {
+        sensorId: measurement.sensorId,
+        value: measurement.value,
+        timestamp: measurement.timestamp,
+        v: v,
+        r: r,
+        s: s,
+      };
+    });
+
+    const resolvedValues = await Promise.all(dataToSend);
+
+    const yourContractInterface = new ethers.Interface(contractFile.abi);
+    const callData = resolvedValues.map((value) =>
+      yourContractInterface.encodeFunctionData('sendMeasurement', [
+        value.sensorId,
+        value.value,
+        value.timestamp,
+        value.v,
+        value.r,
+        value.s,
+      ]),
+    );
+
+    const createReceipt = await batchPrecompiled.batchAll(
+      addresses,
+      values,
+      callData,
+      gasLimit,
     );
 
     createReceipt.wait();
@@ -99,7 +116,7 @@ export class MoonbeamService {
     return createReceipt;
   }
 
-  async callBatchPrecompileContract(data): Promise<string> {
+  async callBatchPrecompileContract(data: any): Promise<string> {
     const batchPrecompiled = new ethers.Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,

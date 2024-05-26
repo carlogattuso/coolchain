@@ -32,6 +32,21 @@
 $ npm install
 ```
 
+## Prepare the contract
+1. First set the Private Key of the deploying wallet in ./contract/.envWallet.js
+```bash
+# 2. Access the contract folder
+$ cd contract
+# 3. Compile the contract
+$ node compileContract
+# 4. Deploy the contract
+$ npm run start:dev
+```
+Save the contract address for future reference
+
+## Set environment variables
+Set the loval environment variables. Use .envExample, change it to .env and set your own variables
+
 ## Running the app
 
 ```bash

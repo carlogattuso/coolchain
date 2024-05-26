@@ -8,9 +8,9 @@ datasource db {
 }
 
 model Temperature {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  sensorId  String
-  timestamp DateTime
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  sensorId  Int         @db.Long
+  timestamp DateTime    @db.Date
   txHash    String
-  value     Int
+  value     Int         @db.Int
 }

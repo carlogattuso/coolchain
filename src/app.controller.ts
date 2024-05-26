@@ -12,7 +12,7 @@ export class AppController {
 
   @Post()
   async sendTemperature(
-    @Body() userData: { sensorId: string; value: number },
+    @Body() userData: { sensorId: number; value: number },
   ): Promise<Temperature> {
     return this.appService.sendTemperature(userData);
   }

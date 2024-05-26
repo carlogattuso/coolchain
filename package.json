@@ -21,16 +21,17 @@
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.2.2",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
-    "@nestjs/typeorm": "^10.0.2",
-    "ethers": "^6.12.1",
     "@nestjs/schedule": "^4.0.2",
+    "@nestjs/typeorm": "^10.0.2",
     "@prisma/client": "^5.14.0",
+    "ethers": "^6.12.1",
     "mongodb": "^6.6.2",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "solc": "^0.8.0"
+    "solc": "^0.8.26"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import { MoonbeamService } from './moonbeam.service';
+import { MoonbeamService } from './moonBeam/moonbeam.service';
 import { Temperature } from '@prisma/client';
 
 
@@ -27,7 +27,7 @@ export class ProcessDataController {
   }
 
   @Get()
-  async getHello(): Promise<string> {
-    return await this.moonbeamService.balances();
+  async sendMeasurement(): Promise<string> {
+    return await this.moonbeamService.sendMeasurement();
   }
 }

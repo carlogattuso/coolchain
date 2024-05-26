@@ -2,12 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Temperature } from '@prisma/client';
 import { PrismaService } from './prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { MoonbeamService } from './moonBeam/moonbeam.service';
 
 @Injectable()
 export class AppService {
   private readonly logger = new Logger(AppService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private moonBeam: MoonbeamService) {}
 
   getHello(): string {
     return 'Hello World!';
@@ -29,6 +30,9 @@ export class AppService {
 
     if (nonVerifiedMeasurements) {
       //TODO: send array of transactions to the Moonbase batch precompile
+      // await this.moonBeam.sendMeasurement(nonVerifiedMeasurements)
+
+      // TODO: set transaction hash
       const txHash: string =
         '0xa293af6faecaef71e542d78646870d20d26bacbbb5657f1231703b4a6d4c03d2';
       await this.prisma.verifyMeasurements(nonVerifiedMeasurements, txHash);

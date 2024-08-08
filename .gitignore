@@ -47,6 +47,9 @@ contract/.envWallet.js
 .temp
 .tmp
 
+# database data
+/db/data
+
 # Runtime data
 pids
 *.pid

@@ -47,4 +47,11 @@ Follow these steps to setup the MongoDB local database environment
   .\yourPathToCoolchain\coolchain\db\data\coolchain_db_seed.sh
 ```
 
+5. Generate prisma scheme
+
+```bash
+  cd yourPathToCoolchain\coolchain\db
+  prisma generate
+```
+
 ## Linux

@@ -6,7 +6,7 @@ import contractFile from '../contract/compileContract';
 import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
-} from '../utils/contants';
+} from '../utils/constants';
 
 const CHAIN_NAME: string = 'moonbase-alpha';
 const CHAIN_RPC_URL: string = 'https://rpc.api.moonbase.moonbeam.network';

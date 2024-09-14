@@ -19,7 +19,7 @@ export class AppService {
   }
 
   async sendTemperature(userData: {
-    sensorId: bigint;
+    sensorId: string;
     value: number;
   }): Promise<Temperature> {
     return await this.prisma.createMeasurement(userData);

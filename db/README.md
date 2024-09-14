@@ -33,7 +33,66 @@ Follow these steps to setup the MongoDB local database environment
 >  Stop-Process -Name mongod
 >```
 
-2. [Install MongoDB Shell](https://www.mongodb.com/try/download/shell)
+2. Create data folder
+
+```bash
+mkdir yourPathToCoolchain/coolchain/db/data
+```
+
+3. [Install MongoDB Shell](https://www.mongodb.com/try/download/shell)
+4. Initiate replica set transactions
+
+```bash
+  mongosh --port 27017
+  rs.initiate()
+```
+
+5. Execute database initialisation scripts
+
+```bash
+  .\yourPathToCoolchain\coolchain\db\data\coolchain_db_seed.sh
+```
+
+6. Generate prisma scheme
+
+```bash
+  cd yourPathToCoolchain\coolchain\db
+  prisma generate
+```
+
+## Linux
+
+### Installation
+
+1. Install MongoDB client
+
+```bash
+  brew tap mongodb/brew
+  brew update
+  brew install mongodb-community
+```
+### Initialisation
+
+1. Create data folder
+
+```bash
+mkdir yourPathToCoolchain/coolchain/db/data
+```
+
+2. Create replica set
+
+```bash
+mongod --replSet rs0 --config /usr/local/etc/mongod.conf --dbpath yourPathToCoolchain/coolchain/db/data --port 27017 --bind_ip_all --fork
+```
+> [!TIP]
+>
+> To shutdown the current MongoDB process, you can use these two commands
+>
+>```bash
+>  ps aux | grep -v grep | grep mongod
+>  kill <mongod pid>
+>```
+
 3. Initiate replica set transactions
 
 ```bash
@@ -53,5 +112,3 @@ Follow these steps to setup the MongoDB local database environment
   cd yourPathToCoolchain\coolchain\db
   prisma generate
 ```
-
-## Linux

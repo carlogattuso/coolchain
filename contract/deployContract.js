@@ -6,20 +6,22 @@ const ethers = require('ethers');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const env = require('./.envWallet');
 
-// 2. Define network configurations
-const providerRPC = {
-  moonbase: {
-    name: 'moonbase-alpha',
-    rpc: 'https://rpc.api.moonbase.moonbeam.network',
-    chainId: 1287, // 0x507 in hex,
-  },
-};
-
-// 3. Create ethers provider
-const provider = new ethers.JsonRpcProvider(providerRPC.moonbase.rpc, {
-  chainId: providerRPC.moonbase.chainId,
-  name: providerRPC.moonbase.name,
-});
+// 2. Create ethers provider
+const isDev = process.argv.includes('--dev');
+let provider;
+if (isDev) {
+  provider = new ethers.JsonRpcProvider('http://localhost:9944');
+  console.log(`Dev RPC provider: ${provider._getConnection().url}`);
+} else {
+  provider = new ethers.JsonRpcProvider(
+    'https://rpc.api.moonbase.moonbeam.network',
+    {
+      chainId: 1287,
+      name: 'moonbase-alpha',
+    },
+  );
+  console.log(`TestNet RPC provider: ${provider._getConnection().url}`);
+}
 
 // 3. Create account variables
 const accountFrom = {

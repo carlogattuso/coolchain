@@ -69,7 +69,7 @@ contract Coolchain {
     }
 
     // Sensor measurement
-    function sendMeasurement(uint64 sensorId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
+    function storeMeasurement(uint64 sensorId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
         Measurement memory measurement = Measurement({sensorId: sensorId, value: value, timestamp: timestamp});
         require(verifyMessage(measurement, v, r, s), "Invalid signature");
         measurements[sensorId].push(measurement);

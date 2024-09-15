@@ -75,7 +75,9 @@ export class MoonbeamService {
     const eip712Data: EIP712Measurement[] =
       await this.mapDataToEIP712(unsignedMeasurements);
 
-    const contractInterface = new ethers.Interface(contractFile.abi);
+    const contractInterface: ethers.Interface = new ethers.Interface(
+      contractFile.abi,
+    );
     const callData = eip712Data.map((eip712Measurement: EIP712Measurement) =>
       contractInterface.encodeFunctionData('storeMeasurement', [
         eip712Measurement.sensorId,
@@ -87,12 +89,12 @@ export class MoonbeamService {
       ]),
     );
 
-    const createReceipt: ContractTransactionResponse =
+    const transaction: ContractTransactionResponse =
       await batchPrecompiled.batchAll(addresses, values, callData, gasLimit);
 
-    await createReceipt.wait();
+    await transaction.wait();
 
-    return createReceipt;
+    return transaction;
   }
 
   private createJsonRpcProvider(

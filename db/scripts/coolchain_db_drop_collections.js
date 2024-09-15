@@ -1,4 +1,4 @@
 db = db.getSiblingDB('coolchain');
 
-db.Temperature.drop();
+db.Measurements.drop();
 db.Versioning.drop();

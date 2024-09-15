@@ -1,6 +1,6 @@
 db = db.getSiblingDB('coolchain');
 
-db.createCollection('Temperature');
+db.createCollection('Measurements');
 db.createCollection('Versioning');
 
 db.Versioning.insertOne({

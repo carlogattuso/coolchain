@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient, Temperature } from '@prisma/client';
+import { Measurement, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -7,8 +7,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async createMeasurement(_userData: { sensorId: string; value: number }) {
-    return this.temperature.create({
+  async storeUnverifiedMeasurement(_userData: {
+    sensorId: string;
+    value: number;
+  }) {
+    return this.measurement.create({
       data: {
         sensorId: String(_userData.sensorId),
         timestamp: new Date(),
@@ -18,8 +21,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async findUnverifiedMeasurements(_recordNum: number): Promise<Temperature[]> {
-    return this.temperature.findMany({
+  async findUnverifiedMeasurements(_recordNum: number): Promise<Measurement[]> {
+    return this.measurement.findMany({
       where: {
         txHash: {
           equals: '',
@@ -33,13 +36,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   async verifyMeasurements(
-    _measurements: Temperature[],
+    _measurements: Measurement[],
     _txHash: string,
   ): Promise<void> {
-    await this.temperature.updateMany({
+    await this.measurement.updateMany({
       where: {
         id: {
-          in: _measurements.map((t: Temperature) => t.id),
+          in: _measurements.map((t: Measurement) => t.id),
         },
       },
       data: {

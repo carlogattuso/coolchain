@@ -14,7 +14,7 @@ contract Coolchain {
 
     // Sensor measurement struct
     struct Measurement {
-        uint64 sensorId;
+        bytes32 sensorId;
         uint8 value;
         uint64 timestamp;
     }
@@ -23,7 +23,7 @@ contract Coolchain {
     bytes32 private DOMAIN_SEPARATOR;
     bytes32 private constant SALT = 0x5e75394f31cc39406c2d33d400bb0a9d15ede58611e895e36e6642881aa1cae6;
 
-    mapping (uint64 => Measurement[]) private measurements;
+    mapping (bytes32 => Measurement[]) private measurements;
     
     // EIP712 domain separator setup
     constructor() {
@@ -51,7 +51,7 @@ contract Coolchain {
     // Hashes an EIP712 message struct
     function hashMessage(Measurement memory measurement) private pure returns (bytes32) {
         return keccak256(abi.encode(
-            keccak256(bytes("Measurement(uint64 sensorId,uint8 value,uint64 timestamp)")),
+            keccak256(bytes("Measurement(bytes32 sensorId,uint8 value,uint64 timestamp)")),
             measurement.sensorId, measurement.value, measurement.timestamp
         ));
     }
@@ -69,7 +69,7 @@ contract Coolchain {
     }
 
     // Sensor measurement
-    function storeMeasurement(uint64 sensorId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
+    function storeMeasurement(bytes32 sensorId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
         Measurement memory measurement = Measurement({sensorId: sensorId, value: value, timestamp: timestamp});
         require(verifyMessage(measurement, v, r, s), "Invalid signature");
         measurements[sensorId].push(measurement);
@@ -77,7 +77,7 @@ contract Coolchain {
     }
 
     // Get sensor measurements
-    function getSensorMeasurements(uint64 sensorId) public view returns (Measurement[] memory) {
+    function getSensorMeasurements(bytes32 sensorId) public view returns (Measurement[] memory) {
         return measurements[sensorId];
     }
 

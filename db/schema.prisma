@@ -8,9 +8,9 @@ datasource db {
 }
 
 model Measurement {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
   sensorId  String
-  timestamp DateTime
+  timestamp Int
   txHash    String
   value     Int
 }

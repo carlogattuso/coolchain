@@ -23,7 +23,7 @@ export class MoonbeamService {
   private readonly domain: TypedDataDomain;
   private readonly types = {
     Measurement: [
-      { name: 'sensorId', type: 'uint64' },
+      { name: 'sensorId', type: 'bytes32' },
       { name: 'value', type: 'uint8' },
       { name: 'timestamp', type: 'uint64' },
     ],
@@ -78,7 +78,12 @@ export class MoonbeamService {
     const contractInterface = new ethers.Interface(contractFile.abi);
     const callData = eip712Data.map((eip712Measurement: EIP712Measurement) =>
       contractInterface.encodeFunctionData('storeMeasurement', [
-        eip712Measurement,
+        eip712Measurement.sensorId,
+        eip712Measurement.value,
+        eip712Measurement.timestamp,
+        eip712Measurement.v,
+        eip712Measurement.r,
+        eip712Measurement.s,
       ]),
     );
 

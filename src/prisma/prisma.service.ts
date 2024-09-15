@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Measurement, PrismaClient } from '@prisma/client';
+import { ethers } from 'ethers';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -13,8 +14,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }) {
     return this.measurement.create({
       data: {
-        sensorId: String(_userData.sensorId),
-        timestamp: new Date(),
+        sensorId: ethers.toBeHex(_userData.sensorId, 32),
+        timestamp: Math.floor(Date.now() / 1000),
         txHash: '',
         value: _userData.value,
       },

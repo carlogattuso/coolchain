@@ -1,4 +1,4 @@
 db = db.getSiblingDB('coolchain');
 
-db.Record.drop();
-db.Version.drop();
+db.Records.drop();
+db.Versions.drop();

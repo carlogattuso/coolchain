@@ -1,9 +1,9 @@
 db = db.getSiblingDB('coolchain');
 
-db.createCollection('Record');
-db.createCollection('Version');
+db.createCollection('Records');
+db.createCollection('Versions');
 
-db.Version.insertOne({
+db.Versions.insertOne({
   versionNumber: '0.0.1',
   installationDate: new Date(),
 });

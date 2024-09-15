@@ -1,10 +1,10 @@
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
-import { GetServerSideProps, Metadata } from 'next';
+import {GetServerSideProps, Metadata} from 'next';
 import clientPromise from '../lib/mongodb';
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import React from "react";
 import RecordsTable from "@/components/Tables/RecordsTable";
-import { RecordsPageProps } from "@/types/records";
+import {RecordsPageProps} from "@/types/records";
 
 export const metadata: Metadata = {
     title: "Coolchain | Records",
@@ -26,7 +26,7 @@ export const getServerSideProps: GetServerSideProps<RecordsPageProps> = async ()
     const client = await clientPromise;
     const db = client.db('coolchain');
     const records = await db
-        .collection('Temperature')
+        .collection('Records')
         .find({})
         .sort({ timestamp: -1 })
         .toArray();

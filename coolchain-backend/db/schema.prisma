@@ -13,4 +13,6 @@ model Record {
   timestamp DateTime
   txHash    String
   value     Int
+
+  @@map("Records")
 }

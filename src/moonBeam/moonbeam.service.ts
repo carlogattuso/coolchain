@@ -1,44 +1,49 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
-import { ethers, TypedDataDomain } from 'ethers';
+import { ContractTransactionResponse, ethers, TypedDataDomain } from 'ethers';
 
 import contractFile from '../contract/compileContract';
 import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
 } from '../utils/constants';
-
-const CHAIN_NAME: string = 'moonbase-alpha';
-const CHAIN_RPC_URL: string = 'https://rpc.api.moonbase.moonbeam.network';
-const CHAIN_ID: number = 1287;
+import { Measurement } from '@prisma/client';
+import { EIP712Measurement } from '../types/EIP712Measurement';
 
 @Injectable()
 export class MoonbeamService {
   private readonly provider: ethers.JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;
+  private readonly salt: string;
+  private readonly chainId: number;
+  private readonly chainName: string;
+  private readonly chainRpcUrl: string;
   private readonly wallet: ethers.Wallet;
   private readonly domain: TypedDataDomain;
-  private readonly types: any;
+  private readonly types = {
+    Measurement: [
+      { name: 'sensorId', type: 'uint64' },
+      { name: 'value', type: 'uint8' },
+      { name: 'timestamp', type: 'uint64' },
+    ],
+  };
 
   constructor(private configService: ConfigService) {
     this.accountFrom = {
       privateKey: this.configService.get('WALLET_PRIVATE_KEY'),
     };
-    this.contractAddress = this.configService.get('CONTRACT_ADDRESS');
+    this.contractAddress = this.configService.get<string>('CONTRACT_ADDRESS');
+    this.chainName = this.configService.get<string>('CHAIN_NAME');
+    this.chainRpcUrl = this.configService.get<string>('CHAIN_RPC_URL');
+    this.chainId = this.configService.get<number>('CHAIN_ID');
+    this.salt = this.configService.get<string>('SALT');
 
-    // Configure Moonbeam provider based on your setup
-    const providerRPC = {
-      moonbase: {
-        name: CHAIN_NAME,
-        rpc: CHAIN_RPC_URL,
-        chainId: CHAIN_ID, // 0x507 in hex,
-      },
-    };
-    this.provider = new ethers.JsonRpcProvider(providerRPC.moonbase.rpc, {
-      chainId: providerRPC.moonbase.chainId,
-      name: providerRPC.moonbase.name,
-    });
+    this.provider = this.createJsonRpcProvider(
+      this.chainRpcUrl,
+      this.chainId,
+      this.chainName,
+    );
 
     this.wallet = new ethers.Wallet(this.accountFrom.privateKey, this.provider);
 
@@ -46,124 +51,85 @@ export class MoonbeamService {
     this.domain = {
       name: 'coolchain',
       version: '1',
-      chainId: CHAIN_ID,
+      chainId: this.chainId,
       verifyingContract: this.contractAddress,
-      salt: '0x5e75394f31cc39406c2d33d400bb0a9d15ede58611e895e36e6642881aa1cae6',
-    };
-
-    this.types = {
-      Measurement: [
-        { name: 'sensorId', type: 'uint64' },
-        { name: 'value', type: 'uint8' },
-        { name: 'timestamp', type: 'uint64' },
-      ],
+      salt: this.salt,
     };
   }
 
-  async sendMeasurement(data: Array<any>): Promise<any> {
+  async verifyMeasurements(
+    unsignedMeasurements: Array<Measurement>,
+  ): Promise<ContractTransactionResponse> {
     const batchPrecompiled = new ethers.Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,
       this.wallet,
     );
 
-    const addresses = Array(data.length).fill(this.contractAddress);
-    const values = Array(data.length).fill(0);
+    const addresses = Array(unsignedMeasurements.length).fill(
+      this.contractAddress,
+    );
+    const values = Array(unsignedMeasurements.length).fill(0);
     const gasLimit = [];
 
-    const dataToSend: Array<any> = data.map(async (measurement) => {
-      const signature = await this.wallet.signTypedData(
-        this.domain,
-        this.types,
-        measurement,
-      );
+    const eip712Data: EIP712Measurement[] =
+      await this.mapDataToEIP712(unsignedMeasurements);
 
-      const { r, s, v } = ethers.Signature.from(signature);
-
-      return {
-        sensorId: measurement.sensorId,
-        value: measurement.value,
-        timestamp: measurement.timestamp,
-        v: v,
-        r: r,
-        s: s,
-      };
-    });
-
-    const resolvedValues = await Promise.all(dataToSend);
-
-    const yourContractInterface = new ethers.Interface(contractFile.abi);
-    const callData = resolvedValues.map((value) =>
-      yourContractInterface.encodeFunctionData('sendMeasurement', [
-        value.sensorId,
-        value.value,
-        value.timestamp,
-        value.v,
-        value.r,
-        value.s,
+    const contractInterface = new ethers.Interface(contractFile.abi);
+    const callData = eip712Data.map((eip712Measurement: EIP712Measurement) =>
+      contractInterface.encodeFunctionData('storeMeasurement', [
+        eip712Measurement,
       ]),
     );
 
-    const createReceipt = await batchPrecompiled.batchAll(
-      addresses,
-      values,
-      callData,
-      gasLimit,
-    );
+    const createReceipt: ContractTransactionResponse =
+      await batchPrecompiled.batchAll(addresses, values, callData, gasLimit);
 
-    createReceipt.wait();
+    await createReceipt.wait();
 
     return createReceipt;
   }
 
-  async callBatchPrecompileContract(data: any): Promise<string> {
-    const batchPrecompiled = new ethers.Contract(
-      BATCH_PRECOMPILE_ADDRESS,
-      BATCH_PRECOMPILE_ABI,
-      this.wallet,
+  private createJsonRpcProvider(
+    rpcUrl: string,
+    chainId?: number,
+    chainName?: string,
+  ): ethers.JsonRpcProvider {
+    if (chainId && chainName) {
+      return new ethers.JsonRpcProvider(rpcUrl, {
+        chainId: chainId,
+        name: chainName,
+      });
+    } else {
+      return new ethers.JsonRpcProvider(rpcUrl);
+    }
+  }
+
+  private async signMeasurement(
+    measurement: Measurement,
+  ): Promise<EIP712Measurement> {
+    const signature = await this.wallet.signTypedData(
+      this.domain,
+      this.types,
+      measurement,
     );
+    const { r, s, v } = ethers.Signature.from(signature);
 
-    const callBatch = async (
-      measurementsData: Array<any>,
-      numberOfRequests: number = 1,
-    ): Promise<any> => {
-      console.log(`Calling the batch precompiled contract`);
-      const addresses = Array(numberOfRequests).fill(this.contractAddress);
-      const values = Array(numberOfRequests).fill(0);
-      const gasLimit = [];
-
-      const yourContractInterface = new ethers.Interface(contractFile.abi);
-      const callData = measurementsData.map((value) =>
-        yourContractInterface.encodeFunctionData('sendMeasurement', [
-          value.sensorId,
-          value.value,
-          value.timeStamp,
-          value.v,
-          value.r,
-          value.s,
-        ]),
-      );
-
-      console.log('Call batch with');
-      console.log(addresses);
-      console.log(values);
-      console.log(callData);
-      console.log(gasLimit);
-
-      const createReceipt = await batchPrecompiled.batchAll(
-        addresses,
-        values,
-        callData,
-        gasLimit,
-      );
-
-      console.log(createReceipt);
-      createReceipt.wait();
-      console.log(`Tx successful with hash: ${createReceipt.hash}`);
-      return createReceipt;
+    return {
+      sensorId: measurement.sensorId,
+      value: measurement.value,
+      timestamp: measurement.timestamp,
+      v: v,
+      r: r,
+      s: s,
     };
-    await callBatch(data.length, data);
+  }
 
-    return `${callBatch}`;
+  private async mapDataToEIP712(
+    data: Measurement[],
+  ): Promise<EIP712Measurement[]> {
+    return Promise.all(
+      data.map((measurement: Measurement) => this.signMeasurement(measurement)),
+    );
   }
 }

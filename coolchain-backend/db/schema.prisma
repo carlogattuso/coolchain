@@ -7,10 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Measurement {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
+model Record {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   sensorId  String
-  timestamp Int
+  timestamp DateTime
   txHash    String
   value     Int
 }

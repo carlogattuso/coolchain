@@ -10,4 +10,4 @@ bytes32 s = 0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba;
 
 // Call the function
 
-contractInstance.storeMeasurement(sensorId, value, timestamp, v, r, s);
+contractInstance.storeRecord(sensorId, value, timestamp, v, r, s);

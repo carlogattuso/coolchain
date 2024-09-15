@@ -1,6 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Measurement, PrismaClient } from '@prisma/client';
-import { ethers } from 'ethers';
+import { PrismaClient, Record } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -8,22 +7,19 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async storeUnverifiedMeasurement(_userData: {
-    sensorId: string;
-    value: number;
-  }) {
-    return this.measurement.create({
+  async storeUnauditedRecord(_userData: { sensorId: string; value: number }) {
+    return this.record.create({
       data: {
-        sensorId: ethers.toBeHex(_userData.sensorId, 32),
-        timestamp: Math.floor(Date.now() / 1000),
+        sensorId: _userData.sensorId,
+        timestamp: new Date(),
         txHash: '',
         value: _userData.value,
       },
     });
   }
 
-  async findUnverifiedMeasurements(_recordNum: number): Promise<Measurement[]> {
-    return this.measurement.findMany({
+  async getUnauditedRecords(_recordNum: number): Promise<Record[]> {
+    return this.record.findMany({
       where: {
         txHash: {
           equals: '',
@@ -36,14 +32,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async verifyMeasurements(
-    _measurements: Measurement[],
-    _txHash: string,
-  ): Promise<void> {
-    await this.measurement.updateMany({
+  async auditRecords(_records: Record[], _txHash: string): Promise<void> {
+    await this.record.updateMany({
       where: {
         id: {
-          in: _measurements.map((t: Measurement) => t.id),
+          in: _records.map((t: Record) => t.id),
         },
       },
       data: {

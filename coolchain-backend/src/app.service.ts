@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { MoonbeamService } from './moonBeam/moonbeam.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Measurement } from '@prisma/client';
+import { Record } from '@prisma/client';
 import { ContractTransactionResponse } from 'ethers';
 
 @Injectable()
@@ -10,52 +10,46 @@ export class AppService {
   private readonly logger: Logger = new Logger(AppService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private moonBeam: MoonbeamService,
+    private _prismaService: PrismaService,
+    private _moonbeamService: MoonbeamService,
   ) {}
 
   getHello(): string {
     return 'Hello World!';
   }
 
-  async storeUnverifiedMeasurement(userData: {
+  async storeUnauditedRecord(_userData: {
     sensorId: string;
     value: number;
-  }): Promise<Measurement> {
-    return await this.prisma.storeUnverifiedMeasurement(userData);
+  }): Promise<Record> {
+    return await this._prismaService.storeUnauditedRecord(_userData);
   }
 
   @Cron(CronExpression.EVERY_30_SECONDS)
   async blockchainChronicler() {
     this.logger.verbose('Blockchain Chronicler: Start');
 
-    const unverifiedMeasurements: Measurement[] =
-      await this.prisma.findUnverifiedMeasurements(3);
+    const unauditedRecords: Record[] =
+      await this._prismaService.getUnauditedRecords(3);
 
-    const sensorIds = Array.from(
-      new Set(
-        unverifiedMeasurements.map((measurement) => measurement.sensorId),
-      ),
-    ).sort();
-
-    if (unverifiedMeasurements.length > 0) {
+    if (unauditedRecords.length > 0) {
       this.logger.verbose(
-        `Blockchain Chronicler: Sensors ${sensorIds} under verification`,
+        `Blockchain Chronicler: Records ${unauditedRecords.map((record: Record) => record.id)} under audit`,
       );
 
       const transaction: ContractTransactionResponse =
-        await this.moonBeam.verifyMeasurements(unverifiedMeasurements);
+        await this._moonbeamService.auditRecords(unauditedRecords);
 
       const txHash: string = transaction.hash;
       this.logger.verbose(
         `Blockchain Chronicler: Tx successful - hash ${txHash}`,
       );
 
-      await this.prisma.verifyMeasurements(unverifiedMeasurements, txHash);
+      await this._prismaService.auditRecords(unauditedRecords, txHash);
     }
 
     this.logger.verbose(
-      `Blockchain Chronicler: End - ${unverifiedMeasurements.length} records verified`,
+      `Blockchain Chronicler: End - ${unauditedRecords.length} records audited`,
     );
   }
 }

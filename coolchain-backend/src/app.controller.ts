@@ -1,19 +1,19 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import { Measurement } from '@prisma/client';
+import { Record } from '@prisma/client';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly _appService: AppService) {}
 
   @Get() getHello(): string {
-    return this.appService.getHello();
+    return this._appService.getHello();
   }
 
   @Post()
-  async storeMeasurement(
-    @Body() userData: { sensorId: string; value: number },
-  ): Promise<Measurement> {
-    return this.appService.storeUnverifiedMeasurement(userData);
+  async storeRecord(
+    @Body() _userData: { sensorId: string; value: number },
+  ): Promise<Record> {
+    return this._appService.storeUnauditedRecord(_userData);
   }
 }

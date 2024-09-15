@@ -7,8 +7,8 @@ import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
 } from '../utils/constants';
-import { Measurement } from '@prisma/client';
-import { EIP712Measurement } from '../types/EIP712Measurement';
+import { Record } from '@prisma/client';
+import { EIP712Record } from '../types/EIP712Record';
 
 @Injectable()
 export class MoonbeamService {
@@ -22,22 +22,22 @@ export class MoonbeamService {
   private readonly wallet: ethers.Wallet;
   private readonly domain: TypedDataDomain;
   private readonly types = {
-    Measurement: [
+    Record: [
       { name: 'sensorId', type: 'bytes32' },
       { name: 'value', type: 'uint8' },
       { name: 'timestamp', type: 'uint64' },
     ],
   };
 
-  constructor(private configService: ConfigService) {
+  constructor(private _configService: ConfigService) {
     this.accountFrom = {
-      privateKey: this.configService.get('WALLET_PRIVATE_KEY'),
+      privateKey: this._configService.get('WALLET_PRIVATE_KEY'),
     };
-    this.contractAddress = this.configService.get<string>('CONTRACT_ADDRESS');
-    this.chainName = this.configService.get<string>('CHAIN_NAME');
-    this.chainRpcUrl = this.configService.get<string>('CHAIN_RPC_URL');
-    this.chainId = this.configService.get<number>('CHAIN_ID');
-    this.salt = this.configService.get<string>('SALT');
+    this.contractAddress = this._configService.get<string>('CONTRACT_ADDRESS');
+    this.chainName = this._configService.get<string>('CHAIN_NAME');
+    this.chainRpcUrl = this._configService.get<string>('CHAIN_RPC_URL');
+    this.chainId = this._configService.get<number>('CHAIN_ID');
+    this.salt = this._configService.get<string>('SALT');
 
     this.provider = this.createJsonRpcProvider(
       this.chainRpcUrl,
@@ -57,8 +57,8 @@ export class MoonbeamService {
     };
   }
 
-  async verifyMeasurements(
-    unsignedMeasurements: Array<Measurement>,
+  async auditRecords(
+    _unsignedRecords: Array<Record>,
   ): Promise<ContractTransactionResponse> {
     const batchPrecompiled = new ethers.Contract(
       BATCH_PRECOMPILE_ADDRESS,
@@ -66,26 +66,24 @@ export class MoonbeamService {
       this.wallet,
     );
 
-    const addresses = Array(unsignedMeasurements.length).fill(
-      this.contractAddress,
-    );
-    const values = Array(unsignedMeasurements.length).fill(0);
+    const addresses = Array(_unsignedRecords.length).fill(this.contractAddress);
+    const values = Array(_unsignedRecords.length).fill(0);
     const gasLimit = [];
 
-    const eip712Data: EIP712Measurement[] =
-      await this.mapDataToEIP712(unsignedMeasurements);
+    const eip712Data: EIP712Record[] =
+      await this.mapDataToEIP712(_unsignedRecords);
 
     const contractInterface: ethers.Interface = new ethers.Interface(
       contractFile.abi,
     );
-    const callData = eip712Data.map((eip712Measurement: EIP712Measurement) =>
-      contractInterface.encodeFunctionData('storeMeasurement', [
-        eip712Measurement.sensorId,
-        eip712Measurement.value,
-        eip712Measurement.timestamp,
-        eip712Measurement.v,
-        eip712Measurement.r,
-        eip712Measurement.s,
+    const callData = eip712Data.map((eip712Record: EIP712Record) =>
+      contractInterface.encodeFunctionData('storeRecord', [
+        eip712Record.sensorId,
+        eip712Record.value,
+        eip712Record.timestamp,
+        eip712Record.v,
+        eip712Record.r,
+        eip712Record.s,
       ]),
     );
 
@@ -98,45 +96,45 @@ export class MoonbeamService {
   }
 
   private createJsonRpcProvider(
-    rpcUrl: string,
-    chainId?: number,
-    chainName?: string,
+    _rpcUrl: string,
+    _chainId?: number,
+    _chainName?: string,
   ): ethers.JsonRpcProvider {
-    if (chainId && chainName) {
-      return new ethers.JsonRpcProvider(rpcUrl, {
-        chainId: chainId,
-        name: chainName,
+    if (_chainId && _chainName) {
+      return new ethers.JsonRpcProvider(_rpcUrl, {
+        chainId: _chainId,
+        name: _chainName,
       });
     } else {
-      return new ethers.JsonRpcProvider(rpcUrl);
+      return new ethers.JsonRpcProvider(_rpcUrl);
     }
   }
 
-  private async signMeasurement(
-    measurement: Measurement,
-  ): Promise<EIP712Measurement> {
+  private async signRecord(_record: Record): Promise<EIP712Record> {
+    const dataToSign = {
+      sensorId: ethers.toBeHex(_record.sensorId, 32),
+      value: _record.value,
+      timestamp: Math.floor(_record.timestamp.getTime() / 1000),
+    };
+
     const signature = await this.wallet.signTypedData(
       this.domain,
       this.types,
-      measurement,
+      dataToSign,
     );
     const { r, s, v } = ethers.Signature.from(signature);
 
     return {
-      sensorId: measurement.sensorId,
-      value: measurement.value,
-      timestamp: measurement.timestamp,
+      sensorId: dataToSign.sensorId,
+      value: dataToSign.value,
+      timestamp: dataToSign.timestamp,
       v: v,
       r: r,
       s: s,
     };
   }
 
-  private async mapDataToEIP712(
-    data: Measurement[],
-  ): Promise<EIP712Measurement[]> {
-    return Promise.all(
-      data.map((measurement: Measurement) => this.signMeasurement(measurement)),
-    );
+  private async mapDataToEIP712(_data: Record[]): Promise<EIP712Record[]> {
+    return Promise.all(_data.map((record: Record) => this.signRecord(record)));
   }
 }

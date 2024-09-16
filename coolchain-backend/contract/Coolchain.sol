@@ -12,9 +12,9 @@ contract Coolchain {
         bytes32 salt;
     }
 
-    // Sensor record struct
+    // Device record struct
     struct Record {
-        bytes32 sensorId;
+        bytes32 deviceId;
         uint8 value;
         uint64 timestamp;
     }
@@ -51,8 +51,8 @@ contract Coolchain {
     // Hashes an EIP712 message struct
     function hashMessage(Record memory record) private pure returns (bytes32) {
         return keccak256(abi.encode(
-            keccak256(bytes("Record(bytes32 sensorId,uint8 value,uint64 timestamp)")),
-            record.sensorId, record.value, record.timestamp
+            keccak256(bytes("Record(bytes32 deviceId,uint8 value,uint64 timestamp)")),
+            record.deviceId, record.value, record.timestamp
         ));
     }
 
@@ -68,17 +68,17 @@ contract Coolchain {
         return (recoveredAddress == msg.sender);
     }
 
-    // Sensor record
-    function storeRecord(bytes32 sensorId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
-        Record memory record = Record({sensorId: sensorId, value: value, timestamp: timestamp});
+    // Device record
+    function storeRecord(bytes32 deviceId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
+        Record memory record = Record({deviceId: deviceId, value: value, timestamp: timestamp});
         require(verifyMessage(record, v, r, s), "Invalid signature");
-        records[sensorId].push(record);
-        return records[sensorId].length;
+        records[deviceId].push(record);
+        return records[deviceId].length;
     }
 
-    // Get sensor records
-    function getSensorRecords(bytes32 sensorId) public view returns (Record[] memory) {
-        return records[sensorId];
+    // Get device records
+    function getDeviceRecords(bytes32 deviceId) public view returns (Record[] memory) {
+        return records[deviceId];
     }
 
 }

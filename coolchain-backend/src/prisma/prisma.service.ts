@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient, Record } from '@prisma/client';
+import { Event, PrismaClient, Record, RecordStatus } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -7,12 +7,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async storeUnauditedRecord(_userData: { sensorId: string; value: number }) {
+  async storeUnauditedRecord(_userData: { deviceId: string; value: number }) {
     return this.record.create({
       data: {
-        sensorId: _userData.sensorId,
+        deviceId: _userData.deviceId,
         timestamp: new Date(),
-        txHash: '',
+        status: RecordStatus.PENDING,
         value: _userData.value,
       },
     });
@@ -21,8 +21,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   async getUnauditedRecords(_recordNum: number): Promise<Record[]> {
     return this.record.findMany({
       where: {
-        txHash: {
-          equals: '',
+        status: {
+          equals: RecordStatus.PENDING,
         },
       },
       orderBy: {
@@ -32,15 +32,50 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async auditRecords(_records: Record[], _txHash: string): Promise<void> {
-    await this.record.updateMany({
-      where: {
-        id: {
-          in: _records.map((t: Record) => t.id),
+  async auditRecords(
+    _submittedRecordIds: string[],
+    _failedRecordIds: string[],
+    _events: Event[],
+  ): Promise<void> {
+    await this.$transaction(async (prisma) => {
+      const updateSubmitted = prisma.record.updateMany({
+        where: {
+          id: {
+            in: _submittedRecordIds,
+          },
         },
+        data: {
+          status: RecordStatus.SUBMITTED,
+        },
+      });
+
+      const updateFailed = await prisma.record.updateMany({
+        where: {
+          id: {
+            in: _failedRecordIds,
+          },
+        },
+        data: {
+          status: RecordStatus.FAILED,
+        },
+      });
+
+      await Promise.all([updateSubmitted, updateFailed]);
+
+      await prisma.event.createMany({
+        data: _events,
+      });
+    });
+  }
+
+  async getRecordsWithEvents(_deviceId: string): Promise<Record[] | null> {
+    return this.record.findMany({
+      where: { deviceId: _deviceId },
+      include: {
+        events: true,
       },
-      data: {
-        txHash: _txHash,
+      orderBy: {
+        timestamp: 'desc',
       },
     });
   }

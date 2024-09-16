@@ -8,11 +8,43 @@ datasource db {
 }
 
 model Record {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  sensorId  String
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId  String
   timestamp DateTime
-  txHash    String
   value     Int
+  status    RecordStatus
+  events    Event[]      @relation("RecordEvents")
 
+  @@index([deviceId, timestamp(sort: Desc)])
   @@map("Records")
+}
+
+enum RecordStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  FAILED
+}
+
+model Event {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  transactionHash  String    @unique
+  blockHash        String
+  blockNumber      Int
+  address          String
+  data             String
+  topics           String[]
+  index            Int
+  transactionIndex Int
+  eventType        EventType
+  recordId         String    @db.ObjectId
+  record           Record    @relation("RecordEvents", fields: [recordId], references: [id])
+
+  @@index([blockNumber])
+  @@map("Events")
+}
+
+enum EventType {
+  SubcallSucceeded
+  SubcallFailed
 }

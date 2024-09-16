@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { MoonbeamService } from './moonBeam/moonbeam.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Record } from '@prisma/client';
-import { ContractTransactionResponse } from 'ethers';
+import { Event, Record } from '@prisma/client';
+import { AuditResult } from './types/AuditResult';
 
 @Injectable()
 export class AppService {
@@ -19,10 +19,14 @@ export class AppService {
   }
 
   async storeUnauditedRecord(_userData: {
-    sensorId: string;
+    deviceId: string;
     value: number;
   }): Promise<Record> {
     return await this._prismaService.storeUnauditedRecord(_userData);
+  }
+
+  async getRecordsByDevice(_deviceId: string): Promise<Record[]> {
+    return await this._prismaService.getRecordsWithEvents(_deviceId);
   }
 
   @Cron(CronExpression.EVERY_30_SECONDS)
@@ -37,15 +41,20 @@ export class AppService {
         `Blockchain Chronicler: Records ${unauditedRecords.map((record: Record) => record.id)} under audit`,
       );
 
-      const transaction: ContractTransactionResponse =
+      const auditResult: AuditResult =
         await this._moonbeamService.auditRecords(unauditedRecords);
 
-      const txHash: string = transaction.hash;
-      this.logger.verbose(
-        `Blockchain Chronicler: Tx successful - hash ${txHash}`,
-      );
+      auditResult.events.forEach((event: Event) => {
+        this.logger.verbose(
+          `Blockchain Chronicler: Record ${event.recordId} - ${event.eventType} - Tx Hash ${event.transactionHash}`,
+        );
+      });
 
-      await this._prismaService.auditRecords(unauditedRecords, txHash);
+      await this._prismaService.auditRecords(
+        auditResult.submittedRecordIds,
+        auditResult.failedRecordIds,
+        auditResult.events,
+      );
     }
 
     this.logger.verbose(

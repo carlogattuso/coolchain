@@ -1,43 +1,85 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# --- General (aplica tanto a backend como frontend) ---
 
-# dependencies
-**/*/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
+# Node dependencies
+**/node_modules
 
-# testing
-**/*//coverage
-
-# next.js
-**/*//.next/
-**/*//out/
-
-# production
-**/*//build
-
-# misc
+# OS generated files
 .DS_Store
-*.pem
 
-# debug
+# Logs
+**/*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# local env files
-**/*/.env*.local
-**/*/.env
-**/*/.env.development.local
-**/*/.env.development
-**/*/.env.test.local
-**/*/.env.production.local
-**/*/.env.local
-**/*/contract/.envWallet.js
+# Coverage and testing
+**/coverage
+**/.nyc_output
 
-# vercel
-**/*/.vercel
+# Build output
+**/dist
+**/build
+**/.next
+**/out
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Debug
+/tmp
+/temp
+*.pid
+*.pid.lock
+pids
+*.seed
+
+# Local env files
+**/.env
+**/.env*.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# Diagnostic reports (Node.js)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# --- Frontend specific ---
+# Path: coolchain-frontend
+
+# Yarn specific
+coolchain-frontend/.pnp
+coolchain-frontend/.pnp.js
+coolchain-frontend/.yarn/install-state.gz
+
+# Vercel
+coolchain-frontend/.vercel
+
+# TypeScript
+coolchain-frontend/*.tsbuildinfo
+coolchain-frontend/next-env.d.ts
+
+# --- Backend specific ---
+# Path: coolchain-backend
+
+# Contract specific
+coolchain-backend/contract/.envWallet.js
+
+# Database
+coolchain-backend/db/data
+
+# --- IDE specific ---
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Other IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace

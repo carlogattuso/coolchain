@@ -84,10 +84,16 @@ Follow these steps to setup the MongoDB local database environment
 
 #### Initialisation
 
-1. Create replica set
+1. Create data folder
 
 ```bash
-  Start-Process powershell -ArgumentList "-NoProfile -WindowStyle Hidden -Command `"mongod.exe --replSet rs0 --dbpath 'yourPathToCoolchain\coolchain\db\data' --port 27017 --bind_ip_all`""
+mkdir yourPathToCoolchain/coolchain/coolchain-backend/db/data
+```
+
+2. Create replica set
+
+```bash
+  Start-Process powershell -ArgumentList "-NoProfile -WindowStyle Hidden -Command `"mongod.exe --replSet rs0 --dbpath 'yourPathToCoolchain\coolchain\coolchain-backend\db\data' --port 27017 --bind_ip_all`""
 ```
 
 > **Note**: To shutdown the current MongoDB process, you can use these two commands
@@ -95,12 +101,6 @@ Follow these steps to setup the MongoDB local database environment
 >  Get-Process mongod
 >  Stop-Process -Name mongod
 >```
-
-2. Create data folder
-
-```bash
-mkdir yourPathToCoolchain/coolchain/db/data
-```
 
 3. [Install MongoDB Shell](https://www.mongodb.com/try/download/shell)
 4. Initiate replica set transactions
@@ -113,13 +113,13 @@ mkdir yourPathToCoolchain/coolchain/db/data
 5. Execute database initialisation scripts
 
 ```bash
-  .\yourPathToCoolchain\coolchain\db\data\coolchain_db_seed.sh
+  .\yourPathToCoolchain\coolchain\coolchain-backend\db\data\coolchain_db_seed.sh
 ```
 
 6. Generate prisma scheme
 
 ```bash
-  cd yourPathToCoolchain\coolchain\db
+  cd yourPathToCoolchain\coolchain\coolchain-backend\db
   prisma generate
 ```
 
@@ -139,13 +139,13 @@ mkdir yourPathToCoolchain/coolchain/db/data
 1. Create data folder
 
 ```bash
-mkdir yourPathToCoolchain/coolchain/db/data
+mkdir yourPathToCoolchain/coolchain/coolchain-backend/db/data
 ```
 
 2. Create replica set
 
 ```bash
-mongod --replSet rs0 --config /usr/local/etc/mongod.conf --dbpath yourPathToCoolchain/coolchain/db/data --port 27017 --bind_ip_all --fork
+mongod --replSet rs0 --config /usr/local/etc/mongod.conf --dbpath yourPathToCoolchain/coolchain/coolchain-backend/db/data --port 27017 --bind_ip_all --fork
 ```
 
 > **Note**: To shutdown the current MongoDB process, you can use these two commands
@@ -153,7 +153,6 @@ mongod --replSet rs0 --config /usr/local/etc/mongod.conf --dbpath yourPathToCool
 >  ps aux | grep -v grep | grep mongod
 >  kill <mongod pid>
 >```
-
 
 3. Initiate replica set transactions
 
@@ -165,13 +164,13 @@ mongod --replSet rs0 --config /usr/local/etc/mongod.conf --dbpath yourPathToCool
 4. Execute database initialisation scripts
 
 ```bash
-  .\yourPathToCoolchain\coolchain\db\data\coolchain_db_seed.sh
+  .\yourPathToCoolchain\coolchain\coolchain-backend\db\data\coolchain_db_seed.sh
 ```
 
 5. Generate prisma scheme
 
 ```bash
-  cd yourPathToCoolchain\coolchain\db
+  cd yourPathToCoolchain\coolchain\coolchain-backend\db
   prisma generate
 ```
 

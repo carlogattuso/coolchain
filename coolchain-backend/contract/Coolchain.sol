@@ -12,8 +12,8 @@ contract Coolchain {
         bytes32 salt;
     }
 
-    // Sensor measurement struct
-    struct Measurement {
+    // Sensor record struct
+    struct Record {
         bytes32 sensorId;
         uint8 value;
         uint64 timestamp;
@@ -23,7 +23,7 @@ contract Coolchain {
     bytes32 private DOMAIN_SEPARATOR;
     bytes32 private constant SALT = 0x5e75394f31cc39406c2d33d400bb0a9d15ede58611e895e36e6642881aa1cae6;
 
-    mapping (bytes32 => Measurement[]) private measurements;
+    mapping (bytes32 => Record[]) private records;
     
     // EIP712 domain separator setup
     constructor() {
@@ -49,36 +49,36 @@ contract Coolchain {
     }
 
     // Hashes an EIP712 message struct
-    function hashMessage(Measurement memory measurement) private pure returns (bytes32) {
+    function hashMessage(Record memory record) private pure returns (bytes32) {
         return keccak256(abi.encode(
-            keccak256(bytes("Measurement(bytes32 sensorId,uint8 value,uint64 timestamp)")),
-            measurement.sensorId, measurement.value, measurement.timestamp
+            keccak256(bytes("Record(bytes32 sensorId,uint8 value,uint64 timestamp)")),
+            record.sensorId, record.value, record.timestamp
         ));
     }
 
-    // Verifies an EIP712 measurement signature
-    function verifyMessage(Measurement memory measurement, uint8 v, bytes32 r, bytes32 s) private view returns (bool) {
+    // Verifies an EIP712 Record signature
+    function verifyMessage(Record memory record, uint8 v, bytes32 r, bytes32 s) private view returns (bool) {
         bytes32 digest = keccak256(abi.encodePacked(
             "\x19\x01",
             DOMAIN_SEPARATOR,
-            hashMessage(measurement)
+            hashMessage(record)
         ));
 
         address recoveredAddress = ecrecover(digest, v, r, s);
         return (recoveredAddress == msg.sender);
     }
 
-    // Sensor measurement
-    function storeMeasurement(bytes32 sensorId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
-        Measurement memory measurement = Measurement({sensorId: sensorId, value: value, timestamp: timestamp});
-        require(verifyMessage(measurement, v, r, s), "Invalid signature");
-        measurements[sensorId].push(measurement);
-        return measurements[sensorId].length;
+    // Sensor record
+    function storeRecord(bytes32 sensorId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
+        Record memory record = Record({sensorId: sensorId, value: value, timestamp: timestamp});
+        require(verifyMessage(record, v, r, s), "Invalid signature");
+        records[sensorId].push(record);
+        return records[sensorId].length;
     }
 
-    // Get sensor measurements
-    function getSensorMeasurements(bytes32 sensorId) public view returns (Measurement[] memory) {
-        return measurements[sensorId];
+    // Get sensor records
+    function getSensorRecords(bytes32 sensorId) public view returns (Record[] memory) {
+        return records[sensorId];
     }
 
 }

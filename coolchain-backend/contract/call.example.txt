@@ -1,7 +1,7 @@
 // Assuming you have an instance of the contract called `contractInstance`
 // and the following variables are defined:
 
-uint64 sensorId = 1;
+bytes32 sensorId = 0x00000000000000000000000000000001;
 uint8 value = 42;
 uint64 timestamp = 1685035200; // Unix timestamp representing 2023-05-25 12:00:00 UTC
 uint8 v = 28;
@@ -10,4 +10,4 @@ bytes32 s = 0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba;
 
 // Call the function
 
-contractInstance.storeMeasurement(sensorId, value, timestamp, v, r, s);
+contractInstance.storeRecord(sensorId, value, timestamp, v, r, s);

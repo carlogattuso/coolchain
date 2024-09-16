@@ -1,4 +1,4 @@
-export interface EIP712Measurement {
+export interface EIP712Record {
   sensorId: string;
   value: number;
   timestamp: number;

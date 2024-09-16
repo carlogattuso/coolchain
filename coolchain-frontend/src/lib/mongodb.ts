@@ -1,6 +1,9 @@
 // lib/mongodb.ts
 
-import { MongoClient } from 'mongodb';
+/* eslint-disable */
+// @ts-nocheck
+
+import {MongoClient} from 'mongodb';
 
 const options = {};
 

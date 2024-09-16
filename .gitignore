@@ -77,6 +77,7 @@ coolchain-backend/db/data
 
 # Other IDEs and editors
 /.idea
+**/.idea
 .project
 .classpath
 .c9/

@@ -1,14 +1,21 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
-import { ContractTransactionResponse, ethers, TypedDataDomain } from 'ethers';
+import {
+  ContractTransactionReceipt,
+  ContractTransactionResponse,
+  ethers,
+  EventLog,
+  TypedDataDomain,
+} from 'ethers';
 
 import contractFile from '../contract/compileContract';
 import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
 } from '../utils/constants';
-import { Record } from '@prisma/client';
+import { EventType, Record } from '@prisma/client';
 import { EIP712Record } from '../types/EIP712Record';
+import { AuditResult } from '../types/AuditResult';
 
 @Injectable()
 export class MoonbeamService {
@@ -23,7 +30,7 @@ export class MoonbeamService {
   private readonly domain: TypedDataDomain;
   private readonly types = {
     Record: [
-      { name: 'sensorId', type: 'bytes32' },
+      { name: 'deviceId', type: 'bytes32' },
       { name: 'value', type: 'uint8' },
       { name: 'timestamp', type: 'uint64' },
     ],
@@ -57,9 +64,7 @@ export class MoonbeamService {
     };
   }
 
-  async auditRecords(
-    _unsignedRecords: Array<Record>,
-  ): Promise<ContractTransactionResponse> {
+  async auditRecords(_unsignedRecords: Record[]): Promise<AuditResult> {
     const batchPrecompiled = new ethers.Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,
@@ -78,7 +83,7 @@ export class MoonbeamService {
     );
     const callData = eip712Data.map((eip712Record: EIP712Record) =>
       contractInterface.encodeFunctionData('storeRecord', [
-        eip712Record.sensorId,
+        eip712Record.deviceId,
         eip712Record.value,
         eip712Record.timestamp,
         eip712Record.v,
@@ -88,11 +93,45 @@ export class MoonbeamService {
     );
 
     const transaction: ContractTransactionResponse =
-      await batchPrecompiled.batchAll(addresses, values, callData, gasLimit);
+      await batchPrecompiled.batchSome(addresses, values, callData, gasLimit);
 
-    await transaction.wait();
+    const receipt: ContractTransactionReceipt = await transaction.wait();
 
-    return transaction;
+    const recordMap = new Map<number, string>(
+      _unsignedRecords.map((record, index) => [index, record.id]),
+    );
+
+    const submittedRecordIds: string[] = [];
+    const failedRecordIds: string[] = [];
+    const events = [];
+
+    receipt.logs.forEach((log: EventLog) => {
+      const recordId = recordMap.get(log.index);
+      if (log.fragment.name === EventType.SubcallSucceeded) {
+        submittedRecordIds.push(recordId);
+      } else {
+        failedRecordIds.push(recordId);
+      }
+
+      events.push({
+        transactionHash: log.transactionHash,
+        blockHash: log.blockHash,
+        blockNumber: log.blockNumber,
+        address: log.address,
+        data: log.data,
+        topics: [...log.topics],
+        index: log.index,
+        transactionIndex: log.transactionIndex,
+        eventType: log.fragment.name as EventType,
+        recordId: recordId,
+      });
+    });
+
+    return {
+      submittedRecordIds,
+      failedRecordIds,
+      events,
+    };
   }
 
   private createJsonRpcProvider(
@@ -112,7 +151,7 @@ export class MoonbeamService {
 
   private async signRecord(_record: Record): Promise<EIP712Record> {
     const dataToSign = {
-      sensorId: ethers.toBeHex(_record.sensorId, 32),
+      deviceId: ethers.toBeHex(_record.deviceId, 32),
       value: _record.value,
       timestamp: Math.floor(_record.timestamp.getTime() / 1000),
     };
@@ -125,7 +164,7 @@ export class MoonbeamService {
     const { r, s, v } = ethers.Signature.from(signature);
 
     return {
-      sensorId: dataToSign.sensorId,
+      deviceId: dataToSign.deviceId,
       value: dataToSign.value,
       timestamp: dataToSign.timestamp,
       v: v,

@@ -1,0 +1,21 @@
+{
+  "name": "coolchain-raspberry",
+  "version": "1.0.0",
+  "description": "Raspberry Pi Mock Device",
+  "main": "dist/raspberry.mjs",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/raspberry.js",
+    "dev": "nodemon",
+    "clean": "rm -rf dist"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "nodemon": "^3.1.4",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}

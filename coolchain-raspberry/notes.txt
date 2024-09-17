@@ -1,0 +1,34 @@
+1. Raspberry Pi takes the record and signs it
+
+2. Raspberry Pi creates the call permit signature
+
+    - from: the address of the account you want to sign the call permit with (device owner)
+    - to - the contract address for the Coolchain.sol contract
+    - value: can be 0 for this example as you'll just be setting a message instead of transferring any funds
+    - data: encode storeRecord function with the record parameters and EIP712 hash signature (by the raspberry)
+    - gasLimit: 100000 will be enough to send the dispatched call
+    - deadline: you can extend the permit for 1 day for example
+
+3. Raspberry Pi receives the call permit signature (v, r and s)
+
+4. Raspberry Pi sends the required information to coolchain:
+
+    - Record (solidity format)
+    - EIP712 signature of the record
+    - Permit (Signature, Expiration date (deadline))
+
+Owner 1 -> N Devices 1 -> N Records 1 -> 1 Permit
+
+5. Coolchain takes the unaudited record, the EIP712 signature and the permit
+
+    - If the Permit has expired: Record passes to expired status
+    - If not, prepare the dispatch function
+
+6. Executes dispatch function
+
+    - encodes the dispatch function of the call permit precompile and add to call data of the batch precompile
+    - the batch precompile executes the dispatches with all permits
+    - Events are recorded to keep track of the origin transaction
+
+        Batch precompile -> Call Permit -> Coolchain
+

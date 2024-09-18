@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient, Record } from '@prisma/client';
 import { CreateEventDTO } from '../types/dto/CreateEventDTO';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
+import { RecordDTO } from '../types/dto/RecordDTO';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -15,6 +16,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         deviceId: _record.deviceId,
         timestamp: _record.timestamp,
         value: _record.value,
+        recordSignature: _record.recordSignature,
+        permitSignature: _record.permitSignature,
       },
     });
   }
@@ -39,10 +42,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async getRecordsWithEvents(_deviceId: string): Promise<Record[] | null> {
+  async getRecordsWithEvents(_deviceId: string): Promise<RecordDTO[] | null> {
     return this.record.findMany({
       where: { deviceId: _deviceId },
-      include: {
+      select: {
+        id: true,
+        deviceId: true,
+        timestamp: true,
+        value: true,
         events: true,
       },
       orderBy: {

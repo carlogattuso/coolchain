@@ -135,9 +135,9 @@ export class MoonbeamService {
 
   private async signRecord(_record: Record): Promise<EIP712Record> {
     const dataToSign = {
-      deviceId: ethers.toBeHex(_record.deviceId, 32),
+      deviceId: _record.deviceId,
       value: _record.value,
-      timestamp: Math.floor(_record.timestamp.getTime() / 1000),
+      timestamp: _record.timestamp,
     };
 
     const signature = await this.wallet.signTypedData(

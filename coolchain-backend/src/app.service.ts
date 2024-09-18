@@ -5,6 +5,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Event, Record } from '@prisma/client';
 import { CreateEventDTO } from './types/dto/CreateEventDTO';
 import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
+import { RecordDTO } from './types/dto/RecordDTO';
 
 @Injectable()
 export class AppService {
@@ -23,7 +24,7 @@ export class AppService {
     return await this._prismaService.storeUnauditedRecord(_record);
   }
 
-  async getRecordsByDevice(_deviceId: string): Promise<Record[]> {
+  async getRecordsByDevice(_deviceId: string): Promise<RecordDTO[]> {
     return await this._prismaService.getRecordsWithEvents(_deviceId);
   }
 

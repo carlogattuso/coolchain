@@ -8,14 +8,22 @@ datasource db {
 }
 
 model Record {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  deviceId  String
-  timestamp Int
-  value     Int
-  events    Event[] @relation("RecordEvents")
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  deviceId        String
+  timestamp       Int
+  value           Int
+  recordSignature Signature
+  permitSignature Signature
+  events          Event[]   @relation("RecordEvents")
 
   @@index([deviceId, timestamp(sort: Desc)])
   @@map("Records")
+}
+
+type Signature {
+  v Int
+  r String
+  s String
 }
 
 model Event {

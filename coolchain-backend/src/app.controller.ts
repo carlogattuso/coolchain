@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Record } from '@prisma/client';
+import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
 
 @Controller()
 export class AppController {
@@ -11,9 +12,7 @@ export class AppController {
   }
 
   @Post()
-  async storeRecord(
-    @Body() _userData: { deviceId: string; value: number },
-  ): Promise<Record> {
+  async storeRecord(@Body() _userData: CreateRecordDTO): Promise<Record> {
     return this._appService.storeUnauditedRecord(_userData);
   }
 

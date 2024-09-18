@@ -15,7 +15,7 @@ import {
 } from '../utils/constants';
 import { EventType, Record } from '@prisma/client';
 import { EIP712Record } from '../types/EIP712Record';
-import { AuditResult } from '../types/AuditResult';
+import { CreateEventDTO } from '../types/dto/CreateEventDTO';
 
 @Injectable()
 export class MoonbeamService {
@@ -64,7 +64,7 @@ export class MoonbeamService {
     };
   }
 
-  async auditRecords(_unsignedRecords: Record[]): Promise<AuditResult> {
+  async auditRecords(_unsignedRecords: Record[]): Promise<CreateEventDTO[]> {
     const batchPrecompiled = new ethers.Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,
@@ -101,19 +101,9 @@ export class MoonbeamService {
       _unsignedRecords.map((record, index) => [index, record.id]),
     );
 
-    const submittedRecordIds: string[] = [];
-    const failedRecordIds: string[] = [];
-    const events = [];
-
-    receipt.logs.forEach((log: EventLog) => {
+    return receipt.logs.map((log: EventLog) => {
       const recordId = recordMap.get(log.index);
-      if (log.fragment.name === EventType.SubcallSucceeded) {
-        submittedRecordIds.push(recordId);
-      } else {
-        failedRecordIds.push(recordId);
-      }
-
-      events.push({
+      return {
         transactionHash: log.transactionHash,
         blockHash: log.blockHash,
         blockNumber: log.blockNumber,
@@ -124,14 +114,8 @@ export class MoonbeamService {
         transactionIndex: log.transactionIndex,
         eventType: log.fragment.name as EventType,
         recordId: recordId,
-      });
+      };
     });
-
-    return {
-      submittedRecordIds,
-      failedRecordIds,
-      events,
-    };
   }
 
   private createJsonRpcProvider(

@@ -8,22 +8,14 @@ datasource db {
 }
 
 model Record {
-  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
   deviceId  String
-  timestamp DateTime
+  timestamp Int
   value     Int
-  status    RecordStatus
-  events    Event[]      @relation("RecordEvents")
+  events    Event[] @relation("RecordEvents")
 
   @@index([deviceId, timestamp(sort: Desc)])
   @@map("Records")
-}
-
-enum RecordStatus {
-  PENDING
-  SUBMITTED
-  CONFIRMED
-  FAILED
 }
 
 model Event {
@@ -39,6 +31,9 @@ model Event {
   eventType        EventType
   recordId         String    @db.ObjectId
   record           Record    @relation("RecordEvents", fields: [recordId], references: [id])
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
 
   @@index([blockNumber])
   @@map("Events")

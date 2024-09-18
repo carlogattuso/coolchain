@@ -13,15 +13,15 @@
 
 4. Raspberry Pi sends the required information to coolchain:
 
-    - Record (solidity format)
-    - EIP712 signature of the record
+    - EIP712 Record
     - Permit (Signature, Expiration date (deadline))
 
-Owner 1 -> N Devices 1 -> N Records 1 -> 1 Permit
+Auditor 1 -> N Devices 1 -> N Records 1 -> 1 Permit
+                                        -> N Events
 
 5. Coolchain takes the unaudited record, the EIP712 signature and the permit
 
-    - If the Permit has expired: Record passes to expired status
+    - If the Permit has expired: Record will not be audited
     - If not, prepare the dispatch function
 
 6. Executes dispatch function
@@ -31,4 +31,3 @@ Owner 1 -> N Devices 1 -> N Records 1 -> 1 Permit
     - Events are recorded to keep track of the origin transaction
 
         Batch precompile -> Call Permit -> Coolchain
-

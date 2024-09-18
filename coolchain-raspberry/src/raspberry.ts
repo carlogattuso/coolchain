@@ -1,12 +1,16 @@
 import dotenv from 'dotenv';
 import axios from 'axios';
-import {Wallet} from 'ethers';
+import { Wallet } from 'ethers';
 
-dotenv.config();
+dotenv.config({
+  path: process.env.NODE_ENV ?
+    `.env.${process.env.NODE_ENV}` : '.env',
+});
 
 interface Record {
   deviceId: string,
-  value: number
+  value: number,
+  timestamp: number,
 }
 
 function getPrivateKey(): string {
@@ -21,14 +25,15 @@ async function storeRecord(_address: string) {
   const mockValue: number = Math.floor(Math.random() * 11);
   const record: Record = {
     deviceId: _address,
-    value: mockValue
-  }
+    value: mockValue,
+    timestamp: Math.floor(Date.now() / 1000),
+  };
 
   try {
     const response = await axios.post(`${process.env.COOLCHAIN_URL}/`, record, {
       headers: {
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
     console.log('Server response:', response.data);
   } catch (error) {
@@ -52,4 +57,4 @@ async function storeTask(): Promise<void> {
   setInterval(() => storeRecord(wallet.address), 10000);
 }
 
-storeTask()
+storeTask();

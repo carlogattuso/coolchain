@@ -1,5 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Event, PrismaClient, Record, RecordStatus } from '@prisma/client';
+import { PrismaClient, Record } from '@prisma/client';
+import { CreateEventDTO } from '../types/dto/CreateEventDTO';
+import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -7,13 +9,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async storeUnauditedRecord(_userData: { deviceId: string; value: number }) {
+  async storeUnauditedRecord(_record: CreateRecordDTO) {
     return this.record.create({
       data: {
-        deviceId: _userData.deviceId,
-        timestamp: new Date(),
-        status: RecordStatus.PENDING,
-        value: _userData.value,
+        deviceId: _record.deviceId,
+        timestamp: _record.timestamp,
+        value: _record.value,
       },
     });
   }
@@ -21,8 +22,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   async getUnauditedRecords(_recordNum: number): Promise<Record[]> {
     return this.record.findMany({
       where: {
-        status: {
-          equals: RecordStatus.PENDING,
+        events: {
+          none: {},
         },
       },
       orderBy: {
@@ -32,39 +33,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async auditRecords(
-    _submittedRecordIds: string[],
-    _failedRecordIds: string[],
-    _events: Event[],
-  ): Promise<void> {
-    await this.$transaction(async (prisma) => {
-      const updateSubmitted = prisma.record.updateMany({
-        where: {
-          id: {
-            in: _submittedRecordIds,
-          },
-        },
-        data: {
-          status: RecordStatus.SUBMITTED,
-        },
-      });
-
-      const updateFailed = await prisma.record.updateMany({
-        where: {
-          id: {
-            in: _failedRecordIds,
-          },
-        },
-        data: {
-          status: RecordStatus.FAILED,
-        },
-      });
-
-      await Promise.all([updateSubmitted, updateFailed]);
-
-      await prisma.event.createMany({
-        data: _events,
-      });
+  async auditRecords(_events: CreateEventDTO[]): Promise<void> {
+    await this.event.createMany({
+      data: _events,
     });
   }
 

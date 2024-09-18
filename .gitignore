@@ -35,7 +35,7 @@ pids
 # Local env files
 **/.env
 **/.env*.local
-coolchain-raspberry/.env.dev
+**/.env*.dev
 **/.env.development.local
 **/.env.test.local
 **/.env.production.local

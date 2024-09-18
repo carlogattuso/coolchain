@@ -12,7 +12,10 @@ import { ConfigModule } from '@nestjs/config';
     PrismaModule,
     MoonbeamModule,
     ScheduleModule.forRoot(),
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      envFilePath: process.env.NODE_ENV ? '.env.dev' : '.env',
+      isGlobal: true,
+    }),
   ],
   providers: [AppService],
 })

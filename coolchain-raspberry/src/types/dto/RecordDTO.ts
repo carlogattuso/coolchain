@@ -1,7 +1,7 @@
 import { ECDSASignature } from '../ECDSASignature';
 
 export interface RecordDTO {
-  deviceId: string;
+  deviceAddress: string;
   value: number;
   timestamp: number;
   recordSignature: ECDSASignature;

@@ -1,5 +1,5 @@
 export interface Record {
-  deviceId: string;
+  deviceAddress: string;
   value: number;
   timestamp: number;
 }

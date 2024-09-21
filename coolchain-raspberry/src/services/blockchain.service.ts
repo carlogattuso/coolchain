@@ -5,13 +5,14 @@ import axios from 'axios';
 import { getJsonRpcProvider } from '../utils/utils';
 import { ECDSASignature } from '../types/ECDSASignature';
 import { Record } from '../types/dto/Record';
+import moment from 'moment';
 
 export class BlockchainService {
   private readonly wallet: ethers.Wallet;
   private readonly domain: TypedDataDomain;
   private readonly types = {
     Record: [
-      { name: 'deviceId', type: 'bytes32' },
+      { name: 'deviceAddress', type: 'address' },
       { name: 'value', type: 'uint8' },
       { name: 'timestamp', type: 'uint64' },
     ],
@@ -33,9 +34,9 @@ export class BlockchainService {
   public async storeRecord() {
     const mockValue: number = Math.floor(Math.random() * 11);
     const record: Record = {
-      deviceId: ethers.toBeHex(this.wallet.address, 32),
+      deviceAddress: this.wallet.address,
       value: mockValue,
-      timestamp: Math.floor(Date.now() / 1000),
+      timestamp: moment().unix(),
     };
 
     const signedRecord: RecordDTO = await this.signRecord(record);

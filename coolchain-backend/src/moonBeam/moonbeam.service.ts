@@ -30,7 +30,7 @@ export class MoonbeamService {
   private readonly domain: TypedDataDomain;
   private readonly types = {
     Record: [
-      { name: 'deviceId', type: 'bytes32' },
+      { name: 'deviceAddress', type: 'address' },
       { name: 'value', type: 'uint8' },
       { name: 'timestamp', type: 'uint64' },
     ],
@@ -83,7 +83,7 @@ export class MoonbeamService {
     );
     const callData = eip712Data.map((eip712Record: EIP712Record) =>
       contractInterface.encodeFunctionData('storeRecord', [
-        eip712Record.deviceId,
+        eip712Record.deviceAddress,
         eip712Record.value,
         eip712Record.timestamp,
         eip712Record.v,
@@ -135,7 +135,7 @@ export class MoonbeamService {
 
   private async signRecord(_record: Record): Promise<EIP712Record> {
     const dataToSign = {
-      deviceId: _record.deviceId,
+      deviceAddress: _record.deviceAddress,
       value: _record.value,
       timestamp: _record.timestamp,
     };
@@ -148,7 +148,7 @@ export class MoonbeamService {
     const { r, s, v } = ethers.Signature.from(signature);
 
     return {
-      deviceId: dataToSign.deviceId,
+      deviceAddress: dataToSign.deviceAddress,
       value: dataToSign.value,
       timestamp: dataToSign.timestamp,
       v: v,

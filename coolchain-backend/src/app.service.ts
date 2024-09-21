@@ -24,8 +24,8 @@ export class AppService {
     return await this._prismaService.storeUnauditedRecord(_record);
   }
 
-  async getRecordsByDevice(_deviceId: string): Promise<RecordDTO[]> {
-    return await this._prismaService.getRecordsWithEvents(_deviceId);
+  async getRecordsByDevice(_deviceAddress: string): Promise<RecordDTO[]> {
+    return await this._prismaService.getRecordsWithEvents(_deviceAddress);
   }
 
   @Cron(CronExpression.EVERY_30_SECONDS)

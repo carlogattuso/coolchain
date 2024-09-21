@@ -17,10 +17,10 @@ export class AppController {
     return this._appService.storeUnauditedRecord(_userData);
   }
 
-  @Get('/records/:deviceId')
+  @Get('/records/:deviceAddress')
   async getRecordsByDevice(
-    @Param('deviceId') _deviceId: string,
+    @Param('deviceAddress') _deviceAddress: string,
   ): Promise<RecordDTO[]> {
-    return this._appService.getRecordsByDevice(_deviceId);
+    return this._appService.getRecordsByDevice(_deviceAddress);
   }
 }

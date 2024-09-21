@@ -13,7 +13,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   async storeUnauditedRecord(_record: CreateRecordDTO) {
     return this.record.create({
       data: {
-        deviceId: _record.deviceId,
+        deviceAddress: _record.deviceAddress,
         timestamp: _record.timestamp,
         value: _record.value,
         recordSignature: _record.recordSignature,
@@ -42,12 +42,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async getRecordsWithEvents(_deviceId: string): Promise<RecordDTO[] | null> {
+  async getRecordsWithEvents(
+    _deviceAddress: string,
+  ): Promise<RecordDTO[] | null> {
     return this.record.findMany({
-      where: { deviceId: _deviceId },
+      where: { deviceAddress: _deviceAddress },
       select: {
         id: true,
-        deviceId: true,
+        deviceAddress: true,
         timestamp: true,
         value: true,
         events: true,

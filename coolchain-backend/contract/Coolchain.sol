@@ -14,7 +14,7 @@ contract Coolchain {
 
     // Device record struct
     struct Record {
-        bytes32 deviceId;
+        address deviceAddress;
         uint8 value;
         uint64 timestamp;
     }
@@ -23,7 +23,8 @@ contract Coolchain {
     bytes32 private DOMAIN_SEPARATOR;
     bytes32 private constant SALT = 0x5e75394f31cc39406c2d33d400bb0a9d15ede58611e895e36e6642881aa1cae6;
 
-    mapping (bytes32 => Record[]) private records;
+    // Mapping to store all records by device address
+    mapping (address => Record[]) private records;
     
     // EIP712 domain separator setup
     constructor() {
@@ -51,8 +52,8 @@ contract Coolchain {
     // Hashes an EIP712 message struct
     function hashMessage(Record memory record) private pure returns (bytes32) {
         return keccak256(abi.encode(
-            keccak256(bytes("Record(bytes32 deviceId,uint8 value,uint64 timestamp)")),
-            record.deviceId, record.value, record.timestamp
+            keccak256(bytes("Record(address deviceAddress,uint8 value,uint64 timestamp)")),
+            record.deviceAddress, record.value, record.timestamp
         ));
     }
 
@@ -68,17 +69,17 @@ contract Coolchain {
         return (recoveredAddress == msg.sender);
     }
 
-    // Device record
-    function storeRecord(bytes32 deviceId, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
-        Record memory record = Record({deviceId: deviceId, value: value, timestamp: timestamp});
+    // Store device record
+    function storeRecord(address deviceAddress, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
+        Record memory record = Record({deviceAddress: deviceAddress, value: value, timestamp: timestamp});
         require(verifyMessage(record, v, r, s), "Invalid signature");
-        records[deviceId].push(record);
-        return records[deviceId].length;
+        records[deviceAddress].push(record);
+        return records[deviceAddress].length;
     }
 
-    // Get device records
-    function getDeviceRecords(bytes32 deviceId) public view returns (Record[] memory) {
-        return records[deviceId];
+    // Get device records by device address
+    function getDeviceRecords(address deviceAddress) public view returns (Record[] memory) {
+        return records[deviceAddress];
     }
 
 }

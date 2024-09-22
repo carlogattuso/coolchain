@@ -2,7 +2,7 @@ import { ethers, TypedDataDomain } from 'ethers';
 import { config } from '../config/config';
 import { RecordDTO } from '../types/dto/RecordDTO';
 import axios from 'axios';
-import { getJsonRpcProvider } from '../utils/utils';
+import { getJsonRpcProvider, parseAxiosError } from '../utils/utils';
 import { ECDSASignature } from '../types/ECDSASignature';
 import { Record } from '../types/dto/Record';
 import moment from 'moment';
@@ -49,11 +49,7 @@ export class BlockchainService {
       });
       console.log('Server response:', response.data);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error(`Request error: ${error.response?.status} - ${error.message}`);
-      } else {
-        console.error(`Unknown error: ${error}`);
-      }
+      console.error(parseAxiosError(error));
     }
   }
 

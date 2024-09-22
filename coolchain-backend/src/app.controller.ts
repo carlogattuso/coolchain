@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Record } from '@prisma/client';
+import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
+import { RecordDTO } from './types/dto/RecordDTO';
 
 @Controller()
 export class AppController {
@@ -11,16 +13,14 @@ export class AppController {
   }
 
   @Post()
-  async storeRecord(
-    @Body() _userData: { deviceId: string; value: number },
-  ): Promise<Record> {
+  async storeRecord(@Body() _userData: CreateRecordDTO): Promise<Record> {
     return this._appService.storeUnauditedRecord(_userData);
   }
 
-  @Get('/records/:deviceId')
+  @Get('/records/:deviceAddress')
   async getRecordsByDevice(
-    @Param('deviceId') _deviceId: string,
-  ): Promise<Record[]> {
-    return this._appService.getRecordsByDevice(_deviceId);
+    @Param('deviceAddress') _deviceAddress: string,
+  ): Promise<RecordDTO[]> {
+    return this._appService.getRecordsByDevice(_deviceAddress);
   }
 }

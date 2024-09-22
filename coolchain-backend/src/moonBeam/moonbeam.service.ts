@@ -15,7 +15,7 @@ import {
 } from '../utils/constants';
 import { EventType, Record } from '@prisma/client';
 import { EIP712Record } from '../types/EIP712Record';
-import { AuditResult } from '../types/AuditResult';
+import { CreateEventDTO } from '../types/dto/CreateEventDTO';
 
 @Injectable()
 export class MoonbeamService {
@@ -30,7 +30,7 @@ export class MoonbeamService {
   private readonly domain: TypedDataDomain;
   private readonly types = {
     Record: [
-      { name: 'deviceId', type: 'bytes32' },
+      { name: 'deviceAddress', type: 'address' },
       { name: 'value', type: 'uint8' },
       { name: 'timestamp', type: 'uint64' },
     ],
@@ -64,7 +64,7 @@ export class MoonbeamService {
     };
   }
 
-  async auditRecords(_unsignedRecords: Record[]): Promise<AuditResult> {
+  async auditRecords(_unsignedRecords: Record[]): Promise<CreateEventDTO[]> {
     const batchPrecompiled = new ethers.Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,
@@ -83,7 +83,7 @@ export class MoonbeamService {
     );
     const callData = eip712Data.map((eip712Record: EIP712Record) =>
       contractInterface.encodeFunctionData('storeRecord', [
-        eip712Record.deviceId,
+        eip712Record.deviceAddress,
         eip712Record.value,
         eip712Record.timestamp,
         eip712Record.v,
@@ -101,19 +101,9 @@ export class MoonbeamService {
       _unsignedRecords.map((record, index) => [index, record.id]),
     );
 
-    const submittedRecordIds: string[] = [];
-    const failedRecordIds: string[] = [];
-    const events = [];
-
-    receipt.logs.forEach((log: EventLog) => {
+    return receipt.logs.map((log: EventLog) => {
       const recordId = recordMap.get(log.index);
-      if (log.fragment.name === EventType.SubcallSucceeded) {
-        submittedRecordIds.push(recordId);
-      } else {
-        failedRecordIds.push(recordId);
-      }
-
-      events.push({
+      return {
         transactionHash: log.transactionHash,
         blockHash: log.blockHash,
         blockNumber: log.blockNumber,
@@ -124,14 +114,8 @@ export class MoonbeamService {
         transactionIndex: log.transactionIndex,
         eventType: log.fragment.name as EventType,
         recordId: recordId,
-      });
+      };
     });
-
-    return {
-      submittedRecordIds,
-      failedRecordIds,
-      events,
-    };
   }
 
   private createJsonRpcProvider(
@@ -151,9 +135,9 @@ export class MoonbeamService {
 
   private async signRecord(_record: Record): Promise<EIP712Record> {
     const dataToSign = {
-      deviceId: ethers.toBeHex(_record.deviceId, 32),
+      deviceAddress: _record.deviceAddress,
       value: _record.value,
-      timestamp: Math.floor(_record.timestamp.getTime() / 1000),
+      timestamp: _record.timestamp,
     };
 
     const signature = await this.wallet.signTypedData(
@@ -164,7 +148,7 @@ export class MoonbeamService {
     const { r, s, v } = ethers.Signature.from(signature);
 
     return {
-      deviceId: dataToSign.deviceId,
+      deviceAddress: dataToSign.deviceAddress,
       value: dataToSign.value,
       timestamp: dataToSign.timestamp,
       v: v,

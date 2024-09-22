@@ -1,5 +1,5 @@
 export interface EIP712Record {
-  deviceId: string;
+  deviceAddress: string;
   value: number;
   timestamp: number;
   v: 27 | 28;

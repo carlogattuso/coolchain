@@ -1,5 +1,8 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Event, PrismaClient, Record, RecordStatus } from '@prisma/client';
+import { PrismaClient, Record } from '@prisma/client';
+import { CreateEventDTO } from '../types/dto/CreateEventDTO';
+import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
+import { RecordDTO } from '../types/dto/RecordDTO';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -7,13 +10,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async storeUnauditedRecord(_userData: { deviceId: string; value: number }) {
+  async storeUnauditedRecord(_record: CreateRecordDTO) {
     return this.record.create({
       data: {
-        deviceId: _userData.deviceId,
-        timestamp: new Date(),
-        status: RecordStatus.PENDING,
-        value: _userData.value,
+        deviceAddress: _record.deviceAddress,
+        timestamp: _record.timestamp,
+        value: _record.value,
+        recordSignature: _record.recordSignature,
+        permitSignature: _record.permitSignature,
       },
     });
   }
@@ -21,8 +25,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   async getUnauditedRecords(_recordNum: number): Promise<Record[]> {
     return this.record.findMany({
       where: {
-        status: {
-          equals: RecordStatus.PENDING,
+        events: {
+          none: {},
         },
       },
       orderBy: {
@@ -32,46 +36,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
   }
 
-  async auditRecords(
-    _submittedRecordIds: string[],
-    _failedRecordIds: string[],
-    _events: Event[],
-  ): Promise<void> {
-    await this.$transaction(async (prisma) => {
-      const updateSubmitted = prisma.record.updateMany({
-        where: {
-          id: {
-            in: _submittedRecordIds,
-          },
-        },
-        data: {
-          status: RecordStatus.SUBMITTED,
-        },
-      });
-
-      const updateFailed = await prisma.record.updateMany({
-        where: {
-          id: {
-            in: _failedRecordIds,
-          },
-        },
-        data: {
-          status: RecordStatus.FAILED,
-        },
-      });
-
-      await Promise.all([updateSubmitted, updateFailed]);
-
-      await prisma.event.createMany({
-        data: _events,
-      });
+  async auditRecords(_events: CreateEventDTO[]): Promise<void> {
+    await this.event.createMany({
+      data: _events,
     });
   }
 
-  async getRecordsWithEvents(_deviceId: string): Promise<Record[] | null> {
+  async getRecordsWithEvents(
+    _deviceAddress: string,
+  ): Promise<RecordDTO[] | null> {
     return this.record.findMany({
-      where: { deviceId: _deviceId },
-      include: {
+      where: { deviceAddress: _deviceAddress },
+      select: {
+        id: true,
+        deviceAddress: true,
+        timestamp: true,
+        value: true,
         events: true,
       },
       orderBy: {

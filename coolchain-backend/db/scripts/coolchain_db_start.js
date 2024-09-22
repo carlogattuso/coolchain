@@ -6,3 +6,4 @@ rs.initiate({
     { _id: 2, host: "localhost:27019" }
   ]
 })
+rs.status()

@@ -5,6 +5,7 @@ import { getJsonRpcProvider, parseAxiosError } from '../utils/utils';
 import { ECDSASignature } from '../types/ECDSASignature';
 import { Record } from '../types/dto/Record';
 import axios from 'axios';
+import { RecordService } from './record.service';
 
 export class BlockchainService {
   private readonly wallet: Wallet;
@@ -16,6 +17,7 @@ export class BlockchainService {
       { name: 'timestamp', type: 'uint64' },
     ],
   };
+  private readonly recordService: RecordService;
 
   constructor() {
     this.wallet = new Wallet(config.privateKey, getJsonRpcProvider());
@@ -28,15 +30,22 @@ export class BlockchainService {
       verifyingContract: config.contractAddress,
       salt: config.salt,
     };
+
+    this.recordService = new RecordService();
   }
 
   public async storeRecord() {
-    const mockValue: number = Math.floor(Math.random() * 11);
+    const nextSample: number | null = this.recordService.getRecordValue();
+    if (!nextSample) return;
+
     const record: Record = {
       deviceAddress: this.wallet.address,
-      value: mockValue,
+      value: nextSample,
       timestamp: Math.floor(Date.now() / 1000),
     };
+
+    console.log(record);
+    return;
 
     const signedRecord: RecordDTO = await this.signRecord(record);
 

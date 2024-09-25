@@ -11,5 +11,6 @@ export const config = {
   chainRpcUrl: process.env.CHAIN_RPC_URL as string,
   chainId: parseInt(process.env.CHAIN_ID || '1', 10),
   salt: process.env.SALT as string,
-  sample_interval: parseInt(process.env.SAMPLE_INTERVAL || '10000', 10),
+  sampleInterval: parseInt(process.env.SAMPLE_INTERVAL || '10000', 10),
+  recordsDir: process.env.RECORDS_DIR as string,
 };

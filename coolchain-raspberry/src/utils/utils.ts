@@ -1,16 +1,18 @@
-import { ethers } from 'ethers';
 import { config } from '../config/config';
-import axios from 'axios';
+import { JsonRpcProvider, Wallet } from 'ethers';
+import { isAxiosError } from 'axios';
+import path from 'node:path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
-export function getJsonRpcProvider(): ethers.JsonRpcProvider {
-  return new ethers.JsonRpcProvider(config.chainRpcUrl, {
+export function getJsonRpcProvider(): JsonRpcProvider {
+  return new JsonRpcProvider(config.chainRpcUrl, {
     chainId: config.chainId,
     name: config.chainName,
   });
 }
 
 export function parseAxiosError(error: unknown): string {
-  if (axios.isAxiosError(error)) {
+  if (isAxiosError(error)) {
     const message = error.message;
     const status = error.response?.status;
 
@@ -26,4 +28,19 @@ export function parseAxiosError(error: unknown): string {
   }
 
   return `Unknown error: ${error}`;
+}
+
+export function getOrCreateWallet(): { privateKey: string } {
+  const walletFilePath = path.join(process.cwd(), '.wallet.json');
+
+  if (existsSync(walletFilePath)) {
+    return JSON.parse(readFileSync(walletFilePath, 'utf8'));
+  } else {
+    const wallet = Wallet.createRandom();
+    const walletKey = {
+      privateKey: wallet.privateKey,
+    };
+    writeFileSync(walletFilePath, JSON.stringify(walletKey, null, 2));
+    return walletKey;
+  }
 }

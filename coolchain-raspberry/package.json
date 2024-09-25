@@ -2,11 +2,13 @@
   "name": "coolchain-raspberry",
   "version": "1.0.0",
   "description": "Raspberry Pi Mock Device",
-  "main": "dist/index.js",
+  "main": "dist/bundle.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "start:dev": "NODE_ENV=dev node dist/index.js",
+    "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/bundle.js --minify && npm run copy",
+    "build:dev": "esbuild src/index.ts --bundle --platform=node --outfile=dist/bundle.js && npm run copy:dev",
+    "copy": "cp .env .wallet.json dist/",
+    "copy:dev": "cp .env.dev dist/.env && cp .wallet.json dist/",
+    "start": "node dist/bundle.js",
     "raspberry:dev": "NODE_ENV=dev nodemon",
     "raspberry": "nodemon",
     "clean": "rm -rf dist"
@@ -16,6 +18,7 @@
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
     "@types/node": "^22.5.5",
+    "esbuild": "^0.19.2",
     "nodemon": "^3.1.4",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"
@@ -23,7 +26,6 @@
   "dependencies": {
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
-    "ethers": "^6.13.2",
-    "moment": "^2.30.1"
+    "ethers": "^6.13.2"
   }
 }

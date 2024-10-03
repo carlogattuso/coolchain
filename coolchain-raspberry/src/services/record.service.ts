@@ -27,7 +27,7 @@ export class RecordService {
         .split('=')[2]?.trim() ?? '0';
       const name = path.basename(sensor);
       const parsedValue = Number(rawValue);
-      console.log(`Sensor ${name}: ${parsedValue.toFixed(2)}ºC`);
+      console.log(`Sensor ${name}: ${(parsedValue / 1000).toFixed(2)}ºC`);
       return parsedValue;
     }).reduce((acc, current) => acc + current, 0);
 

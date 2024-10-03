@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ForbiddenException, Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient, Record } from '@prisma/client';
 import { CreateEventDTO } from '../types/dto/CreateEventDTO';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
@@ -11,6 +11,16 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   async storeUnauditedRecord(_record: CreateRecordDTO) {
+    const device = await this.device.findUnique({
+      where: { address: _record.deviceAddress },
+    });
+
+    if (!device) {
+      throw new ForbiddenException(
+        `Device ${_record.deviceAddress} is not registered.`,
+      );
+    }
+
     return this.record.create({
       data: {
         deviceAddress: _record.deviceAddress,

@@ -67,6 +67,12 @@ coolchain-backend/contract/.envWallet.js
 # Database
 coolchain-backend/db/data
 
+# --- Raspberry specific ---
+# Path: coolchain-raspberry
+
+# Wallet
+coolchain-raspberry/.wallet.json
+
 # --- IDE specific ---
 
 # IDE - VSCode

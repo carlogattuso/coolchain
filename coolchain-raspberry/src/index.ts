@@ -1,6 +1,8 @@
 import { BlockchainService } from './services/blockchain.service';
+import { config } from './config/config';
 
 (async () => {
-  const coolchainService = new BlockchainService();
-  setInterval(() => coolchainService.storeRecord(), 10000);
+  const service = new BlockchainService();
+  await service.storeRecord();
+  setInterval(() => service.storeRecord(), config.sampleInterval);
 })();

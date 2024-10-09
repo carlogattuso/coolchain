@@ -17,7 +17,7 @@ export class AppService {
   ) {}
 
   getHello(): string {
-    return 'Hello World!';
+    return 'Welcome to Coolchain!';
   }
 
   async storeUnauditedRecord(_record: CreateRecordDTO): Promise<Record> {

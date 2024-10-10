@@ -13,7 +13,7 @@ export function getJsonRpcProvider(): JsonRpcProvider {
 
 export function parseAxiosError(error: unknown): string {
   if (isAxiosError(error)) {
-    const message = error.message;
+    const response = error.response?.data;
     const status = error.response?.status;
 
     if (error.code === 'ECONNREFUSED') {
@@ -21,7 +21,7 @@ export function parseAxiosError(error: unknown): string {
     }
 
     if (status) {
-      return `Request error: ${status} - ${message}`;
+      return `Request error: ${status} - ${response.message ?? error.message}`;
     }
 
     return `Axios error: ${error.code || 'Unknown error code'}`;

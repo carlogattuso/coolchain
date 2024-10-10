@@ -3,5 +3,6 @@ import { config } from './config/config';
 
 (async () => {
   const service = new BlockchainService();
-  setInterval(async () => await service.storeRecord(), config.sampleInterval);
+  await service.storeRecord();
+  setInterval(() => service.storeRecord(), config.sampleInterval);
 })();

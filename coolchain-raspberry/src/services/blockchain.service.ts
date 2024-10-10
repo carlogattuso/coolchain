@@ -45,7 +45,6 @@ export class BlockchainService {
     };
 
     console.log(record);
-    return;
 
     const signedRecord: RecordDTO = await this.signRecord(record);
 

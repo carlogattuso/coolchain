@@ -14,7 +14,7 @@
 4. Raspberry Pi sends the required information to coolchain:
 
     - EIP712 Record
-    - Permit (Signature, Expiration date (deadline))
+    - Permit (ECDSASignature, Expiration date (deadline))
 
 Auditor 1 -> N Devices 1 -> N Records 1 -> 1 Permit
                                         -> N Events

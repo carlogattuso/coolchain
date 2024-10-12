@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { MoonbeamService } from './moonBeam/moonbeam.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -21,7 +21,11 @@ export class AppService {
   }
 
   async storeUnauditedRecord(_record: CreateRecordDTO): Promise<Record> {
-    return await this._prismaService.storeUnauditedRecord(_record);
+    try {
+      return await this._prismaService.storeUnauditedRecord(_record);
+    } catch (error) {
+      throw new BadRequestException(error.toString());
+    }
   }
 
   async getRecordsByDevice(_deviceAddress: string): Promise<RecordDTO[]> {

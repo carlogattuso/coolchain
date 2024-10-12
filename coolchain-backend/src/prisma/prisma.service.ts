@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, OnModuleInit } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ForbiddenException, Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient, Record } from '@prisma/client';
 import { CreateEventDTO } from '../types/dto/CreateEventDTO';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
@@ -16,20 +16,24 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
 
     if (!device) {
-      throw new ForbiddenException(
+      throw new Error(
         `Device ${_record.deviceAddress} is not registered.`,
       );
     }
 
-    return this.record.create({
-      data: {
-        deviceAddress: _record.deviceAddress,
-        timestamp: _record.timestamp,
-        value: _record.value,
-        recordSignature: _record.recordSignature,
-        permitSignature: _record.permitSignature,
-      },
-    });
+    try {
+      return this.record.create({
+        data: {
+          deviceAddress: _record.deviceAddress,
+          timestamp: _record.timestamp,
+          value: _record.value,
+          recordSignature: _record.recordSignature,
+          permitSignature: _record.permitSignature,
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException()
+    }
   }
 
   async getUnauditedRecords(_recordNum: number): Promise<Record[]> {

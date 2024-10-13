@@ -22,7 +22,7 @@ export const Login = () => {
       // `values` contains email & password. You can use provider to connect user
 
       await createAuthCookie();
-      router.replace("/");
+      router.replace("/auditors");
     },
     [router]
   );

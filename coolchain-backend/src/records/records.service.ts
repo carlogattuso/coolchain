@@ -1,9 +1,10 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
 import { CreateEventDTO } from '../types/dto/CreateEventDTO';
 import { RecordDTO } from '../types/dto/RecordDTO';
 import { PrismaService } from '../prisma/prisma.service';
 import { Record } from '../types/Record';
+import { ErrorCodes } from '../utils/errors';
 
 @Injectable()
 export class RecordsService {
@@ -15,20 +16,22 @@ export class RecordsService {
     });
 
     if (!device) {
-      throw new ForbiddenException(
-        `Device ${_record.deviceAddress} is not registered.`,
-      );
+      throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code);
     }
 
-    return this._prismaService.record.create({
-      data: {
-        deviceAddress: _record.deviceAddress,
-        timestamp: _record.timestamp,
-        value: _record.value,
-        recordSignature: _record.recordSignature,
-        permitSignature: _record.permitSignature,
-      },
-    });
+    try {
+      return await this._prismaService.record.create({
+        data: {
+          deviceAddress: _record.deviceAddress,
+          timestamp: _record.timestamp,
+          value: _record.value,
+          recordSignature: _record.recordSignature,
+          permitSignature: _record.permitSignature,
+        },
+      });
+    } catch (error) {
+      throw new Error(ErrorCodes.DATABASE_ERROR.code);
+    }
   }
 
   async getUnauditedRecords(_recordNum: number): Promise<Record[]> {

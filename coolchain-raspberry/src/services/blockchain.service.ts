@@ -36,12 +36,11 @@ export class BlockchainService {
 
   public async storeRecord() {
     const nextSample: number | null = this.recordService.getRecordValue();
-    //TODO: Do not merge into master
-    // if (!nextSample) return;
+    if (!nextSample) return;
 
     const record: Record = {
       deviceAddress: this.wallet.address,
-      value: nextSample ?? Math.floor(Math.random() * 10) + 1,
+      value: nextSample,
       timestamp: Math.floor(Date.now() / 1000),
     };
 

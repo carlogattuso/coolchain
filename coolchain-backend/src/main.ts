@@ -11,7 +11,6 @@ async function bootstrap() {
     .setTitle('Coolchain API')
     .setDescription('API Documentation for Coolchain')
     .setVersion('1.0')
-    .addTag('coolchain')  // Optional: Tags for categorizing endpoints
     .build();
 
   // Create Swagger document and setup Swagger module

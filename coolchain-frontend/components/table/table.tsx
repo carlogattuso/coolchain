@@ -4,18 +4,19 @@ import {isDevice} from "@/helpers/types/Device";
 import {RenderDeviceCell} from "@/components/table/render-device-cell";
 import {isAuditor} from "@/helpers/types/Auditor";
 import {RenderAuditorCell} from "@/components/table/render-auditor-cell";
+import {isRecord} from "@/helpers/types/Record";
+import {RenderRecordCell} from "@/components/table/render-record-cell";
 
 export const TableWrapper = ({data}) => {
-
     return (
         <div className=" w-full flex flex-col gap-4">
-            <Table aria-label="Example table with custom cells">
+            <Table aria-label="Example table with custom cells" isStriped>
                 <TableHeader columns={data.columns}>
                     {(column) => <TableColumn key={column.key}>{column.name}</TableColumn>}
                 </TableHeader>
                 <TableBody items={data.items}>
                     {(item) => (
-                        <TableRow key={item.address}>
+                        <TableRow key={item.address || item.id}>
                             {(columnKey) => {
                                 if (isDevice(item)) {
                                     return (
@@ -27,6 +28,12 @@ export const TableWrapper = ({data}) => {
                                     return (
                                         <TableCell>
                                             {RenderAuditorCell({auditor: item, columnKey: columnKey})}
+                                        </TableCell>
+                                    )
+                                } else if (isRecord(item)) {
+                                    return (
+                                        <TableCell>
+                                            {RenderRecordCell({record: item, columnKey: columnKey})}
                                         </TableCell>
                                     )
                                 }

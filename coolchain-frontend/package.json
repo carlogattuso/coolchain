@@ -1,37 +1,40 @@
 {
-  "name": "coolchain-front",
+  "name": "coolchain-frontend-next-ui",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 8080",
+    "dev": "next dev -p 8081",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "test": "jest"
+    "lint": "next lint"
   },
   "dependencies": {
-    "flatpickr": "^4.6.13",
-    "jsvectormap": "^1.6.0",
-    "mongodb": "^6.9.0",
-    "next": "14.2.11",
-    "react": "^18",
-    "react-dom": "^18"
+    "@nextui-org/breadcrumbs": "^2.0.13",
+    "@nextui-org/divider": "^2.0.32",
+    "@nextui-org/react": "^2.4.8",
+    "@nextui-org/system": "^2.2.6",
+    "@nextui-org/theme": "^2.2.11",
+    "apexcharts": "^3.53.0",
+    "clsx": "^2.1.1",
+    "formik": "^2.4.6",
+    "framer-motion": "^11.5.6",
+    "next": "^14.2.13",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.1",
+    "react-apexcharts": "^1.4.1",
+    "react-dom": "^18.3.1",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.5.0",
-    "@testing-library/react": "^16.0.1",
-    "@types/node": "^20",
-    "@types/react": "^18.3.5",
+    "@types/node": "^22.5.5",
+    "@types/react": "18.3.8",
     "@types/react-dom": "^18.3.0",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.11",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "jsdom": "^25.0.0",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "ts-node": "^10.9.2",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.13",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.12",
     "typescript": "^5.6.2"
   }
 }

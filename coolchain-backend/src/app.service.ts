@@ -6,6 +6,7 @@ import { Event, Record } from '@prisma/client';
 import { CreateEventDTO } from './types/dto/CreateEventDTO';
 import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
 import { RecordDTO } from './types/dto/RecordDTO';
+import { Device } from './types/Device';
 
 @Injectable()
 export class AppService {
@@ -28,8 +29,18 @@ export class AppService {
     }
   }
 
-  async getRecordsByDevice(_deviceAddress: string): Promise<RecordDTO[]> {
+  async getRecords(_deviceAddress: string): Promise<RecordDTO[]> {
     return await this._prismaService.getRecordsWithEvents(_deviceAddress);
+  }
+
+  async getRecordsByDevice(
+    _deviceAddress: string | null,
+  ): Promise<RecordDTO[]> {
+    return await this._prismaService.getRecordsWithEvents(_deviceAddress);
+  }
+
+  async getDevices(): Promise<Device[]> {
+    return await this._prismaService.getDevices();
   }
 
   @Cron(CronExpression.EVERY_30_SECONDS)

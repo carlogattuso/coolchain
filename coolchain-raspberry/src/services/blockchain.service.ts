@@ -44,17 +44,17 @@ export class BlockchainService {
       timestamp: Math.floor(Date.now() / 1000),
     };
 
-    console.log(record);
-
+    console.info('New record: ', record);
+    
     const signedRecord: RecordDTO = await this.signRecord(record);
 
     try {
-      const response = await axios.post(`${process.env.COOLCHAIN_URL}/`, signedRecord, {
+      await axios.post(`${process.env.COOLCHAIN_URL}/records`, signedRecord, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      console.log('Server response:', response.data);
+      console.info('Record successfully sent to Coolchain');
     } catch (error) {
       console.error(parseAxiosError(error));
     }

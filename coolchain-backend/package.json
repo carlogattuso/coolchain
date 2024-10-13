@@ -25,12 +25,14 @@
     "@nestjs/core": "^10.4.1",
     "@nestjs/platform-express": "^10.4.1",
     "@nestjs/schedule": "^4.1.0",
+    "@nestjs/swagger": "^7.4.2",
     "@prisma/client": "^5.19.1",
     "ethers": "^6.13.2",
     "mongodb": "^6.9.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "solc": "^0.8.27"
+    "solc": "^0.8.27",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",

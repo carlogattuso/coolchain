@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { MoonbeamService } from './moonBeam/moonbeam.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -6,6 +6,8 @@ import { Event, Record } from '@prisma/client';
 import { CreateEventDTO } from './types/dto/CreateEventDTO';
 import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
 import { RecordDTO } from './types/dto/RecordDTO';
+import { Device } from './types/Device';
+import { Auditor } from './types/Auditor';
 
 @Injectable()
 export class AppService {
@@ -17,15 +19,32 @@ export class AppService {
   ) {}
 
   getHello(): string {
-    return 'Hello World!';
+    return 'Welcome to Coolchain!';
   }
 
   async storeUnauditedRecord(_record: CreateRecordDTO): Promise<Record> {
-    return await this._prismaService.storeUnauditedRecord(_record);
+    try {
+      return await this._prismaService.storeUnauditedRecord(_record);
+    } catch (error) {
+      throw new BadRequestException(error.toString());
+    }
   }
 
-  async getRecordsByDevice(_deviceAddress: string): Promise<RecordDTO[]> {
+  async getRecords(_deviceAddress: string): Promise<RecordDTO[]> {
     return await this._prismaService.getRecordsWithEvents(_deviceAddress);
+  }
+
+  async getRecordsByDevice(
+    _deviceAddress: string | null,
+  ): Promise<RecordDTO[]> {
+    return await this._prismaService.getRecordsWithEvents(_deviceAddress);
+  }
+
+  async getDevices(): Promise<Device[]> {
+    return await this._prismaService.getDevices();
+  }
+  async getAuditors(): Promise<Auditor[]> {
+    return await this._prismaService.getAuditors();
   }
 
   @Cron(CronExpression.EVERY_30_SECONDS)

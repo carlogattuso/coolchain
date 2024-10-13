@@ -1,8 +1,10 @@
-import { ForbiddenException, Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient, Record } from '@prisma/client';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
+import { Prisma, PrismaClient, Record } from '@prisma/client';
 import { CreateEventDTO } from '../types/dto/CreateEventDTO';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
 import { RecordDTO } from '../types/dto/RecordDTO';
+import { Device } from '../types/Device';
+import { Auditor } from '../types/Auditor';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -16,20 +18,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     });
 
     if (!device) {
-      throw new ForbiddenException(
-        `Device ${_record.deviceAddress} is not registered.`,
-      );
+      throw new Error(`Device ${_record.deviceAddress} is not registered.`);
     }
 
-    return this.record.create({
-      data: {
-        deviceAddress: _record.deviceAddress,
-        timestamp: _record.timestamp,
-        value: _record.value,
-        recordSignature: _record.recordSignature,
-        permitSignature: _record.permitSignature,
-      },
-    });
+    try {
+      return this.record.create({
+        data: {
+          deviceAddress: _record.deviceAddress,
+          timestamp: _record.timestamp,
+          value: _record.value,
+          recordSignature: _record.recordSignature,
+          permitSignature: _record.permitSignature,
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException();
+    }
   }
 
   async getUnauditedRecords(_recordNum: number): Promise<Record[]> {
@@ -53,10 +57,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   async getRecordsWithEvents(
-    _deviceAddress: string,
+    _deviceAddress: string | null,
   ): Promise<RecordDTO[] | null> {
-    return this.record.findMany({
-      where: { deviceAddress: _deviceAddress },
+    const query: Prisma.RecordFindManyArgs = {
       select: {
         id: true,
         deviceAddress: true,
@@ -66,6 +69,43 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       },
       orderBy: {
         timestamp: 'desc',
+      },
+    };
+
+    if (_deviceAddress) {
+      query['where'] = { deviceAddress: _deviceAddress };
+    }
+
+    try {
+      return await this.record.findMany(query);
+    } catch (error) {
+      // Log the error and rethrow or return an empty array
+      console.error('Error fetching records with events:', error);
+      throw new Error('Could not fetch records with events');
+    }
+  }
+
+  async getDevices(): Promise<Device[] | null> {
+    return this.device.findMany({
+      select: {
+        address: true,
+        name: true,
+        auditorAddress: true,
+      },
+      orderBy: {
+        address: 'desc',
+      },
+    });
+  }
+
+  async getAuditors(): Promise<Auditor[] | null> {
+    return this.auditor.findMany({
+      select: {
+        address: true,
+        devices: true,
+      },
+      orderBy: {
+        address: 'desc',
       },
     });
   }

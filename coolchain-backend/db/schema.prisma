@@ -7,14 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Auditor {
+  address String   @id @map("_id")
+  devices Device[] @relation("AuditorDevices")
+
+  @@map("Auditors")
+}
+
+model Device {
+  address        String   @id @map("_id")
+  name           String
+  records        Record[] @relation("DeviceRecords")
+  auditorAddress String
+  auditor        Auditor  @relation("AuditorDevices", fields: [auditorAddress], references: [address])
+
+  @@map("Devices")
+}
+
 model Record {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  deviceAddress   String
   timestamp       Int
   value           Int
   recordSignature Signature
   permitSignature Signature
   events          Event[]   @relation("RecordEvents")
+  deviceAddress   String
+  device          Device    @relation("DeviceRecords", fields: [deviceAddress], references: [address])
 
   @@index([deviceAddress, timestamp(sort: Desc)])
   @@map("Records")
@@ -39,9 +57,6 @@ model Event {
   eventType        EventType
   recordId         String    @db.ObjectId
   record           Record    @relation("RecordEvents", fields: [recordId], references: [id])
-
-  createdAt  DateTime @default(now())
-  modifiedAt DateTime @updatedAt
 
   @@index([blockNumber])
   @@map("Events")

@@ -4,6 +4,7 @@ import { Record } from '@prisma/client';
 import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
 import { RecordDTO } from './types/dto/RecordDTO';
 import { Device } from './types/Device';
+import { Auditor } from './types/Auditor';
 
 @Controller()
 export class AppController {
@@ -33,5 +34,10 @@ export class AppController {
   @Get('/devices/')
   async getDevices(): Promise<Device[]> {
     return this._appService.getDevices();
+  }
+
+  @Get('/auditors/')
+  async getAuditors(): Promise<Auditor[]> {
+    return this._appService.getAuditors();
   }
 }

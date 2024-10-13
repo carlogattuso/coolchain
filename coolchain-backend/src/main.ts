@@ -19,6 +19,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document); // Set the API documentation route
 
   // Start app
+  app.enableCors();
   await app.listen(3000);
 }
 

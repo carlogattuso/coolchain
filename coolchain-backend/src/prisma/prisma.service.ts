@@ -1,15 +1,10 @@
-import {
-  BadGatewayException,
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  OnModuleInit,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { Prisma, PrismaClient, Record } from '@prisma/client';
 import { CreateEventDTO } from '../types/dto/CreateEventDTO';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
 import { RecordDTO } from '../types/dto/RecordDTO';
 import { Device } from '../types/Device';
+import { Auditor } from '../types/Auditor';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -96,6 +91,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
         address: true,
         name: true,
         auditorAddress: true,
+      },
+      orderBy: {
+        address: 'desc',
+      },
+    });
+  }
+
+  async getAuditors(): Promise<Auditor[] | null> {
+    return this.auditor.findMany({
+      select: {
+        address: true,
+        devices: true,
       },
       orderBy: {
         address: 'desc',

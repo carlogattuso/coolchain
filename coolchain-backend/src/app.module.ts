@@ -7,19 +7,21 @@ import { AuthModule } from './auth/auth.module';
 import { RecordsModule } from './records/records.module';
 import { CronModule } from './cron/cron.module';
 import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   controllers: [AppController],
   imports: [
-    BlockchainModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       envFilePath: process.env.NODE_ENV ? '.env.dev' : '.env',
       isGlobal: true,
     }),
     AuthModule,
+    BlockchainModule,
     RecordsModule,
     CronModule,
+    PrismaModule,
   ],
   providers: [AppService],
 })

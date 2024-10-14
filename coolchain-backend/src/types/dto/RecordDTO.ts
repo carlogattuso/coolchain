@@ -1,3 +1,7 @@
-import { Record } from '@prisma/client';
+import { OmitType } from '@nestjs/swagger';
+import { Record } from '../Record';
 
-export type RecordDTO = Omit<Record, 'recordSignature' | 'permitSignature'>;
+export class RecordDTO extends OmitType(Record, [
+  'recordSignature',
+  'permitSignature',
+] as const) {}

@@ -36,26 +36,25 @@ export class BlockchainService {
 
   public async storeRecord() {
     const nextSample: number | null = this.recordService.getRecordValue();
-    //TODO: Do not merge into master
-    // if (!nextSample) return;
+    if (!nextSample) return;
 
     const record: Record = {
       deviceAddress: this.wallet.address,
-      value: nextSample ?? Math.floor(Math.random() * 10) + 1,
+      value: nextSample,
       timestamp: Math.floor(Date.now() / 1000),
     };
 
-    console.log(record);
-
+    console.info('New record: ', record);
+    
     const signedRecord: RecordDTO = await this.signRecord(record);
 
     try {
-      const response = await axios.post(`${process.env.COOLCHAIN_URL}/`, signedRecord, {
+      await axios.post(`${process.env.COOLCHAIN_URL}/records`, signedRecord, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      console.log('Server response:', response.data);
+      console.info('Record successfully sent to Coolchain');
     } catch (error) {
       console.error(parseAxiosError(error));
     }

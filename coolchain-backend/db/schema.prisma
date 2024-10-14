@@ -25,20 +25,20 @@ model Device {
 }
 
 model Record {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
   timestamp       Int
   value           Int
-  recordSignature Signature
-  permitSignature Signature
-  events          Event[]   @relation("RecordEvents")
+  recordSignature ECDSASignature
+  permitSignature ECDSASignature
+  events          Event[]        @relation("RecordEvents")
   deviceAddress   String
-  device          Device    @relation("DeviceRecords", fields: [deviceAddress], references: [address])
+  device          Device         @relation("DeviceRecords", fields: [deviceAddress], references: [address])
 
   @@index([deviceAddress, timestamp(sort: Desc)])
   @@map("Records")
 }
 
-type Signature {
+type ECDSASignature {
   v Int
   r String
   s String

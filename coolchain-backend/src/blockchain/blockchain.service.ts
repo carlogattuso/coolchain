@@ -8,17 +8,18 @@ import {
   TypedDataDomain,
 } from 'ethers';
 
-import contractFile from '../contract/compileContract';
+import contractFile from './contract/compile.contract';
 import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
 } from '../utils/constants';
-import { EventType, Record } from '@prisma/client';
 import { EIP712Record } from '../types/EIP712Record';
 import { CreateEventDTO } from '../types/dto/CreateEventDTO';
+import { Record } from '../types/Record';
+import { EventType } from '@prisma/client';
 
 @Injectable()
-export class MoonbeamService {
+export class BlockchainService {
   private readonly provider: ethers.JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;

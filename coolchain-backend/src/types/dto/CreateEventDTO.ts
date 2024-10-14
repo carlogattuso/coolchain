@@ -1,3 +1,4 @@
-import { Event } from '@prisma/client';
+import { OmitType } from '@nestjs/swagger';
+import { Event } from '../Event';
 
-export type CreateEventDTO = Omit<Event, 'id' | 'createdAt' | 'modifiedAt'>;
+export class CreateEventDTO extends OmitType(Event, ['id'] as const) {}

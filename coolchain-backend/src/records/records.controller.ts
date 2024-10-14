@@ -6,8 +6,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
 import { RecordDTO } from '../types/dto/RecordDTO';
@@ -18,7 +18,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Record } from '../types/Record';
 import { ErrorCodes } from '../utils/errors';
 
 @ApiTags('Records')
@@ -39,9 +38,11 @@ export class RecordsController {
   @ApiBadRequestResponse({
     description: 'Invalid data',
   })
-  async storeRecord(@Body() _record: CreateRecordDTO): Promise<Record> {
+  async storeRecord(
+    @Body() _record: CreateRecordDTO,
+  ): Promise<CreateRecordDTO> {
     try {
-      return await this._recordsService.storeUnauditedRecord(_record);
+      return this._recordsService.storeUnauditedRecord(_record);
     } catch (error) {
       if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
         throw new ForbiddenException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
@@ -51,15 +52,23 @@ export class RecordsController {
     }
   }
 
-  @Get('/:deviceAddress')
+  @Get()
   @ApiResponse({
     status: 200,
     description: 'Retrieved records by device address',
     type: [RecordDTO],
   })
-  async getRecordsByDevice(
-    @Param('deviceAddress') _deviceAddress: string,
+  async getRecords(
+    @Query('deviceAddress') _deviceAddress?: string,
   ): Promise<RecordDTO[]> {
-    return this._recordsService.getRecordsByDevice(_deviceAddress);
+    try {
+      return this._recordsService.getRecordsWithEvents(_deviceAddress);
+    } catch (error) {
+      if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
+        throw new ForbiddenException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
+      } else {
+        throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
+      }
+    }
   }
 }

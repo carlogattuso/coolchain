@@ -5,12 +5,15 @@ import { RecordDTO } from '../types/dto/RecordDTO';
 import { PrismaService } from '../prisma/prisma.service';
 import { Record } from '../types/Record';
 import { ErrorCodes } from '../utils/errors';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RecordsService {
   constructor(private _prismaService: PrismaService) {}
 
-  async storeUnauditedRecord(_record: CreateRecordDTO) {
+  async storeUnauditedRecord(
+    _record: CreateRecordDTO,
+  ): Promise<CreateRecordDTO> {
     const device = await this._prismaService.device.findUnique({
       where: { address: _record.deviceAddress },
     });
@@ -20,7 +23,7 @@ export class RecordsService {
     }
 
     try {
-      return await this._prismaService.record.create({
+      return this._prismaService.record.create({
         data: {
           deviceAddress: _record.deviceAddress,
           timestamp: _record.timestamp,
@@ -54,11 +57,10 @@ export class RecordsService {
     });
   }
 
-  async getRecordsByDevice(
-    _deviceAddress: string,
+  async getRecordsWithEvents(
+    _deviceAddress?: string,
   ): Promise<RecordDTO[] | null> {
-    return this._prismaService.record.findMany({
-      where: { deviceAddress: _deviceAddress },
+    const query: Prisma.RecordFindManyArgs = {
       select: {
         id: true,
         deviceAddress: true,
@@ -69,6 +71,16 @@ export class RecordsService {
       orderBy: {
         timestamp: 'desc',
       },
-    });
+    };
+
+    if (_deviceAddress) {
+      query.where = { deviceAddress: _deviceAddress };
+    }
+
+    try {
+      return this._prismaService.record.findMany(query);
+    } catch (error) {
+      throw new Error(ErrorCodes.DATABASE_ERROR.code);
+    }
   }
 }

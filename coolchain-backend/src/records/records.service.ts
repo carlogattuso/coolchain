@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RecordsService {
-  constructor(private _prismaService: PrismaService) {}
+  constructor(private readonly _prismaService: PrismaService) {}
 
   async storeUnauditedRecord(
     _record: CreateRecordDTO,

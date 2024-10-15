@@ -8,8 +8,10 @@ datasource db {
 }
 
 model Auditor {
-  address String   @id @map("_id")
-  devices Device[] @relation("AuditorDevices")
+  address  String    @id @map("_id")
+  devices  Device[]  @relation("AuditorDevices")
+  nonce    String?
+  issuedAt DateTime?
 
   @@map("Auditors")
 }

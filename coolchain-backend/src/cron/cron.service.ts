@@ -12,8 +12,8 @@ export class CronService {
   private readonly logger: Logger = new Logger(CronService.name);
 
   constructor(
-    private _recordsService: RecordsService,
-    private _blockchainService: BlockchainService,
+    private readonly _recordsService: RecordsService,
+    private readonly _blockchainService: BlockchainService,
   ) {}
 
   @Cron(CronExpression.EVERY_30_SECONDS)

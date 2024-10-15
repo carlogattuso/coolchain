@@ -1,11 +1,15 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import {
+  Contract,
   ContractTransactionReceipt,
   ContractTransactionResponse,
-  ethers,
   EventLog,
+  Interface,
+  JsonRpcProvider,
+  Signature,
   TypedDataDomain,
+  Wallet,
 } from 'ethers';
 
 import contractFile from './contract/compile.contract';
@@ -20,14 +24,14 @@ import { EventType } from '@prisma/client';
 
 @Injectable()
 export class BlockchainService {
-  private readonly provider: ethers.JsonRpcProvider;
+  private readonly provider: JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;
   private readonly salt: string;
   private readonly chainId: number;
   private readonly chainName: string;
   private readonly chainRpcUrl: string;
-  private readonly wallet: ethers.Wallet;
+  private readonly wallet: Wallet;
   private readonly domain: TypedDataDomain;
   private readonly types = {
     Record: [
@@ -37,7 +41,7 @@ export class BlockchainService {
     ],
   };
 
-  constructor(private _configService: ConfigService) {
+  constructor(private readonly _configService: ConfigService) {
     this.accountFrom = {
       privateKey: this._configService.get('WALLET_PRIVATE_KEY'),
     };
@@ -53,7 +57,7 @@ export class BlockchainService {
       this.chainName,
     );
 
-    this.wallet = new ethers.Wallet(this.accountFrom.privateKey, this.provider);
+    this.wallet = new Wallet(this.accountFrom.privateKey, this.provider);
 
     //EIP712
     this.domain = {
@@ -66,7 +70,7 @@ export class BlockchainService {
   }
 
   async auditRecords(_unsignedRecords: Record[]): Promise<CreateEventDTO[]> {
-    const batchPrecompiled = new ethers.Contract(
+    const batchPrecompiled = new Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,
       this.wallet,
@@ -79,9 +83,7 @@ export class BlockchainService {
     const eip712Data: EIP712Record[] =
       await this.mapDataToEIP712(_unsignedRecords);
 
-    const contractInterface: ethers.Interface = new ethers.Interface(
-      contractFile.abi,
-    );
+    const contractInterface: Interface = new Interface(contractFile.abi);
     const callData = eip712Data.map((eip712Record: EIP712Record) =>
       contractInterface.encodeFunctionData('storeRecord', [
         eip712Record.deviceAddress,
@@ -123,14 +125,14 @@ export class BlockchainService {
     _rpcUrl: string,
     _chainId?: number,
     _chainName?: string,
-  ): ethers.JsonRpcProvider {
+  ): JsonRpcProvider {
     if (_chainId && _chainName) {
-      return new ethers.JsonRpcProvider(_rpcUrl, {
+      return new JsonRpcProvider(_rpcUrl, {
         chainId: _chainId,
         name: _chainName,
       });
     } else {
-      return new ethers.JsonRpcProvider(_rpcUrl);
+      return new JsonRpcProvider(_rpcUrl);
     }
   }
 
@@ -146,7 +148,7 @@ export class BlockchainService {
       this.types,
       dataToSign,
     );
-    const { r, s, v } = ethers.Signature.from(signature);
+    const { r, s, v } = Signature.from(signature);
 
     return {
       deviceAddress: dataToSign.deviceAddress,

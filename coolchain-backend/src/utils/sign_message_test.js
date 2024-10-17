@@ -2,16 +2,16 @@ const { ethers } = require('ethers');
 
 // Private key provided
 const privateKey =
-  '0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342';
+  '0x5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133';
 const wallet = new ethers.Wallet(privateKey);
 console.log(wallet.address);
 
 const message =
-  `coolchain wants you to sign with your Ethereum account: 0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b\n` +
+  `coolchain wants you to sign with your Ethereum account: 0xf24FF3a9CF04c71Dbc94D0b566f7A27B94566cac\n` +
   `\nPlease sign this message to verify your identity.\n` +
   `\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1281` +
-  `\nNonce: 0x968789014c21e530701a73fb43e91a9bed90ad96ea2812390201ff09ea9aa765` +
-  `\nIssued At: 2024-10-16T18:28:17.360Z`;
+  `\nNonce: 0xaf4034048b2457b45aaea60d4b79dee3cb99135cf97371eedeacea628a71902b` +
+  `\nIssued At: 2024-10-17T10:34:35.967Z`;
 
 console.log(message);
 

@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Record } from './Record';
 
 export class Device {
   @ApiProperty({
@@ -20,11 +19,4 @@ export class Device {
     example: '0x1234567890abcdef1234567890abcdef12345678',
   })
   auditorAddress: string;
-
-  @ApiProperty({
-    description: 'List of records associated with this device',
-    required: false,
-    type: () => [Record],
-  })
-  records?: Record[];
 }

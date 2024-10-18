@@ -23,6 +23,10 @@ export const ErrorCodes = {
     code: 'ERR006',
     message: 'Authentication timeout has expired',
   },
+  DEVICE_ALREADY_EXISTS: {
+    code: 'ERR007',
+    message: 'Device with this address already exists',
+  },
   UNEXPECTED_ERROR: {
     code: 'ERR999',
     message: 'Unexpected error occurred.',

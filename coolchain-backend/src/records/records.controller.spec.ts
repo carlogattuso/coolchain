@@ -62,6 +62,11 @@ describe('RecordsController', () => {
     recordsService = module.get<RecordsService>(RecordsService);
   });
 
+  it('should be defined', () => {
+    expect(recordsController).toBeDefined();
+    expect(recordsService).toBeDefined();
+  });
+
   describe('storeRecord', () => {
     it('should create a new record and return the created data', async () => {
       const createRecordDto: CreateRecordDTO = mockCreateRecordDTO();

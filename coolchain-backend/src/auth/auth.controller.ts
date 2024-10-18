@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtDTO } from '../types/dto/JwtDTO';
 import { SignInDTO } from '../types/dto/SignInDTO';
+import { NonceDTO } from '../types/dto/NonceDTO';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -50,7 +51,7 @@ export class AuthController {
     } catch (error) {
       if (error.message === ErrorCodes.BAD_LOGIN_REQUEST.code) {
         throw new BadRequestException(ErrorCodes.BAD_LOGIN_REQUEST.message);
-      } else if ((error.message = ErrorCodes.AUTH_EXPIRATION_TIMEOUT.code)) {
+      } else if (error.message === ErrorCodes.AUTH_EXPIRATION_TIMEOUT.code) {
         throw new RequestTimeoutException(
           ErrorCodes.AUTH_EXPIRATION_TIMEOUT.message,
         );
@@ -67,12 +68,12 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'Nonce generated successfully',
-    type: String,
+    type: NonceDTO,
   })
   @ApiBadRequestResponse({
     description: 'Invalid data',
   })
-  async getNonce(@Query('address') _address: string): Promise<string> {
+  async getNonce(@Query('address') _address: string): Promise<NonceDTO> {
     try {
       return await this.authService.generateNonce(_address);
     } catch (error) {

@@ -12,6 +12,10 @@ describe('AppService', () => {
     appService = app.get<AppService>(AppService);
   });
 
+  it('should be defined', () => {
+    expect(appService).toBeDefined();
+  });
+
   describe('getHello', () => {
     it('should return "Welcome to Coolchain!"', () => {
       expect(appService.getHello()).toBe('Welcome to Coolchain!');

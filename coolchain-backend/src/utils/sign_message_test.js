@@ -10,8 +10,8 @@ const message =
   `coolchain wants you to sign with your Ethereum account: 0xf24FF3a9CF04c71Dbc94D0b566f7A27B94566cac\n` +
   `\nPlease sign this message to verify your identity.\n` +
   `\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1281` +
-  `\nNonce: 0xaf4034048b2457b45aaea60d4b79dee3cb99135cf97371eedeacea628a71902b` +
-  `\nIssued At: 2024-10-17T10:34:35.967Z`;
+  `\nNonce: 0xb86ff2bbc25a52e0a48dd062639b38ea8f4bf2d8e26b43bf184a335ad739988e` +
+  `\nIssued At: 2024-10-18T19:25:37.737Z`;
 
 console.log(message);
 

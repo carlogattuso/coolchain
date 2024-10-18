@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ErrorCodes } from '../utils/errors';
 import { hexlify, randomBytes, verifyMessage } from 'ethers';
@@ -8,16 +8,13 @@ import { ConfigService } from '@nestjs/config';
 import { SignInDTO } from '../types/dto/SignInDTO';
 import { createSignInMessage } from './message/message.builder';
 import { AUTH_EXPIRATION_TIMEOUT } from '../utils/constants';
-
-const config = {
-  domain: process.env.APP_DOMAIN,
-  statement: 'Please sign this message to confirm your identity.',
-  uri: process.env.ANGULAR_URL,
-  timeout: 60,
-};
+import { NonceDTO } from '../types/dto/NonceDTO';
+import { Auditor } from '../types/Auditor';
 
 @Injectable()
 export class AuthService {
+  private readonly logger: Logger = new Logger(AuthService.name);
+
   private readonly domain: string;
   private readonly uri: string;
   private readonly chainId: number;
@@ -38,9 +35,18 @@ export class AuthService {
       throw new Error(ErrorCodes.BAD_LOGIN_REQUEST.code);
     }
 
-    const auditor = await this._prismaService.auditor.findUnique({
-      where: { address: address },
-    });
+    let auditor: Auditor;
+    try {
+      auditor = await this._prismaService.auditor.findUnique({
+        where: { address: address },
+      });
+    } catch (error) {
+      this.logger.error(`Error retrieving auditor: ${error.message}`, {
+        stack: error.stack,
+        auditor: address,
+      });
+      throw new Error(ErrorCodes.DATABASE_ERROR.code);
+    }
 
     const currentTime = new Date();
     const issuedAt = new Date(auditor.issuedAt);
@@ -62,8 +68,6 @@ export class AuthService {
       auditor.issuedAt.toISOString(),
     );
 
-    console.log(message);
-
     const recoveredAddress = verifyMessage(message, signature);
     if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
       throw new Error(ErrorCodes.UNAUTHORIZED.code);
@@ -75,7 +79,7 @@ export class AuthService {
     return { accessToken: token };
   }
 
-  async generateNonce(_address: string): Promise<string> {
+  async generateNonce(_address: string): Promise<NonceDTO> {
     if (!_address) {
       throw new Error(ErrorCodes.ADDRESS_REQUIRED.code);
     }
@@ -89,6 +93,9 @@ export class AuthService {
       create: { address: _address, nonce: nonce, issuedAt: issuedAt },
     });
 
-    return nonce;
+    return {
+      nonce,
+      issuedAt,
+    };
   }
 }

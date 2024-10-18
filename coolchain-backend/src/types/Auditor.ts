@@ -10,9 +10,10 @@ export class Auditor {
 
   @ApiProperty({
     description: 'List of devices associated with the auditor',
+    required: false,
     type: () => [Device],
   })
-  devices: Device[];
+  devices?: Device[];
 
   @ApiProperty({
     description: 'Optional nonce used for authentication or security purposes',
@@ -26,5 +27,5 @@ export class Auditor {
     example: '2024-10-15T13:45:30.000Z',
     required: false,
   })
-  issuedAt?: string;
+  issuedAt?: Date;
 }

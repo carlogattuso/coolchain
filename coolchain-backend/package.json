@@ -27,7 +27,7 @@
     "@nestjs/platform-express": "^10.4.1",
     "@nestjs/schedule": "^4.1.0",
     "@nestjs/swagger": "^7.4.2",
-    "@prisma/client": "^5.19.1",
+    "@prisma/client": "^5.21.1",
     "ethers": "^6.13.2",
     "mongodb": "^6.9.0",
     "reflect-metadata": "^0.2.2",

@@ -65,6 +65,11 @@ describe('RecordsService', () => {
     prismaService = module.get<PrismaService>(PrismaService);
   });
 
+  it('should be defined', () => {
+    expect(recordsService).toBeDefined();
+    expect(prismaService).toBeDefined();
+  });
+
   describe('storeUnauditedRecord', () => {
     it('should store a record successfully', async () => {
       const createRecordDto = mockCreateRecordDTO();
@@ -92,7 +97,7 @@ describe('RecordsService', () => {
       });
     });
 
-    it('should throw an error if the device is not registered', async () => {
+    it('should log and throw an error if the device is not registered', async () => {
       const createRecordDto = mockCreateRecordDTO();
 
       jest.spyOn(prismaService.device, 'findUnique').mockResolvedValue(null);
@@ -102,7 +107,7 @@ describe('RecordsService', () => {
       ).rejects.toThrow(new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code));
     });
 
-    it('should throw a database error if Prisma throws an error', async () => {
+    it('should log and throw a database error if Prisma throws an error', async () => {
       const createRecordDto = mockCreateRecordDTO();
       jest
         .spyOn(prismaService.device, 'findUnique')
@@ -220,7 +225,7 @@ describe('RecordsService', () => {
       });
     });
 
-    it('should throw a database error if Prisma throws an error', async () => {
+    it('should log and throw a database error if Prisma throws an error', async () => {
       jest
         .spyOn(prismaService.event, 'createMany')
         .mockRejectedValue(mockDatabaseError());
@@ -294,7 +299,7 @@ describe('RecordsService', () => {
       });
     });
 
-    it('should throw a database error if Prisma throws an error and device specified', async () => {
+    it('should log and throw a database error if Prisma throws an error and device specified', async () => {
       jest
         .spyOn(prismaService.record, 'findMany')
         .mockRejectedValue(mockDatabaseError());
@@ -313,7 +318,7 @@ describe('RecordsService', () => {
       );
     });
 
-    it('should throw a database error if Prisma throws an error and device not specified', async () => {
+    it('should log and throw a database error if Prisma throws an error and device not specified', async () => {
       jest
         .spyOn(prismaService.record, 'findMany')
         .mockRejectedValue(mockDatabaseError());

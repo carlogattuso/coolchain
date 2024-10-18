@@ -24,8 +24,4 @@ describe('PrismaService', () => {
     await prismaService.onModuleInit();
     expect(connectSpy).toHaveBeenCalled();
   });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
 });

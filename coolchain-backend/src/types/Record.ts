@@ -29,12 +29,14 @@ export class Record {
 
   @ApiProperty({
     description: 'Digital signature proving the integrity of the record data',
+    required: false,
     type: () => ECDSASignature,
   })
   recordSignature?: ECDSASignature;
 
   @ApiProperty({
     description: 'Digital signature for permit verification',
+    required: false,
     type: () => ECDSASignature,
   })
   permitSignature?: ECDSASignature;

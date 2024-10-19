@@ -10,6 +10,8 @@ import {
   Query,
   Request,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
 import { RecordDTO } from './types/dto/RecordDTO';
@@ -42,6 +44,7 @@ export class RecordsController {
   @ApiBadRequestResponse({
     description: 'Invalid data',
   })
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async storeRecord(
     @Body() _record: CreateRecordDTO,
   ): Promise<CreateRecordDTO> {

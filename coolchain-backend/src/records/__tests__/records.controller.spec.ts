@@ -1,8 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RecordsController } from './records.controller';
-import { RecordsService } from './records.service';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { ErrorCodes } from '../utils/errors';
+import { RecordsController } from '../records.controller';
+import { RecordsService } from '../records.service';
+import {
+  BadRequestException,
+  ForbiddenException,
+  ValidationPipe,
+} from '@nestjs/common';
+import { ErrorCodes } from '../../utils/errors';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
 import { RecordDTO } from '../types/dto/RecordDTO';
 import { JwtService } from '@nestjs/jwt';
@@ -87,6 +91,40 @@ describe('RecordsController', () => {
       await expect(
         recordsController.storeRecord(createRecordDto),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should return BadRequestException when validation fails', async () => {
+      const invalidDto = {
+        deviceAddress: new Date(),
+        timestamp: 'hey',
+        value: 'test value',
+        test: 'hi!',
+        recordSignature: { v: 'abc', r: '0x123', s: '0x456' },
+        permitSignature: { v: 'abc', r: '0x12a', s: '0x4b6' },
+      };
+
+      const validationPipe = new ValidationPipe();
+
+      try {
+        await validationPipe.transform(invalidDto, {
+          type: 'body',
+          metatype: CreateRecordDTO,
+        });
+      } catch (error) {
+        expect(error.status).toBe(400);
+        expect(error.getResponse().message).toEqual([
+          'deviceAddress must be an Ethereum address',
+          'timestamp must be a positive number',
+          'timestamp must be an integer number',
+          'value must be a number conforming to the specified constraints',
+          'recordSignature.v must be a number conforming to the specified constraints',
+          'recordSignature.r must be longer than or equal to 64 characters',
+          'recordSignature.s must be longer than or equal to 64 characters',
+          'permitSignature.v must be a number conforming to the specified constraints',
+          'permitSignature.r must be longer than or equal to 64 characters',
+          'permitSignature.s must be longer than or equal to 64 characters',
+        ]);
+      }
     });
 
     it('should throw BadRequestException for other errors', async () => {

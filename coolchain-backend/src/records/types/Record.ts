@@ -1,6 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Event } from '../../events/types/Event';
 import { ECDSASignature } from './ECDSASignature';
+import {
+  IsEthereumAddress,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class Record {
   @ApiProperty({
@@ -13,18 +22,22 @@ export class Record {
     description: 'Ethereum address of the device that generated the record',
     example: '0x1234567890abcdef1234567890abcdef12345678',
   })
+  @IsEthereumAddress()
   deviceAddress: string;
 
   @ApiProperty({
     description: 'Unix timestamp indicating when the record was created',
     example: 1672525800,
   })
+  @IsInt()
+  @IsPositive()
   timestamp: number;
 
   @ApiProperty({
     description: 'Value recorded from the device',
     example: 23.5,
   })
+  @IsNumber()
   value: number;
 
   @ApiProperty({
@@ -32,6 +45,9 @@ export class Record {
     required: false,
     type: () => ECDSASignature,
   })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ECDSASignature)
   recordSignature?: ECDSASignature;
 
   @ApiProperty({
@@ -39,6 +55,9 @@ export class Record {
     required: false,
     type: () => ECDSASignature,
   })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ECDSASignature)
   permitSignature?: ECDSASignature;
 
   @ApiProperty({

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Event } from './Event';
+import { Event } from '../../events/types/Event';
 import { ECDSASignature } from './ECDSASignature';
 
 export class Record {

@@ -19,9 +19,9 @@ import {
 } from '@nestjs/swagger';
 import { ErrorCodes } from '../utils/errors';
 import { AuthGuard } from '../auth/auth.guard';
-import { CreateDeviceDTO } from '../types/dto/CreateDeviceDTO';
+import { CreateDeviceDTO } from './types/dto/CreateDeviceDTO';
 import { DevicesService } from './devices.service';
-import { DeviceDTO } from '../types/dto/DeviceDTO';
+import { DeviceDTO } from './types/dto/DeviceDTO';
 
 @ApiTags('Devices')
 @Controller('devices')

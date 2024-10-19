@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DevicesController } from './devices.controller';
-import { DevicesService } from './devices.service';
+import { DevicesController } from '../devices.controller';
+import { DevicesService } from '../devices.service';
 import { CreateDeviceDTO } from '../types/dto/CreateDeviceDTO';
 import { DeviceDTO } from '../types/dto/DeviceDTO';
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { ErrorCodes } from '../utils/errors';
+import { ErrorCodes } from '../../utils/errors';
 import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../../auth/auth.guard';
 import { JwtService } from '@nestjs/jwt';
 
 describe('DevicesController', () => {

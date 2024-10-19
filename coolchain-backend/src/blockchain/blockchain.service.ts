@@ -17,9 +17,9 @@ import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
 } from '../utils/constants';
-import { EIP712Record } from '../types/EIP712Record';
-import { CreateEventDTO } from '../types/dto/CreateEventDTO';
-import { Record } from '../types/Record';
+import { EIP712Record } from './types/EIP712Record';
+import { CreateEventDTO } from '../events/types/dto/CreateEventDTO';
+import { Record } from '../records/types/Record';
 import { EventType } from '@prisma/client';
 
 @Injectable()

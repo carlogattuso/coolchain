@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RecordsService } from './records.service';
+import { RecordsService } from '../records.service';
 import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
-import { PrismaService } from '../prisma/prisma.service';
-import { ErrorCodes } from '../utils/errors';
-import { Device, EventType, Record } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { ErrorCodes } from '../../utils/errors';
+import { Device, Record } from '@prisma/client';
 import { Logger } from '@nestjs/common';
-import { MAX_RECORD_BATCH_SIZE } from '../utils/constants';
-import { CreateEventDTO } from '../types/dto/CreateEventDTO';
+import { MAX_RECORD_BATCH_SIZE } from '../../utils/constants';
 
 const mockCreateRecordDTO = (): CreateRecordDTO => ({
   deviceAddress: '0xabc',
@@ -179,63 +178,6 @@ describe('RecordsService', () => {
 
       expect(Logger.prototype.error).toHaveBeenCalledWith(
         expect.stringContaining(`Error retrieving unaudited records:`),
-        expect.objectContaining({
-          stack: expect.any(String),
-        }),
-      );
-    });
-  });
-
-  describe('auditRecords', () => {
-    it('should audit records successfully', async () => {
-      const events: CreateEventDTO[] = [
-        {
-          transactionHash: '0x1234',
-          transactionIndex: 0,
-          blockHash: '0xacbd',
-          blockNumber: 234,
-          address: '0xa1b2',
-          data: 'anoenfe',
-          topics: ['0x123', '0x456'],
-          index: 0,
-          eventType: EventType.SubcallFailed,
-          recordId: '1',
-        },
-        {
-          transactionHash: '0x1234',
-          transactionIndex: 0,
-          blockHash: '0xacbd',
-          blockNumber: 234,
-          address: '0xa1b2',
-          data: 'anoenfe',
-          topics: ['0x123', '0x456'],
-          index: 1,
-          eventType: EventType.SubcallSucceeded,
-          recordId: '1',
-        },
-      ];
-
-      jest
-        .spyOn(prismaService.event, 'createMany')
-        .mockResolvedValue(undefined);
-
-      await expect(recordsService.auditRecords(events)).resolves.not.toThrow();
-      expect(prismaService.event.createMany).toHaveBeenCalledWith({
-        data: events,
-      });
-    });
-
-    it('should log and throw a database error if Prisma throws an error', async () => {
-      jest
-        .spyOn(prismaService.event, 'createMany')
-        .mockRejectedValue(mockDatabaseError());
-
-      await expect(recordsService.auditRecords([])).rejects.toThrow(
-        mockDatabaseError(),
-      );
-
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining(`Error creating events:`),
         expect.objectContaining({
           stack: expect.any(String),
         }),

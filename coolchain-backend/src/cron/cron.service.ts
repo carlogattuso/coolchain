@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { CreateEventDTO } from '../types/dto/CreateEventDTO';
+import { CreateEventDTO } from '../events/types/dto/CreateEventDTO';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { RecordsService } from '../records/records.service';
 import { MAX_RECORD_BATCH_SIZE } from '../utils/constants';
-import { Record } from '../types/Record';
-import { Event } from '../types/Event';
+import { Record } from '../records/types/Record';
+import { Event } from '../events/types/Event';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class CronService {
@@ -13,6 +14,7 @@ export class CronService {
 
   constructor(
     private readonly _recordsService: RecordsService,
+    private readonly _eventsService: EventsService,
     private readonly _blockchainService: BlockchainService,
   ) {}
 
@@ -37,7 +39,7 @@ export class CronService {
         );
       });
 
-      await this._recordsService.auditRecords(auditResult);
+      await this._eventsService.storeEvents(auditResult);
     }
 
     this.logger.verbose(

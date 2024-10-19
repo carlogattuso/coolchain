@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ErrorCodes } from '../utils/errors';
-import { DeviceDTO } from '../types/dto/DeviceDTO';
+import { DeviceDTO } from './types/dto/DeviceDTO';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateDeviceDTO } from '../types/dto/CreateDeviceDTO';
-import { Device } from '../types/Device';
+import { CreateDeviceDTO } from './types/dto/CreateDeviceDTO';
+import { Device } from './types/Device';
 
 @Injectable()
 export class DevicesService {

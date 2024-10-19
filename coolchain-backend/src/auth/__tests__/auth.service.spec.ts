@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { AuthService } from '../auth.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { SignInDTO } from '../types/dto/SignInDTO';
 import { JwtDTO } from '../types/dto/JwtDTO';
 import { NonceDTO } from '../types/dto/NonceDTO';
-import { ErrorCodes } from '../utils/errors';
+import { ErrorCodes } from '../../utils/errors';
 import { randomBytes, verifyMessage } from 'ethers';
-import { AUTH_EXPIRATION_TIMEOUT } from '../utils/constants';
+import { AUTH_EXPIRATION_TIMEOUT } from '../../utils/constants';
 import { Logger } from '@nestjs/common';
 import { Auditor } from '../types/Auditor';
 

@@ -1,4 +1,4 @@
-import { Device } from './Device';
+import { Device } from '../../devices/types/Device';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class Auditor {

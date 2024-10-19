@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DevicesService } from './devices.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { DevicesService } from '../devices.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Logger } from '@nestjs/common';
-import { ErrorCodes } from '../utils/errors';
+import { ErrorCodes } from '../../utils/errors';
 import { CreateDeviceDTO } from '../types/dto/CreateDeviceDTO';
 import { Device } from '../types/Device';
 

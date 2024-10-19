@@ -20,9 +20,9 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { JwtDTO } from '../types/dto/JwtDTO';
-import { SignInDTO } from '../types/dto/SignInDTO';
-import { NonceDTO } from '../types/dto/NonceDTO';
+import { JwtDTO } from './types/dto/JwtDTO';
+import { SignInDTO } from './types/dto/SignInDTO';
+import { NonceDTO } from './types/dto/NonceDTO';
 
 @ApiTags('Auth')
 @Controller('auth')

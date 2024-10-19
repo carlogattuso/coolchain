@@ -11,8 +11,8 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
-import { RecordDTO } from '../types/dto/RecordDTO';
+import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
+import { RecordDTO } from './types/dto/RecordDTO';
 import { RecordsService } from './records.service';
 import {
   ApiBadRequestResponse,

@@ -3,13 +3,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ErrorCodes } from '../utils/errors';
 import { hexlify, randomBytes, verifyMessage } from 'ethers';
 import { JwtService } from '@nestjs/jwt';
-import { JwtDTO } from '../types/dto/JwtDTO';
+import { JwtDTO } from './types/dto/JwtDTO';
 import { ConfigService } from '@nestjs/config';
-import { SignInDTO } from '../types/dto/SignInDTO';
+import { SignInDTO } from './types/dto/SignInDTO';
 import { createSignInMessage } from './message/message.builder';
 import { AUTH_EXPIRATION_TIMEOUT } from '../utils/constants';
-import { NonceDTO } from '../types/dto/NonceDTO';
-import { Auditor } from '../types/Auditor';
+import { NonceDTO } from './types/dto/NonceDTO';
+import { Auditor } from './types/Auditor';
 
 @Injectable()
 export class AuthService {

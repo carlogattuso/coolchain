@@ -7,7 +7,7 @@ import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
 import { RecordDTO } from '../types/dto/RecordDTO';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../../auth/auth.guard';
 
 const mockCreateRecordDTO = (): CreateRecordDTO => ({
   deviceAddress: '0xabc',

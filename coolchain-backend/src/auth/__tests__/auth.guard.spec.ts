@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthGuard } from './auth.guard';
+import { AuthGuard } from '../auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
-import { ErrorCodes } from '../utils/errors';
+import { ErrorCodes } from '../../utils/errors';
 
 describe('AuthGuard', () => {
   let authGuard: AuthGuard;

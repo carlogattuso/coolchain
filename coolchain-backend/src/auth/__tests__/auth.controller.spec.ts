@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthController } from '../auth.controller';
+import { AuthService } from '../auth.service';
 import { JwtDTO } from '../types/dto/JwtDTO';
 import { SignInDTO } from '../types/dto/SignInDTO';
 import { NonceDTO } from '../types/dto/NonceDTO';
@@ -10,7 +10,7 @@ import {
   RequestTimeoutException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ErrorCodes } from '../utils/errors';
+import { ErrorCodes } from '../../utils/errors';
 
 const mockSignInDTO = (): SignInDTO => ({
   address: 'auditorAddress',

@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateRecordDTO } from '../types/dto/CreateRecordDTO';
-import { CreateEventDTO } from '../types/dto/CreateEventDTO';
-import { RecordDTO } from '../types/dto/RecordDTO';
+import { CreateRecordDTO } from './types/dto/CreateRecordDTO';
+import { RecordDTO } from './types/dto/RecordDTO';
 import { PrismaService } from '../prisma/prisma.service';
-import { Record } from '../types/Record';
+import { Record } from './types/Record';
 import { ErrorCodes } from '../utils/errors';
 import { Prisma } from '@prisma/client';
-import { Device } from '../types/Device';
+import { Device } from '../devices/types/Device';
 
 @Injectable()
 export class RecordsService {
@@ -73,19 +72,6 @@ export class RecordsService {
           stack: error.stack,
         },
       );
-      throw new Error(ErrorCodes.DATABASE_ERROR.code);
-    }
-  }
-
-  async auditRecords(_events: CreateEventDTO[]): Promise<void> {
-    try {
-      await this._prismaService.event.createMany({
-        data: _events,
-      });
-    } catch (error) {
-      this.logger.error(`Error creating events: ${error.message}`, {
-        stack: error.stack,
-      });
       throw new Error(ErrorCodes.DATABASE_ERROR.code);
     }
   }

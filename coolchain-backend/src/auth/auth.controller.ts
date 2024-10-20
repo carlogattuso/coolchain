@@ -10,6 +10,8 @@ import {
   Query,
   RequestTimeoutException,
   UnauthorizedException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ErrorCodes } from '../utils/errors';
@@ -45,6 +47,7 @@ export class AuthController {
   @ApiBadRequestResponse({
     description: 'Invalid data',
   })
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async signIn(@Body() _signIn: SignInDTO): Promise<JwtDTO> {
     try {
       return await this.authService.signIn(_signIn);

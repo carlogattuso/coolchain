@@ -9,6 +9,7 @@ import {
   ForbiddenException,
   RequestTimeoutException,
   UnauthorizedException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ErrorCodes } from '../../utils/errors';
 
@@ -16,6 +17,7 @@ const mockSignInDTO = (): SignInDTO => ({
   address: 'auditorAddress',
   signature: 'signature',
   nonce: 'nonce',
+  issuedAt: 'issuedAt',
 });
 
 describe('AuthController', () => {
@@ -93,6 +95,38 @@ describe('AuthController', () => {
       );
     });
 
+    it('should throw BadRequestException for validation errors', async () => {
+      const invalidDto = {
+        auditorAddress: new Date(),
+        signature: new Date(),
+        nonce: 1234,
+        test: 'hi!',
+        issuedAt: 1234,
+      };
+
+      const validationPipe = new ValidationPipe();
+
+      try {
+        await validationPipe.transform(invalidDto, {
+          type: 'body',
+          metatype: SignInDTO,
+        });
+      } catch (error) {
+        expect(error.status).toBe(400);
+        expect(error.getResponse().message).toEqual([
+          'address must be an Ethereum address',
+          'signature must be longer than or equal to 128 and shorter than or equal to 256 characters',
+          'signature must be a hexadecimal number',
+          'signature must be a string',
+          'nonce must be longer than or equal to 64 and shorter than or equal to 128 characters',
+          'nonce must be a hexadecimal number',
+          'nonce must be a string',
+          'issuedAt must be a valid ISO 8601 date string',
+          'issuedAt must be a string',
+        ]);
+      }
+    });
+
     it('should throw BadRequestException for unexpected errors', async () => {
       const signInDto: SignInDTO = mockSignInDTO();
 
@@ -109,7 +143,10 @@ describe('AuthController', () => {
   describe('getNonce', () => {
     it('should return a NonceDTO when getNonce is successful', async () => {
       const address = '0x123456789';
-      const nonceDto: NonceDTO = { nonce: '123456', issuedAt: new Date() };
+      const nonceDto: NonceDTO = {
+        nonce: '123456',
+        issuedAt: new Date().toISOString(),
+      };
 
       jest.spyOn(authService, 'generateNonce').mockResolvedValue(nonceDto);
 

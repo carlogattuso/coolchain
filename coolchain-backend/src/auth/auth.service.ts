@@ -30,8 +30,8 @@ export class AuthService {
   }
 
   async signIn(_signIn: SignInDTO): Promise<JwtDTO> {
-    const { address, signature, nonce } = _signIn;
-    if (!address || !signature || !nonce) {
+    const { address, signature, nonce, issuedAt } = _signIn;
+    if (!address || !signature || !nonce || !issuedAt) {
       throw new Error(ErrorCodes.BAD_LOGIN_REQUEST.code);
     }
 
@@ -49,13 +49,18 @@ export class AuthService {
     }
 
     const currentTime = new Date();
-    const issuedAt = new Date(auditor.issuedAt);
-
-    if (currentTime.getTime() - issuedAt.getTime() > AUTH_EXPIRATION_TIMEOUT) {
+    if (
+      currentTime.getTime() - auditor.issuedAt.getTime() >
+      AUTH_EXPIRATION_TIMEOUT
+    ) {
       throw new Error(ErrorCodes.AUTH_EXPIRATION_TIMEOUT.code);
     }
 
-    if (!auditor || auditor.nonce !== nonce) {
+    if (
+      !auditor ||
+      auditor.nonce !== nonce ||
+      auditor.issuedAt.toISOString() !== issuedAt
+    ) {
       throw new Error(ErrorCodes.UNAUTHORIZED.code);
     }
 
@@ -95,7 +100,7 @@ export class AuthService {
 
     return {
       nonce,
-      issuedAt,
+      issuedAt: issuedAt.toISOString(),
     };
   }
 }

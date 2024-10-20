@@ -22,6 +22,7 @@ const mockSignInDTO = (): SignInDTO => ({
   address: 'auditorAddress',
   signature: 'signature',
   nonce: 'nonce',
+  issuedAt: 'issuedAt',
 });
 
 const mockDatabaseError = (): Error =>
@@ -101,8 +102,13 @@ describe('AuthService', () => {
       });
     });
 
-    it('should throw BadRequestException if address, signature, or nonce is missing', async () => {
-      const signInDto: SignInDTO = { address: '', signature: '', nonce: '' };
+    it('should throw BadRequestException if address, signature, nonce or issuedAt is missing', async () => {
+      const signInDto: SignInDTO = {
+        address: '',
+        signature: '',
+        nonce: '',
+        issuedAt: '',
+      };
 
       await expect(authService.signIn(signInDto)).rejects.toThrow(
         ErrorCodes.BAD_LOGIN_REQUEST.code,

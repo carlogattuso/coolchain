@@ -48,7 +48,7 @@ export class BlockchainService {
     this.contractAddress = this._configService.get<string>('CONTRACT_ADDRESS');
     this.chainName = this._configService.get<string>('CHAIN_NAME');
     this.chainRpcUrl = this._configService.get<string>('CHAIN_RPC_URL');
-    this.chainId = this._configService.get<number>('CHAIN_ID');
+    this.chainId = +this._configService.get<number>('CHAIN_ID');
     this.salt = this._configService.get<string>('SALT');
 
     this.provider = this.createJsonRpcProvider(

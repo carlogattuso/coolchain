@@ -3,7 +3,11 @@ import { DevicesController } from '../devices.controller';
 import { DevicesService } from '../devices.service';
 import { CreateDeviceDTO } from '../types/dto/CreateDeviceDTO';
 import { DeviceDTO } from '../types/dto/DeviceDTO';
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ErrorCodes } from '../../utils/errors';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '../../auth/auth.guard';
@@ -76,7 +80,7 @@ describe('DevicesController', () => {
         .spyOn(devicesService, 'createDevice')
         .mockResolvedValue(createdDevice);
 
-      const result = await devicesController.createDevice(
+      const result = await devicesController.registerDevice(
         mockRequest,
         createDeviceDTO,
       );
@@ -104,12 +108,34 @@ describe('DevicesController', () => {
         .mockRejectedValue(new Error(ErrorCodes.DEVICE_ALREADY_EXISTS.code));
 
       await expect(
-        devicesController.createDevice(mockRequest, createDeviceDTO),
+        devicesController.registerDevice(mockRequest, createDeviceDTO),
       ).rejects.toThrow(ConflictException);
       expect(devicesService.createDevice).toHaveBeenCalledWith(
         auditorAddress,
         createDeviceDTO,
       );
+    });
+
+    it('should return BadRequestException when validation fails', async () => {
+      const invalidDto = {
+        address: new Date(),
+        name: 1234,
+      };
+
+      const validationPipe = new ValidationPipe();
+
+      try {
+        await validationPipe.transform(invalidDto, {
+          type: 'body',
+          metatype: CreateDeviceDTO,
+        });
+      } catch (error) {
+        expect(error.status).toBe(400);
+        expect(error.getResponse().message).toEqual([
+          'address must be an Ethereum address',
+          'name must be a string',
+        ]);
+      }
     });
 
     it('should throw BadRequestException for any other error', async () => {
@@ -128,7 +154,7 @@ describe('DevicesController', () => {
         .mockRejectedValue(new Error('Unexpected error'));
 
       await expect(
-        devicesController.createDevice(mockRequest, createDeviceDTO),
+        devicesController.registerDevice(mockRequest, createDeviceDTO),
       ).rejects.toThrow(BadRequestException);
       expect(devicesService.createDevice).toHaveBeenCalledWith(
         auditorAddress,

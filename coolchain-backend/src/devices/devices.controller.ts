@@ -9,6 +9,8 @@ import {
   Post,
   Request,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -45,7 +47,8 @@ export class DevicesController {
   @ApiBadRequestResponse({
     description: 'Invalid data',
   })
-  async createDevice(
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  async registerDevice(
     @Request() _req: Request,
     @Body() _device: CreateDeviceDTO,
   ): Promise<CreateDeviceDTO> {

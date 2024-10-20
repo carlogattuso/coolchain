@@ -13,4 +13,5 @@ export const config = {
   salt: process.env.SALT as string,
   sampleInterval: parseInt(process.env.SAMPLE_INTERVAL || '10000', 10),
   recordsDir: process.env.RECORDS_DIR as string,
+  coolchainAPIUrl: process.env.COOLCHAIN_URL,
 };

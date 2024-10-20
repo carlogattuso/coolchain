@@ -15,3 +15,13 @@ db.Devices.insertOne({
   name: 'Test Raspberry Pi II',
   auditorAddress: '0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b',
 });
+
+db.Auditors.insertOne({
+  _id: '0xCd9D32e877aDeaAef02B179a8EDE69c289A68968',
+});
+
+db.Devices.insertOne({
+  _id: '0xb57Ba9aD7D81610D4410c91b2F80EbEE580484CB',
+  name: 'Test Raspberry Pi Alpha',
+  auditorAddress: '0xCd9D32e877aDeaAef02B179a8EDE69c289A68968',
+});

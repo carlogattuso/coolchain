@@ -27,7 +27,7 @@ function main() {
 	device_temp = device_temp / sensors.length / 1000;
 
 	console.log(`=> ${device_temp}ºC`);
-	console.log();
+	// console.log();
 }
 main();
 setInterval(main, interval);

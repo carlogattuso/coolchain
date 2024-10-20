@@ -122,7 +122,6 @@ export class BlockchainService {
             deadline,
         };
 
-        const PRIMARY_TYPE = 'CallPermit';
         const CALL_PERMIT_PRECOMPILE_NAME = 'Call Permit Precompile';
         const CALL_PERMIT_ADDRESS = '0x000000000000000000000000000000000000080a';
         const domain = {
@@ -133,24 +132,6 @@ export class BlockchainService {
         }
 
         const typedData = {
-            // EIP712Domain: [
-            //   {
-            //     name: 'name',
-            //     type: 'string',
-            //   },
-            //   {
-            //     name: 'version',
-            //     type: 'string',
-            //   },
-            //   {
-            //     name: 'chainId',
-            //     type: 'uint256',
-            //   },
-            //   {
-            //     name: 'verifyingContract',
-            //     type: 'address',
-            //   },
-            // ],
             CallPermit: [
                 {
                     name: 'from',
@@ -193,11 +174,6 @@ export class BlockchainService {
     private async signRecord(_record: Record): Promise<RecordDTO | undefined> {
         const signature = await this.wallet.signTypedData(this.domain, this.types, _record);
         const recordSignature: ECDSASignature = ethers.Signature.from(signature);
-
-        // console.log("Record data")
-        // console.log(this.domain)
-        // console.log(this.types)
-        // console.log(_record)
 
         const messageData = await this.createPermitMessageData(_record);
 

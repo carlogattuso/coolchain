@@ -27,6 +27,10 @@ export const ErrorCodes = {
     code: 'ERR007',
     message: 'Device with this address already exists',
   },
+  AUDITOR_ALREADY_EXISTS: {
+    code: 'ERR007',
+    message: 'Auditor with this address already exists',
+  },
   UNEXPECTED_ERROR: {
     code: 'ERR999',
     message: 'Unexpected error occurred.',

@@ -10,6 +10,7 @@ import { createSignInMessage } from './message/message.builder';
 import { AUTH_EXPIRATION_TIMEOUT } from '../utils/constants';
 import { NonceDTO } from './types/dto/NonceDTO';
 import { Auditor } from './types/Auditor';
+import { SignUpDTO } from './types/dto/SignUpDTO';
 
 @Injectable()
 export class AuthService {
@@ -102,5 +103,39 @@ export class AuthService {
       nonce,
       issuedAt: issuedAt.toISOString(),
     };
+  }
+
+  async signUp(_signUp: SignUpDTO): Promise<SignUpDTO> {
+    let existingAuditor: Auditor;
+    try {
+      existingAuditor = await this._prismaService.auditor.findUnique({
+        where: { address: _signUp.address },
+      });
+    } catch (error) {
+      this.logger.error(`Error retrieving auditor: ${error.message}`, {
+        stack: error.stack,
+        auditor: _signUp.address,
+      });
+      throw new Error(ErrorCodes.DATABASE_ERROR.code);
+    }
+
+    if (existingAuditor) {
+      throw new Error(ErrorCodes.AUDITOR_ALREADY_EXISTS.code);
+    }
+
+    try {
+      return await this._prismaService.auditor.create({
+        data: _signUp,
+        select: {
+          address: true,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error creating auditor: ${error.message}`, {
+        stack: error.stack,
+        auditor: _signUp.address,
+      });
+      throw new Error(ErrorCodes.DATABASE_ERROR.code);
+    }
   }
 }

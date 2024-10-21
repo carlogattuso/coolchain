@@ -6,18 +6,24 @@ import { SignInDTO } from '../types/dto/SignInDTO';
 import { NonceDTO } from '../types/dto/NonceDTO';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   RequestTimeoutException,
   UnauthorizedException,
   ValidationPipe,
 } from '@nestjs/common';
 import { ErrorCodes } from '../../utils/errors';
+import { SignUpDTO } from '../types/dto/SignUpDTO';
 
 const mockSignInDTO = (): SignInDTO => ({
   address: 'auditorAddress',
   signature: 'signature',
   nonce: 'nonce',
   issuedAt: 'issuedAt',
+});
+
+const mockSignUpDTO = (): SignUpDTO => ({
+  address: 'auditorAddress',
 });
 
 describe('AuthController', () => {
@@ -33,6 +39,7 @@ describe('AuthController', () => {
           useValue: {
             signIn: jest.fn(),
             generateNonce: jest.fn(),
+            signUp: jest.fn(),
           },
         },
       ],
@@ -175,6 +182,42 @@ describe('AuthController', () => {
         .mockRejectedValue(new Error('Unexpected error'));
 
       await expect(authController.getNonce(address)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('signUp', () => {
+    it('should return a SignUpDTO when signUp is successful', async () => {
+      const signUpData: SignUpDTO = mockSignUpDTO();
+
+      jest.spyOn(authService, 'signUp').mockResolvedValue(signUpData);
+
+      const result = await authController.signUp(signUpData);
+      expect(result).toEqual(signUpData);
+      expect(authService.signUp).toHaveBeenCalledWith(signUpData);
+    });
+
+    it('should throw ConflictException if auditor already exists', async () => {
+      const signUpData: SignUpDTO = mockSignUpDTO();
+
+      jest
+        .spyOn(authService, 'signUp')
+        .mockRejectedValue(new Error(ErrorCodes.AUDITOR_ALREADY_EXISTS.code));
+
+      await expect(authController.signUp(signUpData)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('should throw BadRequestException for unexpected errors', async () => {
+      const signUpData: SignUpDTO = mockSignUpDTO();
+
+      jest
+        .spyOn(authService, 'signUp')
+        .mockRejectedValue(new Error('Unexpected error'));
+
+      await expect(authController.signUp(signUpData)).rejects.toThrow(
         BadRequestException,
       );
     });

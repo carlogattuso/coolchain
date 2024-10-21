@@ -22,6 +22,7 @@ import {
   ApiRequestTimeoutResponse,
   ApiResponse,
   ApiTags,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { JwtDTO } from './types/dto/JwtDTO';
@@ -49,6 +50,9 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: 'Invalid data',
+  })
+  @ApiTooManyRequestsResponse({
+    description: 'Too Many Requests',
   })
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async signIn(@Body() _signIn: SignInDTO): Promise<JwtDTO> {
@@ -78,6 +82,9 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: 'Invalid data',
+  })
+  @ApiTooManyRequestsResponse({
+    description: 'Too Many Requests',
   })
   async getNonce(@Query('address') _address: string): Promise<NonceDTO> {
     try {

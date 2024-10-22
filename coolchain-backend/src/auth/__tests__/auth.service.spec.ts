@@ -113,7 +113,7 @@ describe('AuthService', () => {
       };
 
       await expect(authService.signIn(signInDto)).rejects.toThrow(
-        ErrorCodes.BAD_LOGIN_REQUEST.code,
+        ErrorCodes.BAD_SIGN_IN_REQUEST.code,
       );
     });
 

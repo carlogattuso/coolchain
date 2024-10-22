@@ -25,15 +25,14 @@ export class AuthService {
     private readonly _prismaService: PrismaService,
     private readonly _jwtService: JwtService,
   ) {
-    this.domain = this._configService.get<string>('APP_DOMAIN');
-    this.uri = this._configService.get<string>('APP_URI');
+    this.domain = this._configService.get<string>('ORIGIN');
     this.chainId = this._configService.get<number>('CHAIN_ID');
   }
 
   async signIn(_signIn: SignInDTO): Promise<JwtDTO> {
     const { address, signature, nonce, issuedAt } = _signIn;
     if (!address || !signature || !nonce || !issuedAt) {
-      throw new Error(ErrorCodes.BAD_LOGIN_REQUEST.code);
+      throw new Error(ErrorCodes.BAD_SIGN_IN_REQUEST.code);
     }
 
     let auditor: Auditor;
@@ -67,7 +66,6 @@ export class AuthService {
 
     const message: string = createSignInMessage(
       this.domain,
-      this.uri,
       this.chainId,
       auditor.address,
       auditor.nonce,

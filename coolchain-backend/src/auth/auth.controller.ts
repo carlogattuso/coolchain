@@ -59,8 +59,8 @@ export class AuthController {
     try {
       return await this.authService.signIn(_signIn);
     } catch (error) {
-      if (error.message === ErrorCodes.BAD_LOGIN_REQUEST.code) {
-        throw new BadRequestException(ErrorCodes.BAD_LOGIN_REQUEST.message);
+      if (error.message === ErrorCodes.BAD_SIGN_IN_REQUEST.code) {
+        throw new BadRequestException(ErrorCodes.BAD_SIGN_IN_REQUEST.message);
       } else if (error.message === ErrorCodes.AUTH_EXPIRATION_TIMEOUT.code) {
         throw new RequestTimeoutException(
           ErrorCodes.AUTH_EXPIRATION_TIMEOUT.message,

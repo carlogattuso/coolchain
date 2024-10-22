@@ -66,12 +66,12 @@ describe('AuthController', () => {
       expect(authService.signIn).toHaveBeenCalledWith(signInDto);
     });
 
-    it('should throw BadRequestException if bad login request', async () => {
+    it('should throw BadRequestException if bad signIn request', async () => {
       const signInDto: SignInDTO = mockSignInDTO();
 
       jest
         .spyOn(authService, 'signIn')
-        .mockRejectedValue(new Error(ErrorCodes.BAD_LOGIN_REQUEST.code));
+        .mockRejectedValue(new Error(ErrorCodes.BAD_SIGN_IN_REQUEST.code));
 
       await expect(authController.signIn(signInDto)).rejects.toThrow(
         BadRequestException,

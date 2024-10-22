@@ -3,7 +3,7 @@ export const ErrorCodes = {
     code: 'ERR001',
     message: 'The specified device is not registered.',
   },
-  BAD_LOGIN_REQUEST: {
+  BAD_SIGN_IN_REQUEST: {
     code: 'ERR002',
     message: 'Valid address, signature, and nonce are required',
   },

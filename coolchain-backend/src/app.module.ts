@@ -10,6 +10,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { DevicesModule } from './devices/devices.module';
 import { EventsModule } from './events/events.module';
+import { AuditorsModule } from './auditors/auditors.module';
 
 @Module({
   controllers: [AppController],
@@ -26,6 +27,7 @@ import { EventsModule } from './events/events.module';
     PrismaModule,
     DevicesModule,
     EventsModule,
+    AuditorsModule,
   ],
   providers: [AppService],
 })

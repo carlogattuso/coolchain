@@ -5,12 +5,12 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { SignInDTO } from '../types/dto/SignInDTO';
 import { JwtDTO } from '../types/dto/JwtDTO';
-import { NonceDTO } from '../types/dto/NonceDTO';
+import { Nonce } from '../types/Nonce';
 import { ErrorCodes } from '../../utils/errors';
 import { randomBytes, verifyMessage } from 'ethers';
 import { AUTH_EXPIRATION_TIMEOUT } from '../../utils/constants';
 import { Logger } from '@nestjs/common';
-import { Auditor } from '../types/Auditor';
+import { Auditor } from '../../auditors/types/Auditor';
 import { SignUpDTO } from '../types/dto/SignUpDTO';
 
 jest.mock('ethers', () => ({
@@ -20,7 +20,7 @@ jest.mock('ethers', () => ({
 }));
 
 const mockSignInDTO = (): SignInDTO => ({
-  address: 'auditorAddress',
+  auditorAddress: 'auditorAddress',
   signature: 'signature',
   nonce: 'nonce',
   issuedAt: new Date().toISOString(),
@@ -90,23 +90,23 @@ describe('AuthService', () => {
 
       prismaService.auditor.findUnique = jest.fn().mockResolvedValue(auditor);
       jest.spyOn(global.Date, 'now').mockReturnValue(new Date().getTime());
-      (verifyMessage as jest.Mock).mockReturnValue(signInDto.address);
+      (verifyMessage as jest.Mock).mockReturnValue(signInDto.auditorAddress);
       jwtService.sign = jest.fn().mockReturnValue('jwt-token');
 
       const result: JwtDTO = await authService.signIn(signInDto);
 
       expect(result).toEqual({ accessToken: 'jwt-token' });
       expect(prismaService.auditor.findUnique).toHaveBeenCalledWith({
-        where: { address: signInDto.address },
+        where: { address: signInDto.auditorAddress },
       });
       expect(jwtService.sign).toHaveBeenCalledWith({
-        address: signInDto.address,
+        address: signInDto.auditorAddress,
       });
     });
 
     it('should throw BadRequestException if address, signature, nonce or issuedAt is missing', async () => {
       const signInDto: SignInDTO = {
-        address: '',
+        auditorAddress: '',
         signature: '',
         nonce: '',
         issuedAt: '',
@@ -204,7 +204,7 @@ describe('AuthService', () => {
         issuedAt: mockDate,
       });
 
-      const result: NonceDTO = await authService.generateNonce(address);
+      const result: Nonce = await authService.generateNonce(address);
 
       expect(result).toEqual({
         nonce: mockNonce,

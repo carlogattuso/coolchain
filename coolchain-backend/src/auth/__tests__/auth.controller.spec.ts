@@ -3,7 +3,7 @@ import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { JwtDTO } from '../types/dto/JwtDTO';
 import { SignInDTO } from '../types/dto/SignInDTO';
-import { NonceDTO } from '../types/dto/NonceDTO';
+import { Nonce } from '../types/Nonce';
 import {
   BadRequestException,
   ConflictException,
@@ -16,7 +16,7 @@ import { ErrorCodes } from '../../utils/errors';
 import { SignUpDTO } from '../types/dto/SignUpDTO';
 
 const mockSignInDTO = (): SignInDTO => ({
-  address: 'auditorAddress',
+  auditorAddress: 'auditorAddress',
   signature: 'signature',
   nonce: 'nonce',
   issuedAt: 'issuedAt',
@@ -150,14 +150,14 @@ describe('AuthController', () => {
   describe('getNonce', () => {
     it('should return a NonceDTO when getNonce is successful', async () => {
       const address = '0x123456789';
-      const nonceDto: NonceDTO = {
+      const nonceDto: Nonce = {
         nonce: '123456',
         issuedAt: new Date().toISOString(),
       };
 
       jest.spyOn(authService, 'generateNonce').mockResolvedValue(nonceDto);
 
-      const result = await authController.getNonce(address);
+      const result = await authController.getMessage(address);
       expect(result).toEqual(nonceDto);
       expect(authService.generateNonce).toHaveBeenCalledWith(address);
     });
@@ -169,7 +169,7 @@ describe('AuthController', () => {
         .spyOn(authService, 'generateNonce')
         .mockRejectedValue(new Error(ErrorCodes.ADDRESS_REQUIRED.code));
 
-      await expect(authController.getNonce(address)).rejects.toThrow(
+      await expect(authController.getMessage(address)).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -181,7 +181,7 @@ describe('AuthController', () => {
         .spyOn(authService, 'generateNonce')
         .mockRejectedValue(new Error('Unexpected error'));
 
-      await expect(authController.getNonce(address)).rejects.toThrow(
+      await expect(authController.getMessage(address)).rejects.toThrow(
         BadRequestException,
       );
     });

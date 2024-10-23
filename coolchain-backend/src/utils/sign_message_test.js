@@ -2,16 +2,18 @@ const { ethers } = require('ethers');
 
 // Private key provided
 const privateKey =
-  '0x5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133';
+  '0x99b3c12287537e38c90a9219d4cb074a89a16e9cdb20bf85728ebd97c343e342';
 const wallet = new ethers.Wallet(privateKey);
 console.log(wallet.address);
 
 const message =
-  `coolchain wants you to sign with your Ethereum account: 0xf24FF3a9CF04c71Dbc94D0b566f7A27B94566cac\n` +
-  `\nPlease sign this message to verify your identity.\n` +
-  `\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1281` +
-  `\nNonce: 0x815c45d3b6dacf892a6fa223631d2421e48ea53ab9623f972b46a3dd0acb7464` +
-  `\nIssued At: 2024-10-20T17:57:04.753Z`;
+  `http://localhost:8081 wants you to sign in with your Ethereum account:\n0x6Be02d1d3665660d22FF9624b7BE0551ee1Ac91b\n\n` +
+  `I accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\n` +
+  `URI: http://localhost:8081\n` +
+  `Version: 1\n` +
+  `Chain ID: 1281\n` +
+  `Nonce: 0x941ddd61de47230facafd01b564f74a13f5830fae5274b71b198c9d6e1639bfe\n` +
+  `Issued At: 2024-10-23T19:23:44.363Z`;
 
 console.log(message);
 

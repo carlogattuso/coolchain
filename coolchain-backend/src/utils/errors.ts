@@ -1,7 +1,7 @@
 export const ErrorCodes = {
   DEVICE_NOT_REGISTERED: {
     code: 'ERR001',
-    message: 'The specified device is not registered.',
+    message: 'The specified device is not registered',
   },
   BAD_SIGN_IN_REQUEST: {
     code: 'ERR002',
@@ -9,7 +9,7 @@ export const ErrorCodes = {
   },
   DATABASE_ERROR: {
     code: 'ERR003',
-    message: 'Database error occurred.',
+    message: 'Database error occurred',
   },
   ADDRESS_REQUIRED: {
     code: 'ERR004',
@@ -33,6 +33,6 @@ export const ErrorCodes = {
   },
   UNEXPECTED_ERROR: {
     code: 'ERR999',
-    message: 'Unexpected error occurred.',
+    message: 'Unexpected error occurred',
   },
 };

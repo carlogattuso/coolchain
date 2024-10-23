@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Body,
-  ConflictException,
   Controller,
   ForbiddenException,
   Get,
@@ -18,7 +17,7 @@ import { AuthService } from './auth.service';
 import { ErrorCodes } from '../utils/errors';
 import {
   ApiBadRequestResponse,
-  ApiConflictResponse,
+  ApiForbiddenResponse,
   ApiRequestTimeoutResponse,
   ApiResponse,
   ApiTags,
@@ -27,8 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtDTO } from './types/dto/JwtDTO';
 import { SignInDTO } from './types/dto/SignInDTO';
-import { NonceDTO } from './types/dto/NonceDTO';
-import { SignUpDTO } from './types/dto/SignUpDTO';
+import { MessageDTO } from './types/dto/MessageDTO';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -73,54 +71,30 @@ export class AuthController {
     }
   }
 
-  @Get('nonce')
+  @Get('message')
   @HttpCode(HttpStatus.OK)
   @ApiResponse({
     status: 201,
-    description: 'Nonce generated successfully',
-    type: NonceDTO,
+    description: 'Message generated successfully',
+    type: MessageDTO,
   })
   @ApiBadRequestResponse({
     description: 'Invalid data',
   })
+  @ApiForbiddenResponse({
+    description: 'Auditor address is required',
+  })
   @ApiTooManyRequestsResponse({
     description: 'Too Many Requests',
   })
-  async getNonce(@Query('address') _address: string): Promise<NonceDTO> {
+  async getMessage(
+    @Query('address') _auditorAddress: string,
+  ): Promise<MessageDTO> {
     try {
-      return await this.authService.generateNonce(_address);
+      return await this.authService.generateMessageToSign(_auditorAddress);
     } catch (error) {
       if (error.message === ErrorCodes.ADDRESS_REQUIRED.code) {
         throw new ForbiddenException(ErrorCodes.ADDRESS_REQUIRED.message);
-      } else {
-        throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
-      }
-    }
-  }
-
-  @Post('signUp')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiResponse({
-    status: 201,
-    description: 'Signed up successfully',
-    type: SignUpDTO,
-  })
-  @ApiConflictResponse({
-    description: `Auditor with this address already exists`,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid data',
-  })
-  @ApiTooManyRequestsResponse({
-    description: 'Too Many Requests',
-  })
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async signUp(@Body() _signUp: SignUpDTO): Promise<SignUpDTO> {
-    try {
-      return await this.authService.signUp(_signUp);
-    } catch (error) {
-      if (error.message === ErrorCodes.AUDITOR_ALREADY_EXISTS.code) {
-        throw new ConflictException(ErrorCodes.AUDITOR_ALREADY_EXISTS.message);
       } else {
         throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
       }

@@ -1,139 +1,87 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
 import { ErrorCodes } from '../utils/errors';
-import { hexlify, randomBytes, verifyMessage } from 'ethers';
+import { verifyMessage } from 'ethers';
 import { JwtService } from '@nestjs/jwt';
 import { JwtDTO } from './types/dto/JwtDTO';
 import { ConfigService } from '@nestjs/config';
 import { SignInDTO } from './types/dto/SignInDTO';
-import { createSignInMessage } from './message/message.builder';
+import { createSIWEMessage } from './message/message.builder';
 import { AUTH_EXPIRATION_TIMEOUT } from '../utils/constants';
-import { NonceDTO } from './types/dto/NonceDTO';
-import { Auditor } from './types/Auditor';
-import { SignUpDTO } from './types/dto/SignUpDTO';
+import { Auditor } from '../auditors/types/Auditor';
+import { MessageDTO } from './types/dto/MessageDTO';
+import { AuditorsService } from '../auditors/auditors.service';
 
 @Injectable()
 export class AuthService {
-  private readonly logger: Logger = new Logger(AuthService.name);
-
   private readonly domain: string;
-  private readonly uri: string;
   private readonly chainId: number;
 
   constructor(
     private readonly _configService: ConfigService,
-    private readonly _prismaService: PrismaService,
+    private readonly _auditorsService: AuditorsService,
     private readonly _jwtService: JwtService,
   ) {
     this.domain = this._configService.get<string>('ORIGIN');
     this.chainId = this._configService.get<number>('CHAIN_ID');
   }
 
+  async generateMessageToSign(_auditorAddress: string): Promise<MessageDTO> {
+    if (!_auditorAddress) {
+      throw new Error(ErrorCodes.ADDRESS_REQUIRED.code);
+    }
+
+    const auditor: Auditor =
+      await this._auditorsService.findOrCreateAuditor(_auditorAddress);
+
+    const message: string = createSIWEMessage(
+      this.domain,
+      this.chainId,
+      _auditorAddress,
+      auditor.nonce,
+      auditor.issuedAt,
+    );
+    return { message };
+  }
+
   async signIn(_signIn: SignInDTO): Promise<JwtDTO> {
-    const { address, signature, nonce, issuedAt } = _signIn;
-    if (!address || !signature || !nonce || !issuedAt) {
+    const { auditorAddress, signature } = _signIn;
+    if (!auditorAddress || !signature) {
       throw new Error(ErrorCodes.BAD_SIGN_IN_REQUEST.code);
     }
 
-    let auditor: Auditor;
-    try {
-      auditor = await this._prismaService.auditor.findUnique({
-        where: { address: address },
-      });
-    } catch (error) {
-      this.logger.error(`Error retrieving auditor: ${error.message}`, {
-        stack: error.stack,
-        auditor: address,
-      });
-      throw new Error(ErrorCodes.DATABASE_ERROR.code);
-    }
+    const auditor: Auditor =
+      await this._auditorsService.findOrCreateAuditor(auditorAddress);
 
-    const currentTime = new Date();
-    if (
-      currentTime.getTime() - auditor.issuedAt.getTime() >
-      AUTH_EXPIRATION_TIMEOUT
-    ) {
-      throw new Error(ErrorCodes.AUTH_EXPIRATION_TIMEOUT.code);
-    }
-
-    if (
-      !auditor ||
-      auditor.nonce !== nonce ||
-      auditor.issuedAt.toISOString() !== issuedAt
-    ) {
-      throw new Error(ErrorCodes.UNAUTHORIZED.code);
-    }
-
-    const message: string = createSignInMessage(
+    const messageToCheck: string = createSIWEMessage(
       this.domain,
       this.chainId,
       auditor.address,
       auditor.nonce,
-      auditor.issuedAt.toISOString(),
+      auditor.issuedAt,
     );
 
-    const recoveredAddress = verifyMessage(message, signature);
-    if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+    const recoveredAddress = verifyMessage(messageToCheck, signature);
+
+    if (
+      !auditor ||
+      recoveredAddress.toLowerCase() !== auditorAddress.toLowerCase()
+    ) {
       throw new Error(ErrorCodes.UNAUTHORIZED.code);
     }
 
-    const payload = { address: address };
+    if (
+      Date.now() - new Date(auditor.issuedAt).getTime() >
+      AUTH_EXPIRATION_TIMEOUT
+    ) {
+      await this._auditorsService.refreshAuditor(auditorAddress);
+      throw new Error(ErrorCodes.AUTH_EXPIRATION_TIMEOUT.code);
+    }
+    
+    await this._auditorsService.refreshAuditor(auditorAddress);
+
+    const payload = { auditorAddress };
     const token = this._jwtService.sign(payload);
 
-    return { accessToken: token };
-  }
-
-  async generateNonce(_address: string): Promise<NonceDTO> {
-    if (!_address) {
-      throw new Error(ErrorCodes.ADDRESS_REQUIRED.code);
-    }
-
-    const nonce: string = hexlify(randomBytes(32));
-    const issuedAt: Date = new Date();
-
-    await this._prismaService.auditor.upsert({
-      where: { address: _address },
-      update: { nonce, issuedAt },
-      create: { address: _address, nonce: nonce, issuedAt: issuedAt },
-    });
-
-    return {
-      nonce,
-      issuedAt: issuedAt.toISOString(),
-    };
-  }
-
-  async signUp(_signUp: SignUpDTO): Promise<SignUpDTO> {
-    let existingAuditor: Auditor;
-    try {
-      existingAuditor = await this._prismaService.auditor.findUnique({
-        where: { address: _signUp.address },
-      });
-    } catch (error) {
-      this.logger.error(`Error retrieving auditor: ${error.message}`, {
-        stack: error.stack,
-        auditor: _signUp.address,
-      });
-      throw new Error(ErrorCodes.DATABASE_ERROR.code);
-    }
-
-    if (existingAuditor) {
-      throw new Error(ErrorCodes.AUDITOR_ALREADY_EXISTS.code);
-    }
-
-    try {
-      return await this._prismaService.auditor.create({
-        data: _signUp,
-        select: {
-          address: true,
-        },
-      });
-    } catch (error) {
-      this.logger.error(`Error creating auditor: ${error.message}`, {
-        stack: error.stack,
-        auditor: _signUp.address,
-      });
-      throw new Error(ErrorCodes.DATABASE_ERROR.code);
-    }
+    return { accessToken: token, new: auditor.onBoardingPending };
   }
 }

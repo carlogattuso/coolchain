@@ -6,4 +6,12 @@ export class JwtDTO {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   accessToken: string;
+
+  @ApiProperty({
+    description:
+      'Indicates whether the user has completed the onboarding process',
+    example: true,
+    required: false,
+  })
+  new: boolean;
 }

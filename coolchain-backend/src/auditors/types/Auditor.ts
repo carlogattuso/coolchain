@@ -25,9 +25,18 @@ export class Auditor {
   nonce?: string;
 
   @ApiProperty({
-    description: 'Timestamp when the nonce was issued, used for authentication',
-    example: '2024-10-20T17:57:04.753+00:00',
+    description:
+      'Timestamp when the nonce was issued (ISO String), used for authentication',
+    example: '2024-10-20T17:57:04.753Z',
     required: false,
   })
-  issuedAt?: Date;
+  issuedAt?: string;
+
+  @ApiProperty({
+    description:
+      'Indicates whether the user has completed the onboarding process',
+    example: true,
+    required: false,
+  })
+  onBoardingPending?: boolean;
 }

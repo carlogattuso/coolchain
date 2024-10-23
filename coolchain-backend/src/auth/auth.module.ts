@@ -7,10 +7,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AUTH_THROTTLER_LIMIT, AUTH_THROTTLER_TTL } from '../utils/constants';
+import { AuditorsModule } from '../auditors/auditors.module';
 
 @Module({
   imports: [
     PrismaModule,
+    AuditorsModule,
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],

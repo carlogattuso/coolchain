@@ -1,8 +1,9 @@
-"use client";
-import * as React from "react";
-import { NextUIProvider } from "@nextui-org/system";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { ThemeProviderProps } from "next-themes/dist/types";
+'use client';
+import React from 'react';
+import { NextUIProvider } from '@nextui-org/system';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import { ThemeProviderProps } from 'next-themes/dist/types';
+import { MetaMaskProvider } from '@metamask/sdk-react';
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -11,13 +12,23 @@ export interface ProvidersProps {
 
 export function Providers({ children, themeProps }: ProvidersProps) {
   return (
-    <NextUIProvider>
-      <NextThemesProvider
-        defaultTheme='system'
-        attribute='class'
-        {...themeProps}>
-        {children}
-      </NextThemesProvider>
-    </NextUIProvider>
+    <MetaMaskProvider
+      debug={false}
+      sdkOptions={{
+        dappMetadata: {
+          name: 'Coolchain',
+          url: process.env.NEXT_PUBLIC_DAPP_URL,
+        },
+      }}
+    >
+      <NextUIProvider>
+        <NextThemesProvider
+          defaultTheme="system"
+          attribute="class"
+          {...themeProps}>
+          {children}
+        </NextThemesProvider>
+      </NextUIProvider>
+    </MetaMaskProvider>
   );
 }

@@ -1,19 +1,12 @@
-import { object, ref, string } from "yup";
-
-export const LoginSchema = object().shape({
-  email: string()
-    .email("This field must be an email")
-    .required("Email is required"),
-  password: string().required("Password is required"),
-});
+import { object, ref, string } from 'yup';
 
 export const RegisterSchema = object().shape({
-  name: string().required("Name is required"),
+  name: string().required('Name is required'),
   email: string()
-    .email("This field must be an email")
-    .required("Email is required"),
-  password: string().required("Password is required"),
+    .email('This field must be an email')
+    .required('Email is required'),
+  password: string().required('Password is required'),
   confirmPassword: string()
-    .required("Confirm password is required")
-    .oneOf([ref("password")], "Passwords must match"),
+    .required('Confirm password is required')
+    .oneOf([ref('password')], 'Passwords must match'),
 });

@@ -9,12 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@metamask/sdk-react": "^0.30.0",
     "@nextui-org/breadcrumbs": "^2.0.13",
     "@nextui-org/divider": "^2.0.32",
     "@nextui-org/react": "^2.4.8",
     "@nextui-org/system": "^2.2.6",
     "@nextui-org/theme": "^2.2.11",
     "apexcharts": "^3.53.0",
+    "axios": "^1.7.7",
     "clsx": "^2.1.1",
     "formik": "^2.4.6",
     "framer-motion": "^11.5.6",

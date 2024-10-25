@@ -30,8 +30,12 @@ export class AuthService {
       throw new Error(ErrorCodes.ADDRESS_REQUIRED.code);
     }
 
-    const auditor: Auditor =
+    let auditor: Auditor =
       await this._auditorsService.findOrCreateAuditor(_auditorAddress);
+
+    if (this.hasNonceExpired(auditor.issuedAt)) {
+      auditor = await this._auditorsService.refreshAuditor(auditor.address);
+    }
 
     const message: string = createSIWEMessage(
       this.domain,
@@ -69,19 +73,19 @@ export class AuthService {
       throw new Error(ErrorCodes.UNAUTHORIZED.code);
     }
 
-    if (
-      Date.now() - new Date(auditor.issuedAt).getTime() >
-      AUTH_EXPIRATION_TIMEOUT
-    ) {
-      await this._auditorsService.refreshAuditor(auditorAddress);
+    if (this.hasNonceExpired(auditor.issuedAt)) {
       throw new Error(ErrorCodes.AUTH_EXPIRATION_TIMEOUT.code);
     }
-    
+
     await this._auditorsService.refreshAuditor(auditorAddress);
 
     const payload = { auditorAddress };
     const token = this._jwtService.sign(payload);
 
     return { accessToken: token, new: auditor.onBoardingPending };
+  }
+
+  hasNonceExpired(issuedAt: string): boolean {
+    return Date.now() - new Date(issuedAt).getTime() > AUTH_EXPIRATION_TIMEOUT;
   }
 }

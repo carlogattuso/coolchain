@@ -11,9 +11,9 @@ export class AuditorsService {
 
   constructor(private readonly _prismaService: PrismaService) {}
 
-  async refreshAuditor(_auditorAddress: string): Promise<void> {
+  async refreshAuditor(_auditorAddress: string): Promise<Auditor> {
     try {
-      await this._prismaService.auditor.update({
+      return await this._prismaService.auditor.update({
         where: { address: _auditorAddress },
         data: await this.generateNonce(),
       });

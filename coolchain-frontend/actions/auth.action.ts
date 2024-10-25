@@ -7,6 +7,7 @@ export const createAuthCookie = async (accessToken: string) => {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24,
     path: '/',
+    httpOnly: true,
   });
 };
 

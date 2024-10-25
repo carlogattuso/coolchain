@@ -4,6 +4,12 @@ import { NextUIProvider } from '@nextui-org/system';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { ThemeProviderProps } from 'next-themes/dist/types';
 import { MetaMaskProvider } from '@metamask/sdk-react';
+import { isCoolchainError } from '@/helpers/types/CoolchainError';
+import { ErrorCodes } from '@/utils/errors';
+import { deleteAuthCookie } from '@/actions/auth.action';
+import { SWRConfig } from 'swr';
+import fetchWithCredentials from '@/helpers/fetcher';
+import { useRouter } from 'next/navigation';
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -11,6 +17,8 @@ export interface ProvidersProps {
 }
 
 export function Providers({ children, themeProps }: ProvidersProps) {
+  const router = useRouter();
+
   return (
     <MetaMaskProvider
       debug={false}
@@ -21,14 +29,26 @@ export function Providers({ children, themeProps }: ProvidersProps) {
         },
       }}
     >
-      <NextUIProvider>
-        <NextThemesProvider
-          defaultTheme="system"
-          attribute="class"
-          {...themeProps}>
-          {children}
-        </NextThemesProvider>
-      </NextUIProvider>
+      <SWRConfig
+        value={{
+          fetcher: fetchWithCredentials,
+          onError: async (error) => {
+            if (isCoolchainError(error) && error.message === ErrorCodes.UNAUTHORIZED.code) {
+              await deleteAuthCookie();
+              router.replace('/signIn');
+            }
+          },
+        }}
+      >
+        <NextUIProvider>
+          <NextThemesProvider
+            defaultTheme="system"
+            attribute="class"
+            {...themeProps}>
+            {children}
+          </NextThemesProvider>
+        </NextUIProvider>
+      </SWRConfig>
     </MetaMaskProvider>
   );
 }

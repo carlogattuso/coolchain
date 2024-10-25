@@ -43,6 +43,10 @@ export const ErrorCodes = {
     code: 'ERR010',
     message: 'Please connect to Moonbeam network and try again',
   },
+  ERROR_FETCHING_DATA: {
+    code: 'ERR011',
+    message: 'Error fetching data from server',
+  },
   UNEXPECTED_ERROR: {
     code: 'ERR999',
     message: 'Unexpected error occurred. Please contact us or try again later',

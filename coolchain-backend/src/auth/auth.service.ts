@@ -79,7 +79,7 @@ export class AuthService {
 
     await this._auditorsService.refreshAuditor(auditorAddress);
 
-    const payload = { auditorAddress };
+    const payload = { address: auditorAddress };
     const token = this._jwtService.sign(payload);
 
     return { accessToken: token, new: auditor.onBoardingPending };

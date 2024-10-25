@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Image } from '@nextui-org/react';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useSDK } from '@metamask/sdk-react';
 import { ErrorMessage } from '@/components/errors/error-message';
 import { ErrorCodes } from '@/utils/errors';
@@ -9,37 +9,45 @@ import { isCoolchainError } from '@/helpers/types/CoolchainError';
 import { getSiweMessage, signIn } from '@/services/authService';
 import { useMetamask } from '@/components/hooks/useMetamask';
 import { isMetamaskError } from '@/helpers/types/MetamaskError';
+import { createAuthCookie } from '@/actions/auth.action';
+import { JwtDTO } from '@/helpers/types/dto/JwtDTO';
+import { useRouter } from 'next/navigation';
 
 export const SignIn = () => {
+  const router = useRouter();
   const { connecting, provider, chainId } = useSDK();
   const { requestAccounts, signMessage } = useMetamask({ provider });
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const handleSignIn = async () => {
-    setErrorMessage('');
+  const handleSignIn = useCallback(async () => {
+      setErrorMessage('');
 
-    try {
-      if (chainId !== process.env.NEXT_PUBLIC_CHAIN_ID_HEX) {
-        setErrorMessage(ErrorCodes.METAMASK_WRONG_CHAIN_ID.message);
-        return;
+      try {
+        if (chainId !== process.env.NEXT_PUBLIC_CHAIN_ID_HEX) {
+          setErrorMessage(ErrorCodes.METAMASK_WRONG_CHAIN_ID.message);
+          return;
+        }
+
+        const account = await requestAccounts();
+        const messageToSign = await getSiweMessage(account);
+        const signature = await signMessage(messageToSign.message, account);
+
+        const signInData: JwtDTO = await signIn({ auditorAddress: account, signature });
+
+        await createAuthCookie(signInData.accessToken);
+        router.replace('/');
+      } catch (error) {
+        const errorCode =
+          isMetamaskError(error) ?
+            String(error.code) : isCoolchainError(error)
+              ? error.message
+              : ErrorCodes.UNEXPECTED_ERROR.code;
+
+        const errorEntry = Object.values(ErrorCodes).find((entry) => entry.code === errorCode);
+        setErrorMessage(errorEntry?.message || ErrorCodes.UNEXPECTED_ERROR.message);
       }
-
-      const account = await requestAccounts();
-      const messageToSign = await getSiweMessage(account);
-      const signature = await signMessage(messageToSign.message, account);
-
-      await signIn({ auditorAddress: account, signature });
-    } catch (error) {
-      const errorCode =
-        isMetamaskError(error) ?
-          String(error.code) : isCoolchainError(error)
-            ? error.message
-            : ErrorCodes.UNEXPECTED_ERROR.code;
-
-      const errorEntry = Object.values(ErrorCodes).find((entry) => entry.code === errorCode);
-      setErrorMessage(errorEntry?.message || ErrorCodes.UNEXPECTED_ERROR.message);
-    }
-  };
+    },
+    [chainId, requestAccounts, signMessage, router]);
 
   return (
     <div className="text-center">

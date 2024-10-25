@@ -1,6 +1,7 @@
 import { MessageDTO } from '@/helpers/types/dto/MessageDTO';
 import { SignInDTO } from '@/helpers/types/dto/SignInDTO';
 import { ErrorCodes } from '@/utils/errors';
+import { JwtDTO } from '@/helpers/types/dto/JwtDTO';
 
 const handleResponse = async (response: Response, errorMap: Record<number, string>, defaultError: string) => {
   if (!response.ok) {
@@ -17,7 +18,7 @@ export const getSiweMessage = async (account: string): Promise<MessageDTO> => {
   }, ErrorCodes.ERROR_GET_SIWE_MESSAGE.code);
 };
 
-export const signIn = async (signInDTO: SignInDTO) => {
+export const signIn = async (signInDTO: SignInDTO): Promise<JwtDTO> => {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signIn`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

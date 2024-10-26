@@ -6,6 +6,8 @@ dotenv.config({ path: envFile });
 
 export const config = {
   privateKey: getOrCreateWallet().privateKey as string,
+  signerWalletPrivateKey: process.env.SIGNER_WALLET_PRIVATE_KEY as string,
+  signerWalletAddress: process.env.SIGNER_WALLET_ADDRESS as string,
   dispatcherPrivateKey: process.env.DISPATCHER_WALLET_PRIVATE_KEY as string,
   dispatcherAddress:  process.env.DISPATCHER_WALLET_ADDRESS as string,
   contractAddress: process.env.CONTRACT_ADDRESS as string,

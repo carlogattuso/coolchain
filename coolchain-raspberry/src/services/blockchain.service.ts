@@ -1,4 +1,4 @@
-import {Addressable, AddressLike, ethers, Signature, SignatureLike, TypedDataDomain, Wallet} from 'ethers';
+import {AddressLike, ethers, SignatureLike, TypedDataDomain, Wallet} from 'ethers';
 import {config} from '../config/config';
 import {RecordDTO} from '../types/dto/RecordDTO';
 import {getJsonRpcProvider, parseAxiosError} from '../utils/utils';
@@ -8,7 +8,7 @@ import axios from 'axios';
 import {RecordService} from './record.service';
 import {EIP712Record} from "../types/EIP712Record";
 import contractFile from "../contract/compile.contract";
-import {Web3} from "web3";
+import {getNonce} from "../utils/permitFunctions";
 
 export class BlockchainService {
     private wallet: Wallet;
@@ -20,19 +20,11 @@ export class BlockchainService {
             {name: 'timestamp', type: 'uint64'},
         ],
     };
-    private recordService: RecordService;
-
-    private web3;
+    private recordService: RecordService | undefined;
 
     constructor() {
         try {
             this.wallet = new Wallet(config.privateKey, getJsonRpcProvider());
-
-            // Web3 setup
-            this.web3 = new Web3(new Web3.providers.HttpProvider(config.chainRpcUrl));
-            const account = this.web3.eth.accounts.privateKeyToAccount(config.privateKey);
-            this.web3.eth.accounts.wallet.add(account);
-
             // EIP712 domain configuration
             this.domain = {
                 name: 'coolchain',
@@ -61,7 +53,7 @@ export class BlockchainService {
 
         console.info('New record: ', record);
 
-        const signedRecord: RecordDTO = await this.signRecord(record);
+        const signedRecord: RecordDTO | undefined = await this.signRecord(record);
 
         try {
             await axios.post(`${config.coolchainAPIUrl}/records`, signedRecord, {
@@ -76,7 +68,11 @@ export class BlockchainService {
     }
 
     private async signEIP712Record(_record: Record): Promise<EIP712Record> {
-        const dataToSign = {..._record};
+        const dataToSign = {
+            deviceAddress: await this.wallet.getAddress(),
+            value: _record.value,
+            timestamp: _record.timestamp,
+        };
 
         const signature = await this.wallet.signTypedData(
             this.domain,
@@ -100,24 +96,19 @@ export class BlockchainService {
         const to: AddressLike = config.contractAddress as AddressLike;
         const value = 0;
         const gasLimit = 100000;
-        const nonce = await getJsonRpcProvider().getTransactionCount(from);
-        console.log("Nonce", nonce)
-        const deadline = Math.floor((new Date(Date.UTC(2024, 11, 31, 23, 59, 59, 999))).getTime() / 1000);
+        const nonce = await getNonce(from);
+        const deadline = Math.floor(new Date(Date.UTC(2024, 12, 31, 23, 59, 59, 999)).getTime() / 1000);
         const eip712Record: EIP712Record = await this.signEIP712Record(_record)
 
+
+        // SetMessage
         const contractInterface: ethers.Interface = new ethers.Interface(
             contractFile.abi,
         );
-
-        console.log("EIP712Record: ", eip712Record);
-
         const recordCallData = contractInterface.encodeFunctionData('storeRecord', [
             eip712Record.deviceAddress,
             eip712Record.value,
-            eip712Record.timestamp,
-            eip712Record.v,
-            eip712Record.r,
-            eip712Record.s,
+            eip712Record.timestamp
         ]);
 
         const message = {
@@ -125,7 +116,7 @@ export class BlockchainService {
             to,
             value,
             data: recordCallData,
-            gasLimit,
+            gaslimit: gasLimit,
             nonce,
             deadline,
         };
@@ -139,175 +130,60 @@ export class BlockchainService {
             verifyingContract: CALL_PERMIT_ADDRESS,
         }
 
-        let typedData = JSON.stringify({
+        const typedData = {
             types: {
-                EIP712Domain: [
-                    {
-                        name: 'name',
-                        type: 'string',
-                    },
-                    {
-                        name: 'version',
-                        type: 'string',
-                    },
-                    {
-                        name: 'chainId',
-                        type: 'uint256',
-                    },
-                    {
-                        name: 'verifyingContract',
-                        type: 'address',
-                    },
-                ],
                 CallPermit: [
-                    {
-                        name: 'from',
-                        type: 'address',
-                    },
-                    {
-                        name: 'to',
-                        type: 'address',
-                    },
-                    {
-                        name: 'value',
-                        type: 'uint256',
-                    },
-                    {
-                        name: 'data',
-                        type: 'bytes',
-                    },
-                    {
-                        name: 'gaslimit',
-                        type: 'uint64',
-                    },
-                    {
-                        name: 'nonce',
-                        type: 'uint256',
-                    },
-                    {
-                        name: 'deadline',
-                        type: 'uint256',
-                    },
+                    { name: 'from', type: 'address' },
+                    { name: 'to', type: 'address' },
+                    { name: 'value', type: 'uint256' },
+                    { name: 'data', type: 'bytes' },
+                    { name: 'gaslimit', type: 'uint64' },
+                    { name: 'nonce', type: 'uint256' },
+                    { name: 'deadline', type: 'uint256' },
                 ],
             },
             primaryType: 'CallPermit',
-            domain,
-            message,
-        });
-        typedData = JSON.stringify({
-            types: {
-                CallPermit: [
-                    {
-                        name: 'from',
-                        type: 'address',
-                    },
-                    {
-                        name: 'to',
-                        type: 'address',
-                    },
-                    {
-                        name: 'value',
-                        type: 'uint256',
-                    },
-                    {
-                        name: 'data',
-                        type: 'bytes',
-                    },
-                    {
-                        name: 'gaslimit',
-                        type: 'uint64',
-                    },
-                    {
-                        name: 'nonce',
-                        type: 'uint256',
-                    },
-                    {
-                        name: 'deadline',
-                        type: 'uint256',
-                    },
-                ],
+            domain: {
+                name: 'Call Permit Precompile',
+                version: '1',
+                chainId: 1287,
+                verifyingContract: '0x000000000000000000000000000000000000080a',
             },
-            primaryType: 'CallPermit',
-            domain,
-            message,
-        });
+            message: message,
+        };
 
         return {
             typedData,
+            domain,
             message,
         };
     }
 
-    private async signDataForPermit({messageData}: { messageData: any }) {
-        const method = 'eth_signTypedData_v4';
-        const from = messageData.message.from;
-        const params = [from, messageData.typedData.types];
-
-        console.log("from", from);
-        console.log("params", params);
-
-        // @ts-ignore
-        this.web3.currentProvider.sendAsync(
-            {
-                method,
-                params,
-                from,
-            },
-            function (err, result) {
-                if (err) return console.dir(err);
-                if (result.error) {
-                    return console.error('ERROR', result);
-                }
-                console.log('Signature:' + JSON.stringify(result.result));
-
-                const ethersSignature = ethers.Signature.from(result.result);
-                const formattedSignature = {
-                    r: ethersSignature.r,
-                    s: ethersSignature.s,
-                    v: ethersSignature.v,
-                };
-                console.log(formattedSignature);
-                return formattedSignature;
-            }
-        );
-    }
-
-
     private async signRecord(_record: Record): Promise<RecordDTO | undefined> {
         const signature = await this.wallet.signTypedData(this.domain, this.types, _record);
         const recordSignature: ECDSASignature = ethers.Signature.from(signature);
-
-        return
-        const permitData = await this.createPermitMessageData(_record);
-
-        console.log("permitData", permitData)
-
-        // Define permit structure
-        // const permitDomain = messageData.domain;
-        // const permitTypes = messageData.typedData;
-        const permitMessage = permitData.message;
-
-        //
-        // TODO: add nonce and datelimit to the record model or transaction data
         const messageData = await this.createPermitMessageData(_record);
 
-        // const method = 'eth_signTypedData_v4';
-        // const from = messageData.message.from;
-        // const params = [from, messageData.typedData];
-
-
+        // Define permit structure
+        const permitDomain = messageData.domain;
+        const permitTypes = messageData.typedData;
+        const permitData = messageData.message;
 
         try {
-            // const etherTransaction = await this.signPermitTransaction(permitMessage);
-            console.log("Permit transaction data", messageData)
-            return
-            const etherTransaction = await this.signPermitTransaction(messageData.message)
-            const permitSignature: ECDSASignature = ethers.Signature.from(etherTransaction.signature as SignatureLike);
-            // const permitSignature: ECDSASignature | undefined = await this.signDataForPermit({messageData})
+            console.log("permitDomain", permitDomain)
+            console.log("permitTypes", permitTypes.types)
+            console.log("permitData", permitData)
+            // Signature with typed data
+            const permitSigned = await this.wallet.signTypedData(
+                permitDomain,
+                permitTypes.types,
+                permitData,
+            );
+            const permitSignature: ECDSASignature = ethers.Signature.from(permitSigned);
 
+            console.log("Record data", _record);
             console.log("Permit signature", permitSignature);
-            console.log("Permit signature v", permitSignature.v);
-            console.log("Permit data", permitData);
+            console.log("v", permitSignature.v)
             return {
                 ..._record,
                 recordSignature: {
@@ -315,7 +191,6 @@ export class BlockchainService {
                     r: recordSignature.r,
                     s: recordSignature.s,
                 },
-                // nonce,
                 permitSignature: {
                     v: permitSignature.v,
                     r: permitSignature.r,
@@ -325,20 +200,5 @@ export class BlockchainService {
         } catch (error) {
             console.error(error);
         }
-    }
-
-    private async signPermitTransaction(permitData: {
-        gasLimit: number;
-        data: string;
-        from: string | Promise<string> | Addressable;
-        to: string | Promise<string> | Addressable;
-        deadline: number;
-        value: number;
-        nonce: number
-    }) {
-        const transaction = await this.wallet.populateTransaction(permitData)
-        const signedTransaction = await this.wallet.signTransaction(transaction);
-        const etherTransaction = ethers.Transaction.from(signedTransaction);
-        return etherTransaction;
     }
 }

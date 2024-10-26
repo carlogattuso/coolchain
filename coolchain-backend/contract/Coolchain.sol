@@ -25,7 +25,7 @@ contract Coolchain {
 
     // Mapping to store all records by device address
     mapping (address => Record[]) private records;
-    
+
     // EIP712 domain separator setup
     constructor() {
         DOMAIN_SEPARATOR = hashDomain(EIP712Domain({
@@ -70,9 +70,9 @@ contract Coolchain {
     }
 
     // Store device record
-    function storeRecord(address deviceAddress, uint8 value, uint64 timestamp, uint8 v, bytes32 r, bytes32 s) public returns (uint256) {
+    function storeRecord(address deviceAddress, uint8 value, uint64 timestamp) public returns (uint256) {
         Record memory record = Record({deviceAddress: deviceAddress, value: value, timestamp: timestamp});
-        require(verifyMessage(record, v, r, s), "Invalid signature");
+        //require(verifyMessage(record, v, r, s), "Invalid signature");
         records[deviceAddress].push(record);
         return records[deviceAddress].length;
     }

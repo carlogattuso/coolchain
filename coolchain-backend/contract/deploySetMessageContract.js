@@ -1,6 +1,6 @@
 // 1. Import the contract file
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const contractFile = require('./compileContract');
+const contractFile = require('./compileSetMessageContract');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ethers = require('ethers');
 // eslint-disable-next-line @typescript-eslint/no-var-requires

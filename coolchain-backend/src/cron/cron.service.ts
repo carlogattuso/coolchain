@@ -18,7 +18,7 @@ export class CronService {
     private readonly _blockchainService: BlockchainService,
   ) {}
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async blockchainChronicler() {
     this.logger.verbose('Blockchain Chronicler: Start');
 
@@ -31,7 +31,9 @@ export class CronService {
       );
 
       const auditResult: CreateEventDTO[] =
-        await this._blockchainService.auditRecords(unauditedRecords);
+        await this._blockchainService.auditRecordsWithPermit(unauditedRecords);
+      // const auditResult: CreateEventDTO[] =
+      //   await this._blockchainService.auditRecords(unauditedRecords);
 
       auditResult.forEach((event: Event) => {
         this.logger.verbose(

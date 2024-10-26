@@ -8,11 +8,11 @@ datasource db {
 }
 
 model Auditor {
-  address           String   @id @map("_id")
-  devices           Device[] @relation("AuditorDevices")
-  nonce             String?
-  issuedAt          String?
-  onBoardingPending Boolean?
+  address             String   @id @map("_id")
+  devices             Device[] @relation("AuditorDevices")
+  nonce               String?
+  issuedAt            String?
+  isOnboardingPending Boolean?
 
   @@map("Auditors")
 }

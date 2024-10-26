@@ -48,7 +48,7 @@ export class AuditorsService {
         data: {
           address: _auditorAddress,
           ...newNonce,
-          onBoardingPending: true,
+          isOnboardingPending: true,
         },
       });
     } catch (error) {

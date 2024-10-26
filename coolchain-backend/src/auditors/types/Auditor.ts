@@ -38,5 +38,5 @@ export class Auditor {
     example: true,
     required: false,
   })
-  onBoardingPending?: boolean;
+  isOnboardingPending?: boolean;
 }

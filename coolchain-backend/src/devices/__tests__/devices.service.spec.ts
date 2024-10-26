@@ -167,8 +167,9 @@ describe('DevicesService', () => {
     });
 
     it('should log and throw a database error if there is a database error during getDevices', async () => {
-      const error = new Error('Database error');
-      jest.spyOn(prismaService.device, 'findMany').mockRejectedValue(error);
+      jest
+        .spyOn(prismaService.device, 'findMany')
+        .mockRejectedValue(mockDatabaseError());
 
       await expect(
         devicesService.getDevices(mockAuditorAddress()),

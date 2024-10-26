@@ -25,7 +25,6 @@ export const Devices = ({ data }: DevicesProps) => {
           columns: [
             { name: 'Device', key: 'name' },
             { name: 'Address', key: 'address' },
-            { name: 'Auditor', key: 'auditorAddress' },
           ],
         }} />
       </div>

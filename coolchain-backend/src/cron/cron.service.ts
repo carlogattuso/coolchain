@@ -32,8 +32,6 @@ export class CronService {
 
       const auditResult: CreateEventDTO[] =
         await this._blockchainService.auditRecordsWithPermit(unauditedRecords);
-      // const auditResult: CreateEventDTO[] =
-      //   await this._blockchainService.auditRecords(unauditedRecords);
 
       auditResult.forEach((event: Event) => {
         this.logger.verbose(

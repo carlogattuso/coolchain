@@ -84,7 +84,7 @@ export class BlockchainService {
 
     const addresses = Array(_unsignedRecords.length).fill(this.contractAddress);
     const values = Array(_unsignedRecords.length).fill(0);
-    const gasLimit = [];
+    const gasLimit = Array(_unsignedRecords.length).fill(GAS_LIMIT);
     const contractInterface: ethers.Interface = new ethers.Interface(
       PERMIT_PRECOMPILE_ABI,
     );
@@ -108,7 +108,10 @@ export class BlockchainService {
       ]);
     });
 
+    console.log('addresses', addresses);
+    console.log('values', values);
     console.log('callData', callData);
+    console.log('gasLimit', gasLimit);
 
     const transaction: ContractTransactionResponse =
       await batchPrecompiled.batchSome(addresses, values, callData, gasLimit);

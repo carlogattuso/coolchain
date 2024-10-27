@@ -8,6 +8,9 @@ import { RecordsModule } from './records/records.module';
 import { CronModule } from './cron/cron.module';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { DevicesModule } from './devices/devices.module';
+import { EventsModule } from './events/events.module';
+import { AuditorsModule } from './auditors/auditors.module';
 
 @Module({
   controllers: [AppController],
@@ -22,6 +25,9 @@ import { PrismaModule } from './prisma/prisma.module';
     RecordsModule,
     CronModule,
     PrismaModule,
+    DevicesModule,
+    EventsModule,
+    AuditorsModule,
   ],
   providers: [AppService],
 })

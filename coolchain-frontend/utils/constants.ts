@@ -1,0 +1,1 @@
+export const AUTH_COOKIE_EXPIRATION_TIME = 3600 * 1000;

@@ -33,5 +33,4 @@ export class RecordService {
 
     return Math.trunc(total / sensors.length);
   }
-
 }

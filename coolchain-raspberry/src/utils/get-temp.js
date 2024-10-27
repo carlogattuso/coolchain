@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const basedir = '/sys/bus/w1/devices'
-const interval = 20000 // 20s
+const interval = 5000 // 5s
 
 function main() {
 	const files = fs.readdirSync(basedir);

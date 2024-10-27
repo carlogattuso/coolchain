@@ -6,8 +6,8 @@
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/bundle.js --minify && npm run copy",
     "build:dev": "esbuild src/index.ts --bundle --platform=node --outfile=dist/bundle.js && npm run copy:dev",
-    "copy": "cp .env .wallet.json dist/",
-    "copy:dev": "cp .env.dev dist/.env && cp .wallet.json dist/",
+    "copy": "cp .env ../coolchain-backend/contract/Coolchain.sol dist/",
+    "copy:dev": "cp .env.dev dist/.env && cp .wallet.json dist/ && cp ../coolchain-backend/contract/Coolchain.sol dist/",
     "start": "node dist/bundle.js",
     "raspberry:dev": "NODE_ENV=dev nodemon",
     "raspberry": "nodemon",
@@ -24,8 +24,10 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
+    "@metamask/eth-sig-util": "^8.0.0",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
-    "ethers": "^6.13.2"
+    "ethers": "^6.13.2",
+    "solc": "^0.8.27"
   }
 }

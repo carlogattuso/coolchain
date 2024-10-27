@@ -1,6 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import {
+  Addressable,
+  AddressLike,
   Contract,
   ContractTransactionReceipt,
   ContractTransactionResponse,
@@ -16,11 +18,15 @@ import contractFile from './contract/compile.contract';
 import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
+  PERMIT_ADDRESS,
+  PERMIT_PRECOMPILE_ABI,
 } from '../utils/constants';
 import { EIP712Record } from './types/EIP712Record';
 import { CreateEventDTO } from '../events/types/dto/CreateEventDTO';
 import { Record } from '../records/types/Record';
 import { EventType } from '@prisma/client';
+
+const GAS_LIMIT = 100000;
 
 @Injectable()
 export class BlockchainService {
@@ -48,7 +54,7 @@ export class BlockchainService {
     this.contractAddress = this._configService.get<string>('CONTRACT_ADDRESS');
     this.chainName = this._configService.get<string>('CHAIN_NAME');
     this.chainRpcUrl = this._configService.get<string>('CHAIN_RPC_URL');
-    this.chainId = this._configService.get<number>('CHAIN_ID');
+    this.chainId = +this._configService.get<number>('CHAIN_ID');
     this.salt = this._configService.get<string>('SALT');
 
     this.provider = this.createJsonRpcProvider(
@@ -67,6 +73,70 @@ export class BlockchainService {
       verifyingContract: this.contractAddress,
       salt: this.salt,
     };
+  }
+
+  async auditRecordsWithPermit(
+    _unsignedRecords: Record[],
+  ): Promise<CreateEventDTO[]> {
+    const batchPrecompiled = new Contract(
+      BATCH_PRECOMPILE_ADDRESS,
+      BATCH_PRECOMPILE_ABI,
+      this.wallet,
+    );
+
+    const addresses = Array(_unsignedRecords.length).fill(PERMIT_ADDRESS);
+    const values = Array(_unsignedRecords.length).fill(0);
+    const gasLimit = Array(_unsignedRecords.length).fill(GAS_LIMIT);
+    const contractInterface: Interface = new Interface(PERMIT_PRECOMPILE_ABI);
+
+    const plainCallData = await this.mapRecordToPermitData(_unsignedRecords);
+
+    console.log('plainCallData');
+    console.log(plainCallData);
+
+    const callData = plainCallData.map((data) => {
+      return contractInterface.encodeFunctionData('dispatch', [
+        data.from,
+        data.to,
+        data.value,
+        data.data,
+        data.gaslimit,
+        data.deadline,
+        data.v,
+        data.r,
+        data.s,
+      ]);
+    });
+
+    console.log('addresses', addresses);
+    console.log('values', values);
+    console.log('callData', callData);
+    console.log('gasLimit', gasLimit);
+
+    const transaction: ContractTransactionResponse =
+      await batchPrecompiled.batchSome(addresses, values, callData, gasLimit);
+
+    const receipt: ContractTransactionReceipt = await transaction.wait();
+
+    const recordMap = new Map<number, string>(
+      _unsignedRecords.map((record, index) => [index, record.id]),
+    );
+
+    return receipt.logs.map((log: EventLog) => {
+      const recordId = recordMap.get(log.index);
+      return {
+        transactionHash: log.transactionHash,
+        blockHash: log.blockHash,
+        blockNumber: log.blockNumber,
+        address: log.address,
+        data: log.data,
+        topics: [...log.topics],
+        index: log.index,
+        transactionIndex: log.transactionIndex,
+        eventType: log.fragment.name as EventType,
+        recordId: recordId,
+      };
+    });
   }
 
   async auditRecords(_unsignedRecords: Record[]): Promise<CreateEventDTO[]> {
@@ -89,9 +159,6 @@ export class BlockchainService {
         eip712Record.deviceAddress,
         eip712Record.value,
         eip712Record.timestamp,
-        eip712Record.v,
-        eip712Record.r,
-        eip712Record.s,
       ]),
     );
 
@@ -162,5 +229,58 @@ export class BlockchainService {
 
   private async mapDataToEIP712(_data: Record[]): Promise<EIP712Record[]> {
     return Promise.all(_data.map((record: Record) => this.signRecord(record)));
+  }
+
+  private async mapRecordToPermitData(records: Record[]): Promise<
+    Awaited<{
+      gaslimit: number;
+      data: string;
+      from: string | Promise<string> | Addressable;
+      to: string | Promise<string> | Addressable;
+      deadline: number;
+      value: number;
+      v: number;
+      r: string;
+      s: string;
+    }>[]
+  > {
+    return Promise.all(
+      records.map((record: Record) => this.createPermitMessageData(record)),
+    );
+  }
+
+  private async createPermitMessageData(_record: Record) {
+    const from: AddressLike = _record.deviceAddress as AddressLike;
+    const to: AddressLike = this.contractAddress as AddressLike;
+    const value = 0;
+    const gasLimit = GAS_LIMIT;
+    const deadline = Math.floor(
+      new Date(Date.UTC(2024, 12, 31, 23, 59, 59, 999)).getTime() / 1000,
+    );
+    const eip712Record: EIP712Record = await this.signRecord(_record);
+    // Permit signature
+    const { v, r, s } = { ..._record.permitSignature };
+
+    const contractInterface: Interface = new Interface(contractFile.abi);
+
+    const recordCallData = contractInterface.encodeFunctionData('storeRecord', [
+      eip712Record.deviceAddress,
+      eip712Record.value,
+      eip712Record.timestamp,
+    ]);
+
+    const message = {
+      from,
+      to,
+      value,
+      data: recordCallData,
+      gaslimit: gasLimit,
+      deadline,
+      r,
+      s,
+      v,
+    };
+
+    return { ...message };
   }
 }

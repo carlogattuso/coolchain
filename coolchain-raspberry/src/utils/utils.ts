@@ -6,7 +6,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 export function getJsonRpcProvider(): JsonRpcProvider {
   return new JsonRpcProvider(config.chainRpcUrl, {
-    chainId: config.chainId,
+    chainId: +config.chainId,
     name: config.chainName,
   });
 }

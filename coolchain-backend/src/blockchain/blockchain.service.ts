@@ -86,7 +86,7 @@ export class BlockchainService {
 
     const addresses = Array(_unsignedRecords.length).fill(PERMIT_ADDRESS);
     const values = Array(_unsignedRecords.length).fill(0);
-    const gasLimit = Array(_unsignedRecords.length).fill(GAS_LIMIT);
+    const gasLimit = [];
     const contractInterface: Interface = new Interface(PERMIT_PRECOMPILE_ABI);
 
     const plainCallData = await this.mapRecordToPermitData(_unsignedRecords);

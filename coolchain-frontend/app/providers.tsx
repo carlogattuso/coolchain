@@ -21,7 +21,7 @@ export function Providers({ children, themeProps }: ProvidersProps) {
 
   return (
     <MetaMaskProvider
-      debug={false}
+      debug={true}
       sdkOptions={{
         dappMetadata: {
           name: 'Coolchain',

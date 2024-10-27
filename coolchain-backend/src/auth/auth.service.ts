@@ -59,9 +59,9 @@ export class AuthService {
     const messageToCheck: string = createSIWEMessage(
       this.domain,
       this.chainId,
-      auditor.address,
-      auditor.nonce,
-      auditor.issuedAt,
+      auditor?.address,
+      auditor?.nonce,
+      auditor?.issuedAt,
     );
 
     const recoveredAddress = verifyMessage(messageToCheck, signature);
@@ -82,7 +82,7 @@ export class AuthService {
     const payload = { address: auditorAddress };
     const token = this._jwtService.sign(payload);
 
-    return { accessToken: token, new: auditor.onBoardingPending };
+    return { accessToken: token, isNew: auditor.isOnboardingPending };
   }
 
   hasNonceExpired(issuedAt: string): boolean {

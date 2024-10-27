@@ -3,27 +3,33 @@ import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { JwtDTO } from '../types/dto/JwtDTO';
 import { SignInDTO } from '../types/dto/SignInDTO';
-import { Nonce } from '../types/Nonce';
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   RequestTimeoutException,
   UnauthorizedException,
   ValidationPipe,
 } from '@nestjs/common';
 import { ErrorCodes } from '../../utils/errors';
-import { SignUpDTO } from '../types/dto/SignUpDTO';
+import { MessageDTO } from '../types/dto/MessageDTO';
 
 const mockSignInDTO = (): SignInDTO => ({
   auditorAddress: 'auditorAddress',
   signature: 'signature',
-  nonce: 'nonce',
-  issuedAt: 'issuedAt',
 });
 
-const mockSignUpDTO = (): SignUpDTO => ({
-  address: 'auditorAddress',
+const mockSIWEMessage = (_at: string): string => {
+  return (
+    `dapp wants you to sign in with your Ethereum account:\n` +
+    `0x123\n\n` +
+    `I accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\n` +
+    `URI: dapp\nVersion: 1\nChain ID: mockChain\nNonce: 0xabc\n` +
+    `Issued At: ${_at}`
+  );
+};
+
+const mockMessageDTO = (_at: string): MessageDTO => ({
+  message: mockSIWEMessage(_at),
 });
 
 describe('AuthController', () => {
@@ -38,8 +44,7 @@ describe('AuthController', () => {
           provide: AuthService,
           useValue: {
             signIn: jest.fn(),
-            generateNonce: jest.fn(),
-            signUp: jest.fn(),
+            generateMessageToSign: jest.fn(),
           },
         },
       ],
@@ -55,9 +60,9 @@ describe('AuthController', () => {
   });
 
   describe('signIn', () => {
-    it('should return a JwtDTO when signIn is successful', async () => {
+    it('should return a session token when signIn is successful', async () => {
       const signInDto: SignInDTO = mockSignInDTO();
-      const jwtDto: JwtDTO = { accessToken: 'jwt-token' };
+      const jwtDto: JwtDTO = { accessToken: 'jwt-token', isNew: true };
 
       jest.spyOn(authService, 'signIn').mockResolvedValue(jwtDto);
 
@@ -121,15 +126,10 @@ describe('AuthController', () => {
       } catch (error) {
         expect(error.status).toBe(400);
         expect(error.getResponse().message).toEqual([
-          'address must be an Ethereum address',
+          'auditorAddress must be an Ethereum address',
           'signature must be longer than or equal to 128 and shorter than or equal to 256 characters',
           'signature must be a hexadecimal number',
           'signature must be a string',
-          'nonce must be longer than or equal to 64 and shorter than or equal to 128 characters',
-          'nonce must be a hexadecimal number',
-          'nonce must be a string',
-          'issuedAt must be a valid ISO 8601 date string',
-          'issuedAt must be a string',
         ]);
       }
     });
@@ -147,29 +147,25 @@ describe('AuthController', () => {
     });
   });
 
-  describe('getNonce', () => {
-    it('should return a NonceDTO when getNonce is successful', async () => {
+  describe('getMessage', () => {
+    it('should return a SIWE message when getMessage is successful', async () => {
       const address = '0x123456789';
-      const nonceDto: Nonce = {
-        nonce: '123456',
-        issuedAt: new Date().toISOString(),
-      };
-
-      jest.spyOn(authService, 'generateNonce').mockResolvedValue(nonceDto);
+      const at = new Date().toISOString();
+      jest
+        .spyOn(authService, 'generateMessageToSign')
+        .mockResolvedValue(mockMessageDTO(at));
 
       const result = await authController.getMessage(address);
-      expect(result).toEqual(nonceDto);
-      expect(authService.generateNonce).toHaveBeenCalledWith(address);
+      expect(result).toEqual(mockMessageDTO(at));
+      expect(authService.generateMessageToSign).toHaveBeenCalledWith(address);
     });
 
     it('should throw ForbiddenException if address is required', async () => {
-      const address = '0x123456789';
-
       jest
-        .spyOn(authService, 'generateNonce')
+        .spyOn(authService, 'generateMessageToSign')
         .mockRejectedValue(new Error(ErrorCodes.ADDRESS_REQUIRED.code));
 
-      await expect(authController.getMessage(address)).rejects.toThrow(
+      await expect(authController.getMessage(null)).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -178,46 +174,10 @@ describe('AuthController', () => {
       const address = '0x123456789';
 
       jest
-        .spyOn(authService, 'generateNonce')
+        .spyOn(authService, 'generateMessageToSign')
         .mockRejectedValue(new Error('Unexpected error'));
 
       await expect(authController.getMessage(address)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-  });
-
-  describe('signUp', () => {
-    it('should return a SignUpDTO when signUp is successful', async () => {
-      const signUpData: SignUpDTO = mockSignUpDTO();
-
-      jest.spyOn(authService, 'signUp').mockResolvedValue(signUpData);
-
-      const result = await authController.signUp(signUpData);
-      expect(result).toEqual(signUpData);
-      expect(authService.signUp).toHaveBeenCalledWith(signUpData);
-    });
-
-    it('should throw ConflictException if auditor already exists', async () => {
-      const signUpData: SignUpDTO = mockSignUpDTO();
-
-      jest
-        .spyOn(authService, 'signUp')
-        .mockRejectedValue(new Error(ErrorCodes.AUDITOR_ALREADY_EXISTS.code));
-
-      await expect(authController.signUp(signUpData)).rejects.toThrow(
-        ConflictException,
-      );
-    });
-
-    it('should throw BadRequestException for unexpected errors', async () => {
-      const signUpData: SignUpDTO = mockSignUpDTO();
-
-      jest
-        .spyOn(authService, 'signUp')
-        .mockRejectedValue(new Error('Unexpected error'));
-
-      await expect(authController.signUp(signUpData)).rejects.toThrow(
         BadRequestException,
       );
     });

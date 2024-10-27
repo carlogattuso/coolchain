@@ -13,5 +13,5 @@ export class JwtDTO {
     example: true,
     required: false,
   })
-  new: boolean;
+  isNew: boolean;
 }

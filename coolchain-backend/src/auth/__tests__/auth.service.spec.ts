@@ -1,38 +1,57 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../auth.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { AuditorsService } from '../../auditors/auditors.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { SignInDTO } from '../types/dto/SignInDTO';
-import { JwtDTO } from '../types/dto/JwtDTO';
-import { Nonce } from '../types/Nonce';
+import { MessageDTO } from '../types/dto/MessageDTO';
 import { ErrorCodes } from '../../utils/errors';
-import { randomBytes, verifyMessage } from 'ethers';
+import { verifyMessage } from 'ethers';
 import { AUTH_EXPIRATION_TIMEOUT } from '../../utils/constants';
 import { Logger } from '@nestjs/common';
-import { Auditor } from '../../auditors/types/Auditor';
-import { SignUpDTO } from '../types/dto/SignUpDTO';
+import { Nonce } from '../types/Nonce';
+import { PrismaService } from '../../prisma/prisma.service';
+import { SignInDTO } from '../types/dto/SignInDTO';
+import { JwtDTO } from '../types/dto/JwtDTO';
 
-jest.mock('ethers', () => ({
-  ...jest.requireActual('ethers'),
-  randomBytes: jest.fn(),
-  verifyMessage: jest.fn(),
-}));
+const mockAuditorAddress = '0x123';
 
-const mockSignInDTO = (): SignInDTO => ({
-  auditorAddress: 'auditorAddress',
-  signature: 'signature',
-  nonce: 'nonce',
+const mockNonce = (): Nonce => ({
+  nonce: '0xabc',
   issuedAt: new Date().toISOString(),
 });
 
-const mockDatabaseError = (): Error =>
-  new Error(ErrorCodes.DATABASE_ERROR.code);
+const mockAuditor = {
+  address: mockAuditorAddress,
+  ...mockNonce(),
+  isOnboardingPending: true,
+};
+
+const mockSignInDTO = (): SignInDTO => ({
+  auditorAddress: '0x123',
+  signature: 'signature',
+});
+
+const mockSIWEMessage = (_at: string): string => {
+  return (
+    `dapp wants you to sign in with your Ethereum account:\n` +
+    `0x123\n\n` +
+    `I accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\n` +
+    `URI: dapp\nVersion: 1\nChain ID: mockChain\nNonce: 0xabc\n` +
+    `Issued At: ${_at}`
+  );
+};
+
+jest.mock('ethers', () => ({
+  ...jest.requireActual('ethers'),
+  verifyMessage: jest.fn(),
+}));
 
 describe('AuthService', () => {
   let authService: AuthService;
-  let prismaService: PrismaService;
+  let auditorsService: AuditorsService;
   let jwtService: JwtService;
+  let configService: ConfigService;
+  let prismaService: PrismaService;
 
   beforeEach(async () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation(jest.fn());
@@ -40,270 +59,190 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         {
-          provide: PrismaService,
+          provide: AuditorsService,
           useValue: {
-            auditor: {
-              findUnique: jest.fn(),
-              create: jest.fn(),
-              upsert: jest.fn(),
-            },
+            refreshAuditor: jest.fn(),
+            findOrCreateAuditor: jest.fn(),
           },
         },
-        {
-          provide: JwtService,
-          useValue: {
-            sign: jest.fn(),
-          },
-        },
+        JwtService,
         {
           provide: ConfigService,
           useValue: {
             get: jest.fn((key: string) => {
-              if (key === 'APP_DOMAIN') return 'example.com';
-              if (key === 'APP_URI') return 'https://example.com';
-              if (key === 'CHAIN_ID') return 1;
+              if (key === 'ORIGIN') return 'dapp';
+              if (key === 'CHAIN_ID') return 'mockChain';
             }),
+          },
+        },
+        {
+          provide: PrismaService,
+          useValue: {
+            auditor: {
+              update: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+            },
           },
         },
       ],
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
-    prismaService = module.get<PrismaService>(PrismaService);
+    auditorsService = module.get<AuditorsService>(AuditorsService);
     jwtService = module.get<JwtService>(JwtService);
+    configService = module.get<ConfigService>(ConfigService);
+    prismaService = module.get<PrismaService>(PrismaService);
   });
 
   it('should be defined', () => {
     expect(authService).toBeDefined();
-    expect(prismaService).toBeDefined();
+    expect(auditorsService).toBeDefined();
     expect(jwtService).toBeDefined();
+    expect(configService).toBeDefined();
+    expect(prismaService).toBeDefined();
+    expect(authService['domain']).toEqual('dapp');
+    expect(authService['chainId']).toEqual('mockChain');
+  });
+
+  describe('generateMessageToSign', () => {
+    it('should return a message if auditor exists or is created', async () => {
+      jest
+        .spyOn(auditorsService, 'findOrCreateAuditor')
+        .mockResolvedValue(mockAuditor);
+      jest.spyOn(authService, 'hasNonceExpired').mockReturnValue(false);
+
+      const result: MessageDTO =
+        await authService.generateMessageToSign(mockAuditorAddress);
+
+      expect(result.message).toContain(mockSIWEMessage(mockAuditor.issuedAt));
+      expect(auditorsService.findOrCreateAuditor).toHaveBeenCalledWith(
+        mockAuditor.address,
+      );
+      expect(authService.hasNonceExpired).toHaveBeenCalledWith(
+        mockAuditor.issuedAt,
+      );
+    });
+
+    it('should refresh nonce if it has expired', async () => {
+      const issuedAt = new Date(
+        Date.now() - AUTH_EXPIRATION_TIMEOUT - 1000,
+      ).toISOString();
+      const refreshedAuditor = {
+        address: mockAuditorAddress,
+        nonce: mockNonce().nonce,
+        issuedAt,
+        isOnboardingPending: true,
+      };
+
+      jest
+        .spyOn(auditorsService, 'findOrCreateAuditor')
+        .mockResolvedValue(refreshedAuditor);
+      jest.spyOn(authService, 'hasNonceExpired').mockReturnValue(true);
+      jest
+        .spyOn(auditorsService, 'refreshAuditor')
+        .mockResolvedValue(refreshedAuditor);
+
+      const result =
+        await authService.generateMessageToSign(mockAuditorAddress);
+
+      expect(auditorsService.refreshAuditor).toHaveBeenCalledWith(
+        mockAuditorAddress,
+      );
+      expect(result.message).toContain(
+        mockSIWEMessage(refreshedAuditor.issuedAt),
+      );
+    });
+
+    it('should throw an error if no address is provided', async () => {
+      await expect(authService.generateMessageToSign('')).rejects.toThrow(
+        ErrorCodes.ADDRESS_REQUIRED.code,
+      );
+    });
   });
 
   describe('signIn', () => {
-    it('should return a JwtDTO on successful signIn', async () => {
-      const signInDto: SignInDTO = mockSignInDTO();
-      const auditor = {
-        address: 'auditorAddress',
-        nonce: 'nonce',
-        issuedAt: new Date(signInDto.issuedAt),
-      };
-
-      prismaService.auditor.findUnique = jest.fn().mockResolvedValue(auditor);
-      jest.spyOn(global.Date, 'now').mockReturnValue(new Date().getTime());
-      (verifyMessage as jest.Mock).mockReturnValue(signInDto.auditorAddress);
+    it('should return a session token on successful signIn', async () => {
+      jest
+        .spyOn(auditorsService, 'findOrCreateAuditor')
+        .mockResolvedValue(mockAuditor);
+      jest.spyOn(authService, 'hasNonceExpired').mockReturnValue(false);
+      (verifyMessage as jest.Mock).mockReturnValue(
+        mockSignInDTO().auditorAddress,
+      );
       jwtService.sign = jest.fn().mockReturnValue('jwt-token');
 
-      const result: JwtDTO = await authService.signIn(signInDto);
+      const result: JwtDTO = await authService.signIn(mockSignInDTO());
 
-      expect(result).toEqual({ accessToken: 'jwt-token' });
-      expect(prismaService.auditor.findUnique).toHaveBeenCalledWith({
-        where: { address: signInDto.auditorAddress },
-      });
-      expect(jwtService.sign).toHaveBeenCalledWith({
-        address: signInDto.auditorAddress,
-      });
+      expect(result.accessToken).toBe('jwt-token');
+      expect(auditorsService.refreshAuditor).toHaveBeenCalledWith(
+        mockSignInDTO().auditorAddress,
+      );
     });
 
-    it('should throw BadRequestException if address, signature, nonce or issuedAt is missing', async () => {
-      const signInDto: SignInDTO = {
-        auditorAddress: '',
-        signature: '',
-        nonce: '',
-        issuedAt: '',
-      };
+    it('should throw an error if address or signature are missing', async () => {
+      const signInDto = { auditorAddress: '', signature: '' };
 
       await expect(authService.signIn(signInDto)).rejects.toThrow(
         ErrorCodes.BAD_SIGN_IN_REQUEST.code,
       );
     });
 
-    it('should log and throw a database error if Prisma throws an error', async () => {
-      const signInDto: SignInDTO = mockSignInDTO();
-
+    it('should throw an error if the recovered address does not match', async () => {
       jest
-        .spyOn(prismaService.auditor, 'findUnique')
-        .mockRejectedValue(mockDatabaseError());
+        .spyOn(auditorsService, 'findOrCreateAuditor')
+        .mockResolvedValue(mockAuditor);
+      (verifyMessage as jest.Mock).mockReturnValue('wrongAuditorAddress');
 
-      await expect(authService.signIn(signInDto)).rejects.toThrow(
-        mockDatabaseError(),
-      );
-
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining(`Error retrieving auditor:`),
-        expect.objectContaining({
-          stack: expect.any(String),
-          auditor: 'auditorAddress',
-        }),
+      expect(auditorsService.refreshAuditor).not.toHaveBeenCalled();
+      await expect(authService.signIn(mockSignInDTO())).rejects.toThrow(
+        ErrorCodes.UNAUTHORIZED.code,
       );
     });
 
-    it('should throw RequestTimeoutException if the nonce has expired', async () => {
-      const signInDto: SignInDTO = mockSignInDTO();
+    it('should throw an error if the auditor does not exist', async () => {
+      jest
+        .spyOn(auditorsService, 'findOrCreateAuditor')
+        .mockResolvedValue(null);
+      (verifyMessage as jest.Mock).mockReturnValue('wrongAuditorAddress');
+
+      expect(auditorsService.refreshAuditor).not.toHaveBeenCalled();
+      await expect(authService.signIn(mockSignInDTO())).rejects.toThrow(
+        ErrorCodes.UNAUTHORIZED.code,
+      );
+    });
+
+    it('should throw an error if nonce has expired', async () => {
       const auditor = {
-        address: 'auditorAddress',
-        nonce: 'nonce',
-        issuedAt: new Date(Date.now() - AUTH_EXPIRATION_TIMEOUT - 1000),
+        ...mockAuditor,
+        issuedAt: new Date(
+          Date.now() - AUTH_EXPIRATION_TIMEOUT - 1000,
+        ).toISOString(),
       };
 
-      prismaService.auditor.findUnique = jest.fn().mockResolvedValue(auditor);
+      jest
+        .spyOn(auditorsService, 'findOrCreateAuditor')
+        .mockResolvedValue(auditor);
+      (verifyMessage as jest.Mock).mockReturnValue(auditor.address);
+      jest.spyOn(authService, 'hasNonceExpired').mockReturnValue(true);
 
-      await expect(authService.signIn(signInDto)).rejects.toThrow(
+      await expect(authService.signIn(mockSignInDTO())).rejects.toThrow(
         ErrorCodes.AUTH_EXPIRATION_TIMEOUT.code,
       );
     });
-
-    it('should throw UnauthorizedException if auditor nonce does not match', async () => {
-      const signInDto: SignInDTO = mockSignInDTO();
-      const mockWrongAddress: Auditor = {
-        address: 'differentAuditor',
-        nonce: 'wrongNonce',
-        issuedAt: new Date(),
-      };
-
-      prismaService.auditor.findUnique = jest
-        .fn()
-        .mockResolvedValue(mockWrongAddress);
-      (verifyMessage as jest.Mock).mockReturnValue('auditorAddress');
-
-      await expect(authService.signIn(signInDto)).rejects.toThrow(
-        ErrorCodes.UNAUTHORIZED.code,
-      );
-    });
-
-    it('should throw UnauthorizedException if recovered address does not match', async () => {
-      const signInDto: SignInDTO = mockSignInDTO();
-      const auditor: Auditor = {
-        address: 'auditorAddress',
-        nonce: 'nonce',
-        issuedAt: new Date(),
-      };
-
-      prismaService.auditor.findUnique = jest.fn().mockResolvedValue(auditor);
-      (verifyMessage as jest.Mock).mockReturnValue('0xDifferentAddress');
-
-      await expect(authService.signIn(signInDto)).rejects.toThrow(
-        ErrorCodes.UNAUTHORIZED.code,
-      );
-    });
   });
 
-  describe('generateNonce', () => {
-    it('should return a NonceDTO on successful generation', async () => {
-      const address = '0x123';
-      const mockNonce = '0x74657374';
-      const mockDate = new Date();
-
-      (randomBytes as unknown as jest.Mock).mockReturnValue(
-        Buffer.from('test', 'utf8'),
-      );
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
-
-      prismaService.auditor.upsert = jest.fn().mockResolvedValue({
-        address,
-        nonce: mockNonce,
-        issuedAt: mockDate,
-      });
-
-      const result: Nonce = await authService.generateNonce(address);
-
-      expect(result).toEqual({
-        nonce: mockNonce,
-        issuedAt: mockDate.toISOString(),
-      });
-      expect(prismaService.auditor.upsert).toHaveBeenCalledWith({
-        where: { address },
-        update: { nonce: mockNonce, issuedAt: mockDate },
-        create: { address: address, nonce: mockNonce, issuedAt: mockDate },
-      });
+  describe('hasNonceExpired', () => {
+    it('should return true if nonce has expired', () => {
+      const expiredDate = new Date(
+        Date.now() - AUTH_EXPIRATION_TIMEOUT - 1000,
+      ).toISOString();
+      expect(authService.hasNonceExpired(expiredDate)).toBe(true);
     });
 
-    it('should throw ADDRESS_REQUIRED if no address is provided', async () => {
-      const address = '';
-
-      await expect(authService.generateNonce(address)).rejects.toThrow(
-        ErrorCodes.ADDRESS_REQUIRED.code,
-      );
-    });
-  });
-
-  describe('signUp', () => {
-    it('should sign up a new auditor and return SignUpDTO on success', async () => {
-      const signUpDto: SignUpDTO = { address: 'newAuditorAddress' };
-      const createdAuditor = { address: 'newAuditorAddress' };
-
-      prismaService.auditor.findUnique = jest.fn().mockResolvedValue(null);
-      prismaService.auditor.create = jest
-        .fn()
-        .mockResolvedValue(createdAuditor);
-
-      const result = await authService.signUp(signUpDto);
-
-      expect(result).toEqual(createdAuditor);
-      expect(prismaService.auditor.findUnique).toHaveBeenCalledWith({
-        where: { address: signUpDto.address },
-      });
-      expect(prismaService.auditor.create).toHaveBeenCalledWith({
-        data: signUpDto,
-        select: { address: true },
-      });
-    });
-
-    it('should throw AUDITOR_ALREADY_EXISTS error if auditor exists', async () => {
-      const signUpDto: SignUpDTO = { address: 'existingAuditorAddress' };
-      const existingAuditor = { address: 'existingAuditorAddress' };
-
-      prismaService.auditor.findUnique = jest
-        .fn()
-        .mockResolvedValue(existingAuditor);
-
-      await expect(authService.signUp(signUpDto)).rejects.toThrow(
-        ErrorCodes.AUDITOR_ALREADY_EXISTS.code,
-      );
-      expect(prismaService.auditor.findUnique).toHaveBeenCalledWith({
-        where: { address: signUpDto.address },
-      });
-      expect(prismaService.auditor.create).not.toHaveBeenCalled();
-    });
-
-    it('should log and throw DATABASE_ERROR if there is an error retrieving the auditor', async () => {
-      const signUpDto: SignUpDTO = { address: 'newAuditorAddress' };
-
-      prismaService.auditor.findUnique = jest
-        .fn()
-        .mockRejectedValue(mockDatabaseError());
-
-      await expect(authService.signUp(signUpDto)).rejects.toThrow(
-        mockDatabaseError(),
-      );
-
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error retrieving auditor:'),
-        expect.objectContaining({
-          stack: expect.any(String),
-          auditor: signUpDto.address,
-        }),
-      );
-    });
-
-    it('should log and throw DATABASE_ERROR if there is an error creating the auditor', async () => {
-      const signUpDto: SignUpDTO = { address: 'newAuditorAddress' };
-
-      prismaService.auditor.findUnique = jest.fn().mockResolvedValue(null);
-      prismaService.auditor.create = jest
-        .fn()
-        .mockRejectedValue(mockDatabaseError());
-
-      await expect(authService.signUp(signUpDto)).rejects.toThrow(
-        mockDatabaseError(),
-      );
-
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error creating auditor:'),
-        expect.objectContaining({
-          stack: expect.any(String),
-          auditor: signUpDto.address,
-        }),
-      );
+    it('should return false if nonce has not expired', () => {
+      const recentDate = new Date(Date.now() - 1000).toISOString();
+      expect(authService.hasNonceExpired(recentDate)).toBe(false);
     });
   });
 });

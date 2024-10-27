@@ -9,6 +9,33 @@ import { ErrorCodes } from '../../utils/errors';
 const mockDatabaseError = (): Error =>
   new Error(ErrorCodes.DATABASE_ERROR.code);
 
+const mockCreateEventDTO = (): CreateEventDTO[] => [
+  {
+    transactionHash: '0x1234',
+    transactionIndex: 0,
+    blockHash: '0xacbd',
+    blockNumber: 234,
+    address: '0xa1b2',
+    data: 'anoenfe',
+    topics: ['0x123', '0x456'],
+    index: 0,
+    eventType: EventType.SubcallFailed,
+    recordId: '1',
+  },
+  {
+    transactionHash: '0x1234',
+    transactionIndex: 0,
+    blockHash: '0xacbd',
+    blockNumber: 234,
+    address: '0xa1b2',
+    data: 'anoenfe',
+    topics: ['0x123', '0x456'],
+    index: 1,
+    eventType: EventType.SubcallSucceeded,
+    recordId: '1',
+  },
+];
+
 describe('EventsService', () => {
   let eventsService: EventsService;
   let prismaService: PrismaService;
@@ -40,40 +67,18 @@ describe('EventsService', () => {
 
   describe('storeEvents', () => {
     it('should store events successfully', async () => {
-      const events: CreateEventDTO[] = [
-        {
-          transactionHash: '0x1234',
-          transactionIndex: 0,
-          blockHash: '0xacbd',
-          blockNumber: 234,
-          address: '0xa1b2',
-          data: 'anoenfe',
-          topics: ['0x123', '0x456'],
-          index: 0,
-          eventType: EventType.SubcallFailed,
-          recordId: '1',
-        },
-        {
-          transactionHash: '0x1234',
-          transactionIndex: 0,
-          blockHash: '0xacbd',
-          blockNumber: 234,
-          address: '0xa1b2',
-          data: 'anoenfe',
-          topics: ['0x123', '0x456'],
-          index: 1,
-          eventType: EventType.SubcallSucceeded,
-          recordId: '1',
-        },
-      ];
-
+      const batchPayloadPromise = Promise.resolve({
+        count: 2,
+      });
       jest
         .spyOn(prismaService.event, 'createMany')
-        .mockResolvedValue(undefined);
+        .mockResolvedValue(await batchPayloadPromise);
 
-      await expect(eventsService.storeEvents(events)).resolves.not.toThrow();
+      await expect(
+        eventsService.storeEvents(mockCreateEventDTO()),
+      ).resolves.not.toThrow();
       expect(prismaService.event.createMany).toHaveBeenCalledWith({
-        data: events,
+        data: mockCreateEventDTO(),
       });
     });
 

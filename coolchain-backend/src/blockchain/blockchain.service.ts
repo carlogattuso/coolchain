@@ -16,7 +16,7 @@ import {
 import contractFile from './contract/compile.contract';
 import {
   BATCH_PRECOMPILE_ABI,
-  BATCH_PRECOMPILE_ADDRESS,
+  BATCH_PRECOMPILE_ADDRESS, PERMIT_ADDRESS,
   PERMIT_PRECOMPILE_ABI,
 } from '../utils/constants';
 import { EIP712Record } from './types/EIP712Record';
@@ -82,7 +82,7 @@ export class BlockchainService {
       this.wallet,
     );
 
-    const addresses = Array(_unsignedRecords.length).fill(this.contractAddress);
+    const addresses = Array(_unsignedRecords.length).fill(PERMIT_ADDRESS);
     const values = Array(_unsignedRecords.length).fill(0);
     const gasLimit = Array(_unsignedRecords.length).fill(GAS_LIMIT);
     const contractInterface: ethers.Interface = new ethers.Interface(
@@ -158,7 +158,7 @@ export class BlockchainService {
       contractInterface.encodeFunctionData('storeRecord', [
         eip712Record.deviceAddress,
         eip712Record.value,
-        eip712Record.timestamp
+        eip712Record.timestamp,
       ]),
     );
 
@@ -268,7 +268,7 @@ export class BlockchainService {
     const recordCallData = contractInterface.encodeFunctionData('storeRecord', [
       eip712Record.deviceAddress,
       eip712Record.value,
-      eip712Record.timestamp
+      eip712Record.timestamp,
     ]);
 
     const message = {

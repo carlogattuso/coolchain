@@ -7,6 +7,9 @@ import { MAX_RECORD_BATCH_SIZE } from '../utils/constants';
 import { Record } from '../records/types/Record';
 import { Event } from '../events/types/Event';
 import { EventsService } from '../events/events.service';
+import { EVERY_20_SECONDS, MAX_RECORD_BATCH_SIZE } from '../utils/constants';
+import { Record } from '../types/Record';
+import { Event } from '../types/Event';
 
 @Injectable()
 export class CronService {
@@ -18,7 +21,7 @@ export class CronService {
     private readonly _blockchainService: BlockchainService,
   ) {}
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(EVERY_20_SECONDS)
   async blockchainChronicler() {
     this.logger.verbose('Blockchain Chronicler: Start');
 

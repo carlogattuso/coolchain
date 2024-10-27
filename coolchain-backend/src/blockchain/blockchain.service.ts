@@ -1,7 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import {
-  Addressable, AddressLike,
+  Addressable,
+  AddressLike,
   Contract,
   ContractTransactionReceipt,
   ContractTransactionResponse,
@@ -16,7 +17,8 @@ import {
 import contractFile from './contract/compile.contract';
 import {
   BATCH_PRECOMPILE_ABI,
-  BATCH_PRECOMPILE_ADDRESS, PERMIT_ADDRESS,
+  BATCH_PRECOMPILE_ADDRESS,
+  PERMIT_ADDRESS,
   PERMIT_PRECOMPILE_ABI,
 } from '../utils/constants';
 import { EIP712Record } from './types/EIP712Record';
@@ -76,7 +78,7 @@ export class BlockchainService {
   async auditRecordsWithPermit(
     _unsignedRecords: Record[],
   ): Promise<CreateEventDTO[]> {
-    const batchPrecompiled = new ethers.Contract(
+    const batchPrecompiled = new Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,
       this.wallet,
@@ -85,9 +87,7 @@ export class BlockchainService {
     const addresses = Array(_unsignedRecords.length).fill(PERMIT_ADDRESS);
     const values = Array(_unsignedRecords.length).fill(0);
     const gasLimit = Array(_unsignedRecords.length).fill(GAS_LIMIT);
-    const contractInterface: ethers.Interface = new ethers.Interface(
-      PERMIT_PRECOMPILE_ABI,
-    );
+    const contractInterface: Interface = new Interface(PERMIT_PRECOMPILE_ABI);
 
     const plainCallData = await this.mapRecordToPermitData(_unsignedRecords);
 
@@ -261,9 +261,7 @@ export class BlockchainService {
     // Permit signature
     const { v, r, s } = { ..._record.permitSignature };
 
-    const contractInterface: ethers.Interface = new ethers.Interface(
-      contractFile.abi,
-    );
+    const contractInterface: Interface = new Interface(contractFile.abi);
 
     const recordCallData = contractInterface.encodeFunctionData('storeRecord', [
       eip712Record.deviceAddress,

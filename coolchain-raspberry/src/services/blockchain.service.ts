@@ -1,4 +1,4 @@
-import {AddressLike, ethers, SignatureLike, TypedDataDomain, Wallet} from 'ethers';
+import {AddressLike, ethers, TypedDataDomain, Wallet} from 'ethers';
 import {config} from '../config/config';
 import {RecordDTO} from '../types/dto/RecordDTO';
 import {getJsonRpcProvider, parseAxiosError} from '../utils/utils';

@@ -45,7 +45,7 @@ db = db.getSiblingDB('coolchain');
 // });
 
 db.Devices.insertOne({
-  _id: '0x90CEA7737918e4232041C0c3370877C17bDc29Ae',
+  _id: '0x0870CbE3F789B437050a7ab1de0dB4549Bc91e53',
   name: 'Test Raspberry Pi Alpha III',
   auditorAddress: '0xCd9D32e877aDeaAef02B179a8EDE69c289A68968',
 });

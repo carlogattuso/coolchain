@@ -46,8 +46,8 @@ export class BlockchainService {
 
         const record: Record = {
             deviceAddress: this.wallet.address,
-            // value: nextSample || Math.round(Math.random()*100),
-            value: Math.round(Math.random() * 100),
+            value: nextSample || Math.round(Math.random()*100),
+            // value: Math.round(Math.random() * 100),
             timestamp: Math.floor(Date.now() / 1000),
         };
 

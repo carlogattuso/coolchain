@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@metamask/sdk-react": "^0.30.0",
+    "@metamask/sdk-react": "^0.14.1",
     "@nextui-org/breadcrumbs": "^2.0.13",
     "@nextui-org/divider": "^2.0.32",
     "@nextui-org/react": "^2.4.8",

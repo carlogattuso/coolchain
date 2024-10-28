@@ -4,6 +4,6 @@ export interface RecordDTO {
   deviceAddress: string;
   value: number;
   timestamp: number;
-  recordSignature: ECDSASignature;
+  permitDeadline: number;
   permitSignature: ECDSASignature;
 }

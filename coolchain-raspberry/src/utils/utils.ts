@@ -1,8 +1,9 @@
 import { config } from '../config/config';
-import { JsonRpcProvider, Wallet } from 'ethers';
+import { AddressLike, ethers, JsonRpcProvider, Wallet } from 'ethers';
 import { isAxiosError } from 'axios';
-import path from 'node:path';
+import path, { join } from 'node:path';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { PERMIT_PRECOMPILE_ADDRESS, PERMIT_PRECOMPILE_GET_NONCE_ABI } from './constants';
 
 export function getJsonRpcProvider(): JsonRpcProvider {
   return new JsonRpcProvider(config.chainRpcUrl, {
@@ -43,4 +44,23 @@ export function getOrCreateWallet(): { privateKey: string } {
     writeFileSync(walletFilePath, JSON.stringify(walletKey, null, 2));
     return walletKey;
   }
+}
+
+export async function getNonce(forAddress: AddressLike): Promise<bigint> {
+  const contract = new ethers.Contract(
+    PERMIT_PRECOMPILE_ADDRESS,
+    PERMIT_PRECOMPILE_GET_NONCE_ABI,
+    getJsonRpcProvider(),
+  );
+  return await contract.nonces(forAddress);
+}
+
+export function getCoolchainContract(): CompiledContract {
+  const contractFilePath = join(process.cwd(), '.coolchain.json');
+  if (!existsSync(contractFilePath)) {
+    throw new Error(
+      'Compiled contract file not found. Please make sure to run \'npm run compile-contract\' before starting the application.',
+    );
+  }
+  return JSON.parse(readFileSync(contractFilePath, 'utf8')) as CompiledContract;
 }

@@ -76,6 +76,9 @@ coolchain-backend/db/data
 # Wallet
 coolchain-raspberry/.wallet.json
 
+# Compiled contract
+coolchain-raspberry/.coolchain.json
+
 # --- IDE specific ---
 
 # IDE - VSCode

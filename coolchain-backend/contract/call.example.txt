@@ -2,7 +2,7 @@
 // and the following variables are defined:
 
 address deviceAddress = 0x00000000000000000000000000000001;
-uint8 value = 42;
+int64 value = 42;
 uint64 timestamp = 1685035200; // Unix timestamp representing 2023-05-25 12:00:00 UTC
 uint8 v = 28;
 bytes32 r = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;

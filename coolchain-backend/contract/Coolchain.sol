@@ -15,7 +15,7 @@ contract Coolchain {
     // Device record struct
     struct Record {
         address deviceAddress;
-        uint8 value;
+        uint64 value;
         uint64 timestamp;
     }
 
@@ -52,7 +52,7 @@ contract Coolchain {
     // Hashes an EIP712 message struct
     function hashMessage(Record memory record) private pure returns (bytes32) {
         return keccak256(abi.encode(
-            keccak256(bytes("Record(address deviceAddress,uint8 value,uint64 timestamp)")),
+            keccak256(bytes("Record(address deviceAddress,uint64 value,uint64 timestamp)")),
             record.deviceAddress, record.value, record.timestamp
         ));
     }
@@ -70,7 +70,7 @@ contract Coolchain {
     }
 
     // Store device record
-    function storeRecord(address deviceAddress, uint8 value, uint64 timestamp) public returns (uint256) {
+    function storeRecord(address deviceAddress, uint64 value, uint64 timestamp) public returns (uint256) {
         Record memory record = Record({deviceAddress: deviceAddress, value: value, timestamp: timestamp});
         //require(verifyMessage(record, v, r, s), "Invalid signature");
         records[deviceAddress].push(record);

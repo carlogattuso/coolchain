@@ -42,7 +42,7 @@ export class BlockchainService {
   private readonly types = {
     Record: [
       { name: 'deviceAddress', type: 'address' },
-      { name: 'value', type: 'uint8' },
+      { name: 'value', type: 'int64' },
       { name: 'timestamp', type: 'uint64' },
     ],
   };

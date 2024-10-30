@@ -16,7 +16,7 @@ export class BlockchainService {
     private readonly types = {
         Record: [
             {name: 'deviceAddress', type: 'address'},
-            {name: 'value', type: 'uint8'},
+            {name: 'value', type: 'int64'},
             {name: 'timestamp', type: 'uint64'},
         ],
     };
@@ -44,10 +44,16 @@ export class BlockchainService {
         const nextSample: number | null = this.recordService.getRecordValue();
         // if (!nextSample) return;
 
+        // Random value for raspberry-pi Docker
+        let virtualSample = Math.random();
+        if (virtualSample > 0.5) virtualSample = -virtualSample
+
+        const decimalValue = +((nextSample || virtualSample) * 100).toFixed(2)
+        const value = Math.round(decimalValue * 100);
+
         const record: Record = {
             deviceAddress: this.wallet.address,
-            value: nextSample || Math.round(Math.random()*100),
-            // value: Math.round(Math.random() * 100),
+            value,
             timestamp: Math.floor(Date.now() / 1000),
         };
 

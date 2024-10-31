@@ -41,14 +41,13 @@ export class Record {
   value: number;
 
   @ApiProperty({
-    description: 'Digital signature proving the integrity of the record data',
+    description:
+      'Unix timestamp indicating when the permit for that record expires',
     required: false,
-    type: () => ECDSASignature,
   })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => ECDSASignature)
-  recordSignature?: ECDSASignature;
+  @IsInt()
+  @IsPositive()
+  permitDeadline?: number;
 
   @ApiProperty({
     description: 'Digital signature for permit verification',

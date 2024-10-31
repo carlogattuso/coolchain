@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import path from 'node:path';
+import path, { join } from 'node:path';
 import { config } from '../config/config';
 
 export class RecordService {
@@ -14,7 +14,7 @@ export class RecordService {
 
     const sensors: string[] = readdirSync(this.recordsFilePath)
       .filter(file => file.startsWith('28-'))
-      .map(file => path.join(this.recordsFilePath, file));
+      .map(file => join(this.recordsFilePath, file));
 
     if (sensors.length === 0) {
       console.log(`No data from temperature sensors - Skipping record storage`);

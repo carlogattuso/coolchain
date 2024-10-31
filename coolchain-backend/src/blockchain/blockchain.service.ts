@@ -254,9 +254,6 @@ export class BlockchainService {
     const to: AddressLike = this.contractAddress as AddressLike;
     const value = 0;
     const gasLimit = GAS_LIMIT;
-    const deadline = Math.floor(
-      new Date(Date.UTC(2024, 12, 31, 23, 59, 59, 999)).getTime() / 1000,
-    );
     const eip712Record: EIP712Record = await this.signRecord(_record);
     // Permit signature
     const { v, r, s } = { ..._record.permitSignature };
@@ -275,7 +272,7 @@ export class BlockchainService {
       value,
       data: recordCallData,
       gaslimit: gasLimit,
-      deadline,
+      deadline: _record.permitDeadline,
       r,
       s,
       v,

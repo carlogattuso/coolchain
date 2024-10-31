@@ -39,7 +39,7 @@ export class RecordsService {
           deviceAddress: _record.deviceAddress,
           timestamp: _record.timestamp,
           value: _record.value,
-          recordSignature: _record.recordSignature,
+          permitDeadline: _record.permitDeadline,
           permitSignature: _record.permitSignature,
         },
       });

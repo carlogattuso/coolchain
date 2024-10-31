@@ -31,7 +31,7 @@ model Record {
   id              String         @id @default(auto()) @map("_id") @db.ObjectId
   timestamp       Int
   value           Int
-  recordSignature ECDSASignature
+  permitDeadline  Int
   permitSignature ECDSASignature
   events          Event[]        @relation("RecordEvents")
   deviceAddress   String

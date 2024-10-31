@@ -1,19 +1,19 @@
-// 1. Import the contract file
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const contractFile = require('./compileContract');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ethers = require('ethers');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const env = require('./.envWallet');
+const { readFileSync, existsSync } = require('node:fs');
+const { join } = require('node:path');
+const { JsonRpcProvider, Wallet, ContractFactory } = require('ethers');
+
+// 1. Read wallet and compiled contract
+const contractFile = JSON.parse(readFileSync(join(__dirname, '.coolchain.json'), 'utf-8'));
+const env = JSON.parse(readFileSync(join(__dirname, '.wallet.json'), 'utf-8'));
 
 // 2. Create ethers provider
 const isDev = process.argv.includes('--dev');
 let provider;
 if (isDev) {
-  provider = new ethers.JsonRpcProvider('http://localhost:9944');
+  provider = new JsonRpcProvider('http://localhost:9944');
   console.log(`Dev RPC provider: ${provider._getConnection().url}`);
 } else {
-  provider = new ethers.JsonRpcProvider(
+  provider = new JsonRpcProvider(
     'https://rpc.api.moonbase.moonbeam.network',
     {
       chainId: 1287,
@@ -29,14 +29,14 @@ const accountFrom = {
 };
 
 // 4. Create wallet
-let wallet = new ethers.Wallet(accountFrom.privateKey, provider);
+let wallet = new Wallet(accountFrom.privateKey, provider);
 
 // 5. Load contract information
 const bytecode = contractFile.evm.bytecode.object;
 const abi = contractFile.abi;
 
 // 6. Create contract instance with signer
-const coolchainContract = new ethers.ContractFactory(abi, bytecode, wallet);
+const coolchainContract = new ContractFactory(abi, bytecode, wallet);
 
 // 7. Create deploy function
 const deploy = async () => {

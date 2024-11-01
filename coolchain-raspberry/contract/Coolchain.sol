@@ -32,16 +32,14 @@ contract Coolchain {
     mapping (address => Record[]) private records;
 
     // Store device record
-    function storeRecord(address deviceAddress, int64 value, uint64 timestamp) public returns (uint256) {
-        verifyDevice(deviceAddress);
+    function storeRecord(address deviceAddress, int64 value, uint64 timestamp) public isDeviceRegistered(deviceAddress) returns (uint256) {
         Record memory record = Record({deviceAddress: deviceAddress, value: value, timestamp: timestamp});
         records[deviceAddress].push(record);
         return records[deviceAddress].length;
     }
 
     // Get device records by device address
-    function getDeviceRecords(address deviceAddress) public view returns (Record[] memory) {
-        verifyDevice(deviceAddress);
+    function getDeviceRecords(address deviceAddress) public view isDeviceRegistered(deviceAddress) returns (Record[] memory) {
         return records[deviceAddress];
     }
 
@@ -59,15 +57,8 @@ contract Coolchain {
     }
 
     // Register device
-    function registerDevice(address auditorAddress, address deviceAddress) public returns (Device memory) {
-        // Verify auditor
-        verifyOrRegisterAuditor(auditorAddress);
-
+    function registerDevice(address auditorAddress, address deviceAddress) public isAuditorRegistered(auditorAddress) isDeviceNew(deviceAddress) returns (Device memory) {
         Device memory device = Device({deviceAddress: deviceAddress});
-
-        // Check device is not registered and is not associated to the device
-        require(devices[deviceAddress].auditorAddress == address(0), "Device is already registered");
-
         Auditor memory auditor = getAuditor(auditorAddress);
 
         // Register device for auditor
@@ -77,40 +68,43 @@ contract Coolchain {
     }
 
     // Disable auditor
-    function disableAuditor(address auditorAddress) public {
-        require(auditors[auditorAddress].active, "Auditor not registered");
+    function disableAuditor(address auditorAddress) public isAuditorRegistered(auditorAddress) {
         Auditor memory auditor = auditors[auditorAddress];
         auditor.active = false;
         auditors[auditorAddress] = auditor;
     }
 
+    // Remove device
+    function removeDevice(address deviceAddress) public isDeviceRegistered(deviceAddress) {
+        Auditor memory emptyAuditor;
+        devices[deviceAddress] = emptyAuditor;
+    }
+
     // Get auditor with devices
-    function getAuditor(address auditorAddress) public view returns (Auditor memory) {
-        require(auditors[auditorAddress].active, "Auditor not registered");
+    function getAuditor(address auditorAddress) public view isAuditorRegistered(auditorAddress) returns (Auditor memory) {
         return auditors[auditorAddress];
     }
 
-    //Verify or register auditor
-    function verifyOrRegisterAuditor(address auditorAddress) public returns (bool) {
-        if (auditors[auditorAddress].active == false) {
-            registerAuditor(auditorAddress);
-        }
-        return true;
+    //Verify  auditor
+    modifier isAuditorRegistered(address _auditorAddress){
+        require(auditors[_auditorAddress].active == true, "Auditor is not registered");
+        _;
     }
 
     //Verify device is registered for an auditor
-    function verifyDevice(address deviceAddress) public view returns (bool) {
-        require(devices[deviceAddress].auditorAddress != address(0), "Device is not registered for any auditor");
-        return true;
+    modifier isDeviceRegistered(address _deviceAddress) {
+        require(devices[_deviceAddress].auditorAddress != address(0), "Device is not registered for any auditor");
+        _;
+    }
+
+    //Verify device is not registered
+    modifier isDeviceNew(address _deviceAddress) {
+        require(devices[_deviceAddress].auditorAddress == address(0), "Device is already registered");
+        _;
     }
 
     //Get empty device - auditor
     function getDevice(address deviceAddress) public view returns (Auditor memory) {
         return devices[deviceAddress];
-    }
-
-    //Get empty device - auditor
-    function getDeviceAuditor(address deviceAddress) public view returns (address) {
-        return devices[deviceAddress].auditorAddress;
     }
 }

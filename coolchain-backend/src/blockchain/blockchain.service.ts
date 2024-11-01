@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import {
-  Addressable,
   AddressLike,
   Contract,
   ContractTransactionReceipt,
@@ -10,7 +9,6 @@ import {
   Interface,
   JsonRpcProvider,
   Signature,
-  TypedDataDomain,
   Wallet,
 } from 'ethers';
 import {
@@ -18,33 +16,25 @@ import {
   BATCH_PRECOMPILE_ADDRESS,
   PERMIT_PRECOMPILE_ABI,
   PERMIT_PRECOMPILE_ADDRESS,
+  PERMIT_PRECOMPILE_GAS_LIMIT,
 } from '../utils/constants';
-import { EIP712Record } from './types/EIP712Record';
 import { CreateEventDTO } from '../events/types/dto/CreateEventDTO';
 import { Record } from '../records/types/Record';
 import { EventType } from '@prisma/client';
-import { getCoolchainContract } from './blockchain.utils';
-
-const GAS_LIMIT = 100000;
+import {
+  createJsonRpcProvider,
+  getCoolchainContract,
+} from './blockchain.utils';
 
 @Injectable()
 export class BlockchainService {
   private readonly provider: JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;
-  private readonly salt: string;
   private readonly chainId: number;
   private readonly chainName: string;
   private readonly chainRpcUrl: string;
   private readonly wallet: Wallet;
-  private readonly domain: TypedDataDomain;
-  private readonly types = {
-    Record: [
-      { name: 'deviceAddress', type: 'address' },
-      { name: 'value', type: 'int64' },
-      { name: 'timestamp', type: 'uint64' },
-    ],
-  };
 
   constructor(private readonly _configService: ConfigService) {
     this.accountFrom = {
@@ -54,29 +44,17 @@ export class BlockchainService {
     this.chainName = this._configService.get<string>('CHAIN_NAME');
     this.chainRpcUrl = this._configService.get<string>('CHAIN_RPC_URL');
     this.chainId = +this._configService.get<number>('CHAIN_ID');
-    this.salt = this._configService.get<string>('SALT');
 
-    this.provider = this.createJsonRpcProvider(
+    this.provider = createJsonRpcProvider(
       this.chainRpcUrl,
       this.chainId,
       this.chainName,
     );
 
     this.wallet = new Wallet(this.accountFrom.privateKey, this.provider);
-
-    //EIP712
-    this.domain = {
-      name: 'coolchain',
-      version: '1',
-      chainId: this.chainId,
-      verifyingContract: this.contractAddress,
-      salt: this.salt,
-    };
   }
 
-  async auditRecordsWithPermit(
-    _unsignedRecords: Record[],
-  ): Promise<CreateEventDTO[]> {
+  async auditRecords(_unsignedRecords: Record[]): Promise<CreateEventDTO[]> {
     const batchPrecompiled = new Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,
@@ -88,31 +66,8 @@ export class BlockchainService {
     );
     const values = Array(_unsignedRecords.length).fill(0);
     const gasLimit = [];
-    const contractInterface: Interface = new Interface(PERMIT_PRECOMPILE_ABI);
 
-    const plainCallData = await this.mapRecordToPermitData(_unsignedRecords);
-
-    console.log('plainCallData');
-    console.log(plainCallData);
-
-    const callData = plainCallData.map((data) => {
-      return contractInterface.encodeFunctionData('dispatch', [
-        data.from,
-        data.to,
-        data.value,
-        data.data,
-        data.gaslimit,
-        data.deadline,
-        data.v,
-        data.r,
-        data.s,
-      ]);
-    });
-
-    console.log('addresses', addresses);
-    console.log('values', values);
-    console.log('callData', callData);
-    console.log('gasLimit', gasLimit);
+    const callData = await this.mapRecordsToPermitCallData(_unsignedRecords);
 
     const transaction: ContractTransactionResponse =
       await batchPrecompiled.batchSome(addresses, values, callData, gasLimit);
@@ -140,94 +95,45 @@ export class BlockchainService {
     });
   }
 
-  private createJsonRpcProvider(
-    _rpcUrl: string,
-    _chainId?: number,
-    _chainName?: string,
-  ): JsonRpcProvider {
-    if (_chainId && _chainName) {
-      return new JsonRpcProvider(_rpcUrl, {
-        chainId: _chainId,
-        name: _chainName,
-      });
-    } else {
-      return new JsonRpcProvider(_rpcUrl);
-    }
-  }
-
-  private async signRecord(_record: Record): Promise<EIP712Record> {
-    const dataToSign = {
-      deviceAddress: _record.deviceAddress,
-      value: _record.value,
-      timestamp: _record.timestamp,
-    };
-
-    const signature = await this.wallet.signTypedData(
-      this.domain,
-      this.types,
-      dataToSign,
-    );
-    const { r, s, v } = Signature.from(signature);
-
-    return {
-      deviceAddress: dataToSign.deviceAddress,
-      value: dataToSign.value,
-      timestamp: dataToSign.timestamp,
-      v: v,
-      r: r,
-      s: s,
-    };
-  }
-
-  private async mapRecordToPermitData(records: Record[]): Promise<
-    Awaited<{
-      gaslimit: number;
-      data: string;
-      from: string | Promise<string> | Addressable;
-      to: string | Promise<string> | Addressable;
-      deadline: number;
-      value: number;
-      v: number;
-      r: string;
-      s: string;
-    }>[]
-  > {
+  private async mapRecordsToPermitCallData(
+    _records: Record[],
+  ): Promise<Awaited<string>[]> {
     return Promise.all(
-      records.map((record: Record) => this.createPermitMessageData(record)),
+      _records.map((record: Record) => this.createPermitCallData(record)),
     );
   }
 
-  private async createPermitMessageData(_record: Record) {
+  private async createPermitCallData(_record: Record) {
     const from: AddressLike = _record.deviceAddress as AddressLike;
     const to: AddressLike = this.contractAddress as AddressLike;
     const value = 0;
-    const gasLimit = GAS_LIMIT;
-    const eip712Record: EIP712Record = await this.signRecord(_record);
-    // Permit signature
-    const { v, r, s } = { ..._record.permitSignature };
+    const gasLimit = PERMIT_PRECOMPILE_GAS_LIMIT;
 
-    const contractInterface: Interface = new Interface(
+    const { v, r, s } = Signature.from(_record.permitSignature);
+
+    const coolchainContractInterface: Interface = new Interface(
       getCoolchainContract().abi,
     );
 
-    const recordCallData = contractInterface.encodeFunctionData('storeRecord', [
-      eip712Record.deviceAddress,
-      eip712Record.value,
-      eip712Record.timestamp,
-    ]);
+    const permitPrecompileInteface: Interface = new Interface(
+      PERMIT_PRECOMPILE_ABI,
+    );
 
-    const message = {
+    const recordCallData = coolchainContractInterface.encodeFunctionData(
+      'storeRecord',
+      [_record.deviceAddress, _record.value, _record.timestamp],
+    );
+
+    return permitPrecompileInteface.encodeFunctionData('dispatch', [
       from,
       to,
       value,
-      data: recordCallData,
-      gaslimit: gasLimit,
-      deadline: _record.permitDeadline,
+      recordCallData,
+      gasLimit,
+      _record.permitDeadline,
+      v,
       r,
       s,
-      v,
-    };
-
-    return { ...message };
+    ]);
   }
 }

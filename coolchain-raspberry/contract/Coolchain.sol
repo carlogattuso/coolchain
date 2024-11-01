@@ -10,23 +10,30 @@ contract Coolchain {
         uint64 timestamp;
     }
 
-    // Register auditor
+    // Auditor struct
     struct Auditor {
         address auditorAddress;
         bool active;
-        string name;
         uint256 registerTimeStamp;
+    }
+
+    // Device struct
+    struct Device {
+        address deviceAddress;
     }
 
     // Mapping to store auditors
     mapping (address => Auditor) private auditors;
+
+    // Mapping to store devices per auditor
+    mapping (address => Auditor) private devices;
 
     // Mapping to store all records by device address
     mapping (address => Record[]) private records;
 
     // Store device record
     function storeRecord(address deviceAddress, int64 value, uint64 timestamp) public returns (uint256) {
-        verifyAuditor(msg.sender);
+        verifyDevice(deviceAddress);
         Record memory record = Record({deviceAddress: deviceAddress, value: value, timestamp: timestamp});
         records[deviceAddress].push(record);
         return records[deviceAddress].length;
@@ -34,13 +41,13 @@ contract Coolchain {
 
     // Get device records by device address
     function getDeviceRecords(address deviceAddress) public view returns (Record[] memory) {
-        //verifyAuditor(msg.sender);
+        verifyDevice(deviceAddress);
         return records[deviceAddress];
     }
 
     // Register auditor
-    function registerAuditor(address auditorAddress, string calldata name) public returns (Auditor memory) {
-        Auditor memory auditor = Auditor({auditorAddress: auditorAddress, name: name, active: false, registerTimeStamp: 0 });
+    function registerAuditor(address auditorAddress) public returns (Auditor memory) {
+        Auditor memory auditor = Auditor({auditorAddress: auditorAddress, active: false, registerTimeStamp: 0 });
         if (auditors[auditorAddress].active) {
             auditor = auditors[auditorAddress];
         } else {
@@ -51,6 +58,24 @@ contract Coolchain {
         return auditor;
     }
 
+    // Register device
+    function registerDevice(address auditorAddress, address deviceAddress) public returns (Device memory) {
+        // Verify auditor
+        verifyOrRegisterAuditor(auditorAddress);
+
+        Device memory device = Device({deviceAddress: deviceAddress});
+
+        // Check device is not registered and is not associated to the device
+        require(devices[deviceAddress].auditorAddress == address(0), "Device is already registered");
+
+        Auditor memory auditor = getAuditor(auditorAddress);
+
+        // Register device for auditor
+        devices[deviceAddress] = auditor;
+
+        return device;
+    }
+
     // Disable auditor
     function disableAuditor(address auditorAddress) public {
         require(auditors[auditorAddress].active, "Auditor not registered");
@@ -59,15 +84,33 @@ contract Coolchain {
         auditors[auditorAddress] = auditor;
     }
 
-    // Get device records by device address
+    // Get auditor with devices
     function getAuditor(address auditorAddress) public view returns (Auditor memory) {
         require(auditors[auditorAddress].active, "Auditor not registered");
         return auditors[auditorAddress];
     }
 
-    //Verify auditor is registered
-    function verifyAuditor(address auditorAddress) public view returns (bool) {
-        require(auditors[auditorAddress].active, "Auditor not registered");
+    //Verify or register auditor
+    function verifyOrRegisterAuditor(address auditorAddress) public returns (bool) {
+        if (auditors[auditorAddress].active == false) {
+            registerAuditor(auditorAddress);
+        }
         return true;
+    }
+
+    //Verify device is registered for an auditor
+    function verifyDevice(address deviceAddress) public view returns (bool) {
+        require(devices[deviceAddress].auditorAddress != address(0), "Device is not registered for any auditor");
+        return true;
+    }
+
+    //Get empty device - auditor
+    function getDevice(address deviceAddress) public view returns (Auditor memory) {
+        return devices[deviceAddress];
+    }
+
+    //Get empty device - auditor
+    function getDeviceAuditor(address deviceAddress) public view returns (address) {
+        return devices[deviceAddress].auditorAddress;
     }
 }

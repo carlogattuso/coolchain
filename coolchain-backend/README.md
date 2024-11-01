@@ -3,6 +3,7 @@
 </p>
 
 [circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+
 [circleci-url]: https://circleci.com/gh/nestjs/nest
 
   <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
@@ -31,6 +32,7 @@
 ```bash
 $ npm install
 ```
+
 ## Setup local blockchain
 
 ```bash
@@ -41,7 +43,7 @@ $ docker run -d --rm --name moonbeam_development -p 9944:9944 moonbeamfoundation
 
 ## Prepare the contract
 
-1. First set the Private Key of the deploying wallet in ./contract/.envWallet.js
+1. First set the Private Key of the deploying wallet in ./contract/.wallet.json
 
 ```bash
 # 2. Access the contract folder
@@ -64,6 +66,7 @@ $ node deployContract
 Save the contract address for future reference
 
 ## Set environment variables
+
 Set the local environment variables. Use .envExample, change it to .env and set your own variables
 
 ## Database Installation
@@ -77,7 +80,8 @@ Follow these steps to setup the MongoDB local database environment
 1. [Install MongoDB client](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-windows/#install-mongodb-community-edition-on-windows)
 2. Add `yourPathToMongoDB\MongoDB\Server\yourVersion\bin` to PATH environment variable
 
-> **Note**: When installing MongoDB, make sure to check that the database does not start as a service. To verify this, you need to
+> **Note**: When installing MongoDB, make sure to check that the database does not start as a service. To verify this,
+> you need to
 > go to the Windows Services and disable/deactivate it.
 >
 >`MongoDB Database Server (MongoDB)`
@@ -134,6 +138,7 @@ mkdir yourPathToCoolchain/coolchain/coolchain-backend/db/data
   brew update
   brew install mongodb-community
 ```
+
 ### Initialisation
 
 1. Create data folder
@@ -202,7 +207,8 @@ $ npm run test:cov
 
 ## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If
+you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
 ## Stay in touch
 

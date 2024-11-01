@@ -13,18 +13,17 @@ import {
   TypedDataDomain,
   Wallet,
 } from 'ethers';
-
-import contractFile from './contract/compile.contract';
 import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
-  PERMIT_ADDRESS,
   PERMIT_PRECOMPILE_ABI,
+  PERMIT_PRECOMPILE_ADDRESS,
 } from '../utils/constants';
 import { EIP712Record } from './types/EIP712Record';
 import { CreateEventDTO } from '../events/types/dto/CreateEventDTO';
 import { Record } from '../records/types/Record';
 import { EventType } from '@prisma/client';
+import { getCoolchainContract } from './blockchain.utils';
 
 const GAS_LIMIT = 100000;
 
@@ -84,7 +83,9 @@ export class BlockchainService {
       this.wallet,
     );
 
-    const addresses = Array(_unsignedRecords.length).fill(PERMIT_ADDRESS);
+    const addresses = Array(_unsignedRecords.length).fill(
+      PERMIT_PRECOMPILE_ADDRESS,
+    );
     const values = Array(_unsignedRecords.length).fill(0);
     const gasLimit = [];
     const contractInterface: Interface = new Interface(PERMIT_PRECOMPILE_ABI);
@@ -112,55 +113,6 @@ export class BlockchainService {
     console.log('values', values);
     console.log('callData', callData);
     console.log('gasLimit', gasLimit);
-
-    const transaction: ContractTransactionResponse =
-      await batchPrecompiled.batchSome(addresses, values, callData, gasLimit);
-
-    const receipt: ContractTransactionReceipt = await transaction.wait();
-
-    const recordMap = new Map<number, string>(
-      _unsignedRecords.map((record, index) => [index, record.id]),
-    );
-
-    return receipt.logs.map((log: EventLog) => {
-      const recordId = recordMap.get(log.index);
-      return {
-        transactionHash: log.transactionHash,
-        blockHash: log.blockHash,
-        blockNumber: log.blockNumber,
-        address: log.address,
-        data: log.data,
-        topics: [...log.topics],
-        index: log.index,
-        transactionIndex: log.transactionIndex,
-        eventType: log.fragment.name as EventType,
-        recordId: recordId,
-      };
-    });
-  }
-
-  async auditRecords(_unsignedRecords: Record[]): Promise<CreateEventDTO[]> {
-    const batchPrecompiled = new Contract(
-      BATCH_PRECOMPILE_ADDRESS,
-      BATCH_PRECOMPILE_ABI,
-      this.wallet,
-    );
-
-    const addresses = Array(_unsignedRecords.length).fill(this.contractAddress);
-    const values = Array(_unsignedRecords.length).fill(0);
-    const gasLimit = [];
-
-    const eip712Data: EIP712Record[] =
-      await this.mapDataToEIP712(_unsignedRecords);
-
-    const contractInterface: Interface = new Interface(contractFile.abi);
-    const callData = eip712Data.map((eip712Record: EIP712Record) =>
-      contractInterface.encodeFunctionData('storeRecord', [
-        eip712Record.deviceAddress,
-        eip712Record.value,
-        eip712Record.timestamp,
-      ]),
-    );
 
     const transaction: ContractTransactionResponse =
       await batchPrecompiled.batchSome(addresses, values, callData, gasLimit);
@@ -227,10 +179,6 @@ export class BlockchainService {
     };
   }
 
-  private async mapDataToEIP712(_data: Record[]): Promise<EIP712Record[]> {
-    return Promise.all(_data.map((record: Record) => this.signRecord(record)));
-  }
-
   private async mapRecordToPermitData(records: Record[]): Promise<
     Awaited<{
       gaslimit: number;
@@ -258,7 +206,9 @@ export class BlockchainService {
     // Permit signature
     const { v, r, s } = { ..._record.permitSignature };
 
-    const contractInterface: Interface = new Interface(contractFile.abi);
+    const contractInterface: Interface = new Interface(
+      getCoolchainContract().abi,
+    );
 
     const recordCallData = contractInterface.encodeFunctionData('storeRecord', [
       eip712Record.deviceAddress,

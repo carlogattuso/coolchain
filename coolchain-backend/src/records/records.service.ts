@@ -60,6 +60,7 @@ export class RecordsService {
             none: {},
           },
         },
+        distinct: ['deviceAddress'],
         orderBy: {
           timestamp: 'asc',
         },

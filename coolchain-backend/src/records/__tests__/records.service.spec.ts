@@ -11,7 +11,7 @@ const mockCreateRecordDTO = (): CreateRecordDTO => ({
   deviceAddress: '0xabc',
   timestamp: 1234,
   value: 3,
-  recordSignature: { v: 28, r: '0x123', s: '0x456' },
+  permitDeadline: Date.now() + 24 * 60 * 60,
   permitSignature: { v: 27, r: '0x12a', s: '0x4b6' },
 });
 
@@ -20,7 +20,7 @@ const mockRecord = (): Record => ({
   deviceAddress: '0xabc',
   timestamp: 1234,
   value: 3,
-  recordSignature: { v: 28, r: '0x123', s: '0x456' },
+  permitDeadline: Date.now() + 24 * 60 * 60,
   permitSignature: { v: 27, r: '0x12a', s: '0x4b6' },
 });
 
@@ -90,7 +90,7 @@ describe('RecordsService', () => {
           deviceAddress: createRecordDto.deviceAddress,
           timestamp: createRecordDto.timestamp,
           value: createRecordDto.value,
-          recordSignature: createRecordDto.recordSignature,
+          permitDeadline: createRecordDto.permitDeadline,
           permitSignature: createRecordDto.permitSignature,
         },
       });

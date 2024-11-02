@@ -32,6 +32,7 @@ export class DevicesController {
   constructor(private readonly _devicesService: DevicesService) {}
 
   @Post()
+  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse({
     status: 201,
@@ -48,11 +49,11 @@ export class DevicesController {
     description: 'Invalid data',
   })
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async registerDevice(
+  async registerDevices(
     @Request() _req: Request,
     @Body() _devices: CreateDeviceInputDTO,
   ): Promise<CreateDeviceOutputDTO> {
-    const auditorAddress = '0x6be02d1d3665660d22ff9624b7be0551ee1ac91b';
+    const auditorAddress = _req['auditor'].address;
     try {
       return await this._devicesService.createDevices(auditorAddress, _devices);
     } catch (error) {

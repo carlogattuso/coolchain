@@ -3,7 +3,7 @@ import { DevicesService } from '../devices.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Logger } from '@nestjs/common';
 import { ErrorCodes } from '../../utils/errors';
-import { CreateDeviceDTO } from '../types/dto/CreateDeviceDTO';
+import { CreateDeviceInputDTO } from '../types/dto/CreateDeviceInputDTO';
 import { Device } from '../types/Device';
 
 const mockDevice = (): Device => ({
@@ -12,7 +12,7 @@ const mockDevice = (): Device => ({
   auditorAddress: '0x123',
 });
 
-const mockCreateDeviceDTO = (): CreateDeviceDTO => ({
+const mockCreateDeviceDTO = (): CreateDeviceInputDTO => ({
   name: 'Device1',
   address: '0xabc',
 });
@@ -64,7 +64,7 @@ describe('DevicesService', () => {
         .spyOn(prismaService.device, 'create')
         .mockResolvedValue(mockDevice());
 
-      const result = await devicesService.createDevice(
+      const result = await devicesService.createDevices(
         mockAuditorAddress(),
         createDeviceDto,
       );
@@ -95,7 +95,7 @@ describe('DevicesService', () => {
         .mockResolvedValue(existingDevice);
 
       await expect(
-        devicesService.createDevice(mockAuditorAddress(), createDeviceDto),
+        devicesService.createDevices(mockAuditorAddress(), createDeviceDto),
       ).rejects.toThrow(new Error(ErrorCodes.DEVICE_ALREADY_EXISTS.code));
       expect(prismaService.device.findUnique).toHaveBeenCalledWith({
         where: { address: createDeviceDto.address },
@@ -111,7 +111,7 @@ describe('DevicesService', () => {
         .mockRejectedValue(mockDatabaseError());
 
       await expect(
-        devicesService.createDevice(
+        devicesService.createDevices(
           mockAuditorAddress(),
           mockCreateDeviceDTO(),
         ),
@@ -135,7 +135,7 @@ describe('DevicesService', () => {
         .mockRejectedValue(mockDatabaseError());
 
       await expect(
-        devicesService.createDevice(mockAuditorAddress(), createDeviceDto),
+        devicesService.createDevices(mockAuditorAddress(), createDeviceDto),
       ).rejects.toThrow(mockDatabaseError());
 
       expect(Logger.prototype.error).toHaveBeenCalledWith(

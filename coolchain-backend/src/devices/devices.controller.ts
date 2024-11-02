@@ -21,9 +21,10 @@ import {
 } from '@nestjs/swagger';
 import { ErrorCodes } from '../utils/errors';
 import { AuthGuard } from '../auth/auth.guard';
-import { CreateDeviceDTO } from './types/dto/CreateDeviceDTO';
+import { CreateDeviceInputDTO } from './types/dto/CreateDeviceInputDTO';
 import { DevicesService } from './devices.service';
 import { DeviceDTO } from './types/dto/DeviceDTO';
+import { CreateDeviceOutputDTO } from './types/dto/CreateDeviceOutputDTO';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -31,18 +32,17 @@ export class DevicesController {
   constructor(private readonly _devicesService: DevicesService) {}
 
   @Post()
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse({
     status: 201,
     description: 'Device created successfully',
-    type: CreateDeviceDTO,
+    type: CreateDeviceOutputDTO,
   })
   @ApiUnauthorizedResponse({
     description: `Not authenticated`,
   })
   @ApiConflictResponse({
-    description: `Device with this address already exists`,
+    description: `Any of the new devices already exists`,
   })
   @ApiBadRequestResponse({
     description: 'Invalid data',
@@ -50,14 +50,14 @@ export class DevicesController {
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async registerDevice(
     @Request() _req: Request,
-    @Body() _device: CreateDeviceDTO,
-  ): Promise<CreateDeviceDTO> {
-    const auditorAddress = _req['auditor'].address;
+    @Body() _devices: CreateDeviceInputDTO,
+  ): Promise<CreateDeviceOutputDTO> {
+    const auditorAddress = '0x6be02d1d3665660d22ff9624b7be0551ee1ac91b';
     try {
-      return await this._devicesService.createDevice(auditorAddress, _device);
+      return await this._devicesService.createDevices(auditorAddress, _devices);
     } catch (error) {
-      if (error.message === ErrorCodes.DEVICE_ALREADY_EXISTS.code) {
-        throw new ConflictException(ErrorCodes.DEVICE_ALREADY_EXISTS.message);
+      if (error.code === ErrorCodes.DEVICE_ALREADY_EXISTS.code) {
+        throw new ConflictException(error.message);
       } else {
         throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
       }

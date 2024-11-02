@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DevicesController } from '../devices.controller';
 import { DevicesService } from '../devices.service';
-import { CreateDeviceDTO } from '../types/dto/CreateDeviceDTO';
+import { CreateDeviceInputDTO } from '../types/dto/CreateDeviceInputDTO';
 import { DeviceDTO } from '../types/dto/DeviceDTO';
 import {
   BadRequestException,
@@ -66,7 +66,7 @@ describe('DevicesController', () => {
   describe('createDevice', () => {
     it('should return the created device when successful', async () => {
       const auditorAddress = '0x123';
-      const createDeviceDTO: CreateDeviceDTO = {
+      const createDeviceDTO: CreateDeviceInputDTO = {
         name: 'Device1',
         address: '0xabc',
       };
@@ -77,7 +77,7 @@ describe('DevicesController', () => {
 
       const createdDevice = { ...createDeviceDTO };
       jest
-        .spyOn(devicesService, 'createDevice')
+        .spyOn(devicesService, 'createDevices')
         .mockResolvedValue(createdDevice);
 
       const result = await devicesController.registerDevice(
@@ -86,7 +86,7 @@ describe('DevicesController', () => {
       );
 
       expect(result).toEqual(createdDevice);
-      expect(devicesService.createDevice).toHaveBeenCalledWith(
+      expect(devicesService.createDevices).toHaveBeenCalledWith(
         auditorAddress,
         createDeviceDTO,
       );
@@ -94,7 +94,7 @@ describe('DevicesController', () => {
 
     it('should throw ConflictException if device already exists', async () => {
       const auditorAddress = '0x123';
-      const createDeviceDTO: CreateDeviceDTO = {
+      const createDeviceDTO: CreateDeviceInputDTO = {
         name: 'Device1',
         address: '0xabc',
       };
@@ -104,13 +104,13 @@ describe('DevicesController', () => {
       } as any;
 
       jest
-        .spyOn(devicesService, 'createDevice')
+        .spyOn(devicesService, 'createDevices')
         .mockRejectedValue(new Error(ErrorCodes.DEVICE_ALREADY_EXISTS.code));
 
       await expect(
         devicesController.registerDevice(mockRequest, createDeviceDTO),
       ).rejects.toThrow(ConflictException);
-      expect(devicesService.createDevice).toHaveBeenCalledWith(
+      expect(devicesService.createDevices).toHaveBeenCalledWith(
         auditorAddress,
         createDeviceDTO,
       );
@@ -127,7 +127,7 @@ describe('DevicesController', () => {
       try {
         await validationPipe.transform(invalidDto, {
           type: 'body',
-          metatype: CreateDeviceDTO,
+          metatype: CreateDeviceInputDTO,
         });
       } catch (error) {
         expect(error.status).toBe(400);
@@ -140,7 +140,7 @@ describe('DevicesController', () => {
 
     it('should throw BadRequestException for any other error', async () => {
       const auditorAddress = '0x123';
-      const createDeviceDTO: CreateDeviceDTO = {
+      const createDeviceDTO: CreateDeviceInputDTO = {
         name: 'Device1',
         address: '0xabc',
       };
@@ -150,13 +150,13 @@ describe('DevicesController', () => {
       } as any;
 
       jest
-        .spyOn(devicesService, 'createDevice')
+        .spyOn(devicesService, 'createDevices')
         .mockRejectedValue(new Error('Unexpected error'));
 
       await expect(
         devicesController.registerDevice(mockRequest, createDeviceDTO),
       ).rejects.toThrow(BadRequestException);
-      expect(devicesService.createDevice).toHaveBeenCalledWith(
+      expect(devicesService.createDevices).toHaveBeenCalledWith(
         auditorAddress,
         createDeviceDTO,
       );

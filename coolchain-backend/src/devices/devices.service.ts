@@ -2,8 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ErrorCodes } from '../utils/errors';
 import { DeviceDTO } from './types/dto/DeviceDTO';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateDeviceDTO } from './types/dto/CreateDeviceDTO';
-import { Device } from './types/Device';
+import { CreateDeviceInputDTO } from './types/dto/CreateDeviceInputDTO';
+import { DeviceAlreadyExistsError } from '../utils/types/DeviceAlreadyExistsError';
+import { CreateDeviceOutputDTO } from './types/dto/CreateDeviceOutputDTO';
 
 @Injectable()
 export class DevicesService {
@@ -11,41 +12,51 @@ export class DevicesService {
 
   constructor(private readonly _prismaService: PrismaService) {}
 
-  async createDevice(
+  async createDevices(
     _auditorAddress: string,
-    _device: CreateDeviceDTO,
-  ): Promise<CreateDeviceDTO> {
-    let existingDevice: Device;
+    _input: CreateDeviceInputDTO,
+  ): Promise<CreateDeviceOutputDTO> {
+    const deviceAddresses = _input.devices.map((d) => d.address);
+
+    let existingAddresses: string[];
     try {
-      existingDevice = await this._prismaService.device.findUnique({
-        where: { address: _device.address },
+      const existingDevices = await this._prismaService.device.findMany({
+        where: {
+          address: {
+            in: deviceAddresses,
+          },
+        },
+        select: {
+          address: true,
+        },
       });
+      existingAddresses = existingDevices.map((device) => device.address);
     } catch (error) {
-      this.logger.error(`Error retrieving device: ${error.message}`, {
+      this.logger.error(`Error retrieving devices: ${error.message}`, {
         stack: error.stack,
-        device: _device.address,
+        devices: deviceAddresses,
       });
       throw new Error(ErrorCodes.DATABASE_ERROR.code);
     }
 
-    if (existingDevice) {
-      throw new Error(ErrorCodes.DEVICE_ALREADY_EXISTS.code);
+    if (existingAddresses.length > 0) {
+      throw new DeviceAlreadyExistsError(
+        ErrorCodes.DEVICE_ALREADY_EXISTS.code,
+        existingAddresses,
+      );
     }
 
     try {
-      return await this._prismaService.device.create({
-        data: {
+      const createdDevices = await this._prismaService.device.createMany({
+        data: _input.devices.map((device) => ({
           auditorAddress: _auditorAddress,
-          address: _device.address,
-          name: _device.name,
-        },
-        select: {
-          address: true,
-          name: true,
-        },
+          address: device.address,
+          name: device.name,
+        })),
       });
+      return { created: createdDevices.count };
     } catch (error) {
-      this.logger.error(`Error creating device: ${error.message}`, {
+      this.logger.error(`Error creating devices: ${error.message}`, {
         stack: error.stack,
         auditor: _auditorAddress,
       });

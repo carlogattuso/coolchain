@@ -21,9 +21,10 @@ import {
 } from '@nestjs/swagger';
 import { ErrorCodes } from '../utils/errors';
 import { AuthGuard } from '../auth/auth.guard';
-import { CreateDeviceDTO } from './types/dto/CreateDeviceDTO';
+import { CreateDeviceInputDTO } from './types/dto/CreateDeviceInputDTO';
 import { DevicesService } from './devices.service';
 import { DeviceDTO } from './types/dto/DeviceDTO';
+import { CreateDeviceOutputDTO } from './types/dto/CreateDeviceOutputDTO';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -36,28 +37,28 @@ export class DevicesController {
   @ApiResponse({
     status: 201,
     description: 'Device created successfully',
-    type: CreateDeviceDTO,
+    type: CreateDeviceOutputDTO,
   })
   @ApiUnauthorizedResponse({
     description: `Not authenticated`,
   })
   @ApiConflictResponse({
-    description: `Device with this address already exists`,
+    description: `Any of the new devices already exists`,
   })
   @ApiBadRequestResponse({
     description: 'Invalid data',
   })
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async registerDevice(
+  async registerDevices(
     @Request() _req: Request,
-    @Body() _device: CreateDeviceDTO,
-  ): Promise<CreateDeviceDTO> {
+    @Body() _devices: CreateDeviceInputDTO,
+  ): Promise<CreateDeviceOutputDTO> {
     const auditorAddress = _req['auditor'].address;
     try {
-      return await this._devicesService.createDevice(auditorAddress, _device);
+      return await this._devicesService.createDevices(auditorAddress, _devices);
     } catch (error) {
-      if (error.message === ErrorCodes.DEVICE_ALREADY_EXISTS.code) {
-        throw new ConflictException(ErrorCodes.DEVICE_ALREADY_EXISTS.message);
+      if (error.code === ErrorCodes.DEVICE_ALREADY_EXISTS.code) {
+        throw new ConflictException(error.message);
       } else {
         throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
       }

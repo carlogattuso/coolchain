@@ -17,7 +17,7 @@ const mockCreateRecordDTO = (): CreateRecordDTO => ({
   deviceAddress: '0xabc',
   timestamp: 1234,
   value: 3,
-  recordSignature: { v: 28, r: '0x123', s: '0x456' },
+  permitDeadline: Date.now() + 24 * 60 * 60,
   permitSignature: { v: 27, r: '0x12a', s: '0x4b6' },
 });
 
@@ -117,9 +117,8 @@ describe('RecordsController', () => {
           'timestamp must be a positive number',
           'timestamp must be an integer number',
           'value must be a number conforming to the specified constraints',
-          'recordSignature.v must be a number conforming to the specified constraints',
-          'recordSignature.r must be longer than or equal to 64 characters',
-          'recordSignature.s must be longer than or equal to 64 characters',
+          'permitDeadline must be a positive number',
+          'permitDeadline must be an integer number',
           'permitSignature.v must be a number conforming to the specified constraints',
           'permitSignature.r must be longer than or equal to 64 characters',
           'permitSignature.s must be longer than or equal to 64 characters',

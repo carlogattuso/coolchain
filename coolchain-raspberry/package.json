@@ -4,8 +4,8 @@
   "description": "Raspberry Pi Mock Device",
   "main": "dist/bundle.js",
   "scripts": {
-    "build": "npm run clean && npm run compile-contract && npm run bundle && npm run copy",
-    "build:dev": "npm run clean && npm run compile-contract && npm run bundle:dev && npm run copy:dev",
+    "build:raspy": "npm run clean && npm run compile-contract && npm run bundle && npm run copy",
+    "build:raspy:dev": "npm run clean && npm run compile-contract && npm run bundle:dev && npm run copy:dev",
     "bundle": "esbuild src/index.ts --bundle --platform=node --outfile=dist/bundle.js --minify",
     "bundle:dev": "esbuild src/index.ts --bundle --platform=node --outfile=dist/bundle.js",
     "copy": "npm run copy:env && npm run copy:contract",
@@ -13,9 +13,9 @@
     "copy:env": "cp .env dist/.env",
     "copy:env:dev": "cp .env.dev dist/.env",
     "copy:contract": "cp .coolchain.json dist/",
-    "compile-contract": "node contract/compile.js",
-    "start": "node dist/bundle.js",
-    "start:dev": "NODE_ENV=dev nodemon",
+    "compile-contract": "node ../coolchain-contract/compile.js",
+    "start:raspy": "node dist/bundle.js",
+    "start:raspy:dev": "NODE_ENV=dev nodemon",
     "clean": "rm -rf dist"
   },
   "author": "",
@@ -29,10 +29,9 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
-    "@metamask/eth-sig-util": "^8.0.0",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
     "ethers": "^6.13.2",
-    "solc": "^0.8.27"
+    "slc": "^1.0.0"
   }
 }

@@ -53,9 +53,6 @@ coolchain-frontend/.pnp
 coolchain-frontend/.pnp.js
 coolchain-frontend/.yarn/install-state.gz
 
-# Vercel
-**/.vercel
-
 # TypeScript
 coolchain-frontend/*.tsbuildinfo
 coolchain-frontend/next-env.d.ts
@@ -64,8 +61,8 @@ coolchain-frontend/.next
 # --- Backend specific ---
 # Path: coolchain-backend
 
-# Contract specific
-coolchain-backend/contract/.envWallet.js
+# Compiled contract
+coolchain-backend/.coolchain.json
 
 # Database
 coolchain-backend/db/data
@@ -73,11 +70,17 @@ coolchain-backend/db/data
 # --- Raspberry specific ---
 # Path: coolchain-raspberry
 
+# Compiled contract
+coolchain-raspberry/.coolchain.json
+
 # Wallet
 coolchain-raspberry/.wallet.json
 
-# Compiled contract
-coolchain-raspberry/.coolchain.json
+# --- Contract specific ---
+# Path: coolchain-contract
+
+coolchain-contract/.coolchain.json
+coolchain-contract/.wallet.json
 
 # --- IDE specific ---
 

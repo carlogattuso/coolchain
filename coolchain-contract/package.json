@@ -1,0 +1,22 @@
+{
+  "name": "coolchain-contract",
+  "version": "1.0.0",
+  "description": "Coolchain Smart Contract management",
+  "scripts": {
+    "compile": "node compile.js",
+    "deploy": "node deploy.js",
+    "deploy:dev": "node deploy.js --dev",
+    "start": "npm run compile && npm run deploy",
+    "start:dev": "npm run compile && npm run deploy:dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ethers": "^6.13.4",
+    "solc": "^0.8.28"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.5"
+  }
+}

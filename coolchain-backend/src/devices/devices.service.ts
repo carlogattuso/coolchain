@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateDeviceInputDTO } from './types/dto/CreateDeviceInputDTO';
 import { DeviceAlreadyExistsError } from '../utils/types/DeviceAlreadyExistsError';
 import { CreateDeviceOutputDTO } from './types/dto/CreateDeviceOutputDTO';
+import { Device } from './types/Device';
 
 @Injectable()
 export class DevicesService {
@@ -79,6 +80,20 @@ export class DevicesService {
       this.logger.error(`Error retrieving devices: ${error.message}`, {
         stack: error.stack,
         auditor: _auditorAddress,
+      });
+      throw new Error(ErrorCodes.DATABASE_ERROR.code);
+    }
+  }
+
+  async findDevice(address: string): Promise<Device> {
+    try {
+      return await this._prismaService.device.findUnique({
+        where: { address },
+      });
+    } catch (error) {
+      this.logger.error(`Error retrieving device: ${error.message}`, {
+        stack: error.stack,
+        device: address,
       });
       throw new Error(ErrorCodes.DATABASE_ERROR.code);
     }

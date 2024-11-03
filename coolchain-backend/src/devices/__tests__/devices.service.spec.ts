@@ -25,6 +25,12 @@ const mockDatabaseError = (): Error =>
 
 const mockAuditorAddress = (): string => '0x123';
 
+const mockDevice = (): Device => ({
+  address: '0xabc',
+  name: 'Device 1',
+  auditorAddress: '0x1aT',
+});
+
 describe('DevicesService', () => {
   let devicesService: DevicesService;
   let prismaService: PrismaService;
@@ -40,6 +46,7 @@ describe('DevicesService', () => {
             device: {
               createMany: jest.fn(),
               findMany: jest.fn(),
+              findUnique: jest.fn(),
             },
           },
         },
@@ -218,6 +225,56 @@ describe('DevicesService', () => {
         expect.objectContaining({
           stack: expect.any(String),
           auditor: mockAuditorAddress(),
+        }),
+      );
+    });
+  });
+
+  describe('findDevice', () => {
+    it('should return the existing device if found', async () => {
+      const mockExistingDevice = mockDevice();
+      jest
+        .spyOn(prismaService.device, 'findUnique')
+        .mockResolvedValue(mockExistingDevice);
+
+      const result = await devicesService.findDevice(
+        mockExistingDevice.address,
+      );
+
+      expect(result).toEqual(mockExistingDevice);
+      expect(prismaService.device.findUnique).toHaveBeenCalledWith({
+        where: { address: mockExistingDevice.address },
+      });
+    });
+
+    it('should return empty device if not found', async () => {
+      const mockExistingDevice = mockDevice();
+      jest.spyOn(prismaService.device, 'findUnique').mockResolvedValue(null);
+
+      const result = await devicesService.findDevice(
+        mockExistingDevice.address,
+      );
+
+      expect(result).toEqual(null);
+      expect(prismaService.device.findUnique).toHaveBeenCalledWith({
+        where: { address: mockExistingDevice.address },
+      });
+    });
+
+    it('should log an error and throw a database error if find unique fails', async () => {
+      const device = mockDevice();
+      jest
+        .spyOn(prismaService.device, 'findUnique')
+        .mockRejectedValue(mockDatabaseError());
+
+      await expect(devicesService.findDevice(device.address)).rejects.toThrow(
+        mockDatabaseError(),
+      );
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error retrieving device'),
+        expect.objectContaining({
+          stack: expect.any(String),
+          device: device.address,
         }),
       );
     });

@@ -28,6 +28,7 @@ export const Records = ({data}: RecordsProps) => {
                         {name: 'Timestamp', key: 'timestamp'},
                         {name: 'Device', key: 'deviceAddress'},
                     ],
+                    emptyMessage: 'No records found',
                 }}/>
             </div>
         </div>

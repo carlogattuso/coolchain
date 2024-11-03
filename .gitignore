@@ -63,6 +63,7 @@ coolchain-frontend/.next
 
 # Compiled contract
 coolchain-backend/.coolchain.json
+**/.envWallet.js
 
 # Database
 coolchain-backend/db/data

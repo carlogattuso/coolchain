@@ -4,9 +4,6 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
-import { AUTH_THROTTLER_LIMIT, AUTH_THROTTLER_TTL } from '../utils/constants';
 import { AuditorsModule } from '../auditors/auditors.module';
 
 @Module({
@@ -22,20 +19,8 @@ import { AuditorsModule } from '../auditors/auditors.module';
         signOptions: { expiresIn: '24h' },
       }),
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: AUTH_THROTTLER_TTL,
-        limit: AUTH_THROTTLER_LIMIT,
-      },
-    ]),
   ],
-  providers: [
-    AuthService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
+  providers: [AuthService],
   controllers: [AuthController],
   exports: [AuthService],
 })

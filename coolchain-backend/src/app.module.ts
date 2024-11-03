@@ -11,6 +11,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { DevicesModule } from './devices/devices.module';
 import { EventsModule } from './events/events.module';
 import { AuditorsModule } from './auditors/auditors.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AUTH_THROTTLER_LIMIT, AUTH_THROTTLER_TTL } from './utils/constants';
 
 @Module({
   controllers: [AppController],
@@ -20,6 +22,12 @@ import { AuditorsModule } from './auditors/auditors.module';
       envFilePath: process.env.NODE_ENV ? '.env.dev' : '.env',
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: AUTH_THROTTLER_TTL,
+        limit: AUTH_THROTTLER_LIMIT,
+      },
+    ]),
     AuthModule,
     BlockchainModule,
     RecordsModule,

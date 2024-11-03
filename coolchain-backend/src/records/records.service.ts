@@ -7,6 +7,7 @@ import { ErrorCodes } from '../utils/errors';
 import { Prisma } from '@prisma/client';
 import { DevicesService } from '../devices/devices.service';
 import { getUnixTimeInSeconds } from '../blockchain/blockchain.utils';
+import { AuditStatusDTO } from './types/dto/AuditStatusDTO';
 
 @Injectable()
 export class RecordsService {
@@ -25,7 +26,8 @@ export class RecordsService {
       throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code);
     }
 
-    if (!(await this.isAuditAvailable(_record.deviceAddress))) {
+    const auditStatus = await this.getAuditStatus(_record.deviceAddress);
+    if (auditStatus.isAuditPending) {
       throw new Error(ErrorCodes.AUDIT_NOT_AVAILABLE.code);
     }
 
@@ -117,7 +119,12 @@ export class RecordsService {
     }
   }
 
-  async isAuditAvailable(_deviceAddress: string): Promise<boolean> {
+  async getAuditStatus(_deviceAddress: string): Promise<AuditStatusDTO> {
+    const device = await this._devicesService.findDevice(_deviceAddress);
+    if (!device) {
+      throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code);
+    }
+
     try {
       const record = await this._prismaService.record.findFirst({
         where: {
@@ -130,7 +137,7 @@ export class RecordsService {
           deviceAddress: _deviceAddress,
         },
       });
-      return record === null;
+      return { isAuditPending: record !== null };
     } catch (error) {
       this.logger.error(`Error checking audit status: ${error.message}`, {
         stack: error.stack,

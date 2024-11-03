@@ -27,6 +27,7 @@ import {
 import { ErrorCodes } from '../utils/errors';
 import { AuthGuard } from '../auth/auth.guard';
 import { ThrottlerException } from '@nestjs/throttler';
+import { AuditStatusDTO } from './types/dto/AuditStatusDTO';
 
 @ApiTags('Records')
 @Controller('records')
@@ -92,6 +93,33 @@ export class RecordsController {
       );
     } catch (error) {
       throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
+    }
+  }
+
+  @Get('status')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({
+    status: 200,
+    description: 'Check if audit is available for a device',
+    type: [AuditStatusDTO],
+  })
+  @ApiForbiddenResponse({
+    description: `The specified device is not registered in the system`,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid data',
+  })
+  async getAuditStatus(
+    @Query('deviceAddress') _deviceAddress?: string,
+  ): Promise<AuditStatusDTO> {
+    try {
+      return await this._recordsService.getAuditStatus(_deviceAddress);
+    } catch (error) {
+      if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
+        throw new ForbiddenException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
+      } else {
+        throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
+      }
     }
   }
 }

@@ -161,7 +161,12 @@ describe('RecordsService', () => {
 
       expect(result).toEqual(records);
       expect(prismaService.record.findMany).toHaveBeenCalledWith({
-        where: { events: { none: {} } },
+        where: {
+          permitDeadline: {
+            gt: Date.now(),
+          },
+          events: { none: {} },
+        },
         distinct: ['deviceAddress'],
         orderBy: { timestamp: 'asc' },
         take: MAX_RECORD_BATCH_SIZE,

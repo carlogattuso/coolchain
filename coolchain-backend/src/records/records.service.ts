@@ -56,6 +56,9 @@ export class RecordsService {
     try {
       return await this._prismaService.record.findMany({
         where: {
+          permitDeadline: {
+            gt: Date.now(),
+          },
           events: {
             none: {},
           },
@@ -114,6 +117,29 @@ export class RecordsService {
           device: _deviceAddress ?? null,
         },
       );
+      throw new Error(ErrorCodes.DATABASE_ERROR.code);
+    }
+  }
+
+  async checkAuditStatus(_deviceAddress: string): Promise<boolean> {
+    try {
+      const record = await this._prismaService.record.findFirst({
+        where: {
+          permitDeadline: {
+            gt: Date.now(),
+          },
+          events: {
+            none: {},
+          },
+          deviceAddress: _deviceAddress,
+        },
+      });
+      return record === null;
+    } catch (error) {
+      this.logger.error(`Error checking audit status: ${error.message}`, {
+        stack: error.stack,
+        device: _deviceAddress,
+      });
       throw new Error(ErrorCodes.DATABASE_ERROR.code);
     }
   }

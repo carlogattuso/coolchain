@@ -177,7 +177,7 @@ describe('RecordsService', () => {
       });
     });
 
-    it('should throw a database error if Prisma throws an error', async () => {
+    it('should log and throw a database error if Prisma throws an error', async () => {
       jest
         .spyOn(prismaService.record, 'findMany')
         .mockRejectedValue(mockDatabaseError());

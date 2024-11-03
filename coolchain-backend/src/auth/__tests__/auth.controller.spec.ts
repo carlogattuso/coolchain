@@ -12,6 +12,11 @@ import {
 } from '@nestjs/common';
 import { ErrorCodes } from '../../utils/errors';
 import { MessageDTO } from '../types/dto/MessageDTO';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import {
+  AUTH_THROTTLER_LIMIT,
+  AUTH_THROTTLER_TTL,
+} from '../../utils/constants';
 
 const mockSignInDTO = (): SignInDTO => ({
   auditorAddress: 'auditorAddress',
@@ -39,6 +44,14 @@ describe('AuthController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
+      imports: [
+        ThrottlerModule.forRoot([
+          {
+            ttl: AUTH_THROTTLER_TTL,
+            limit: AUTH_THROTTLER_LIMIT,
+          },
+        ]),
+      ],
       providers: [
         {
           provide: AuthService,
@@ -46,6 +59,10 @@ describe('AuthController', () => {
             signIn: jest.fn(),
             generateMessageToSign: jest.fn(),
           },
+        },
+        {
+          provide: ThrottlerGuard,
+          useClass: ThrottlerGuard,
         },
       ],
     }).compile();

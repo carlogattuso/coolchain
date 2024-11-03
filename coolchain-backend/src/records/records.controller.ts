@@ -59,7 +59,7 @@ export class RecordsController {
       if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
         throw new ForbiddenException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
       } else if (error.message === ErrorCodes.AUDIT_NOT_AVAILABLE.code) {
-        throw new ThrottlerException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
+        throw new ThrottlerException(ErrorCodes.AUDIT_NOT_AVAILABLE.message);
       } else {
         throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
       }

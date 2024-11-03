@@ -6,6 +6,7 @@ import { Record } from './types/Record';
 import { ErrorCodes } from '../utils/errors';
 import { Prisma } from '@prisma/client';
 import { DevicesService } from '../devices/devices.service';
+import { getUnixTimeInSeconds } from '../blockchain/blockchain.utils';
 
 @Injectable()
 export class RecordsService {
@@ -52,7 +53,7 @@ export class RecordsService {
       return await this._prismaService.record.findMany({
         where: {
           permitDeadline: {
-            gt: Date.now(),
+            gt: getUnixTimeInSeconds(),
           },
           events: {
             none: {},
@@ -121,7 +122,7 @@ export class RecordsService {
       const record = await this._prismaService.record.findFirst({
         where: {
           permitDeadline: {
-            gt: Date.now(),
+            gt: getUnixTimeInSeconds(),
           },
           events: {
             none: {},

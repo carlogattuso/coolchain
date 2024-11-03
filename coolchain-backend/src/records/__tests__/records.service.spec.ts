@@ -6,6 +6,7 @@ import { ErrorCodes } from '../../utils/errors';
 import { Device, Record } from '@prisma/client';
 import { Logger } from '@nestjs/common';
 import { MAX_RECORD_BATCH_SIZE } from '../../utils/constants';
+import { DevicesService } from '../../devices/devices.service';
 
 const mockCreateRecordDTO = (): CreateRecordDTO => ({
   deviceAddress: '0xabc',
@@ -35,6 +36,7 @@ const mockDatabaseError = (): Error =>
 
 describe('RecordsService', () => {
   let recordsService: RecordsService;
+  let devicesService: DevicesService;
   let prismaService: PrismaService;
 
   beforeEach(async () => {
@@ -43,14 +45,18 @@ describe('RecordsService', () => {
       providers: [
         RecordsService,
         {
+          provide: DevicesService,
+          useValue: {
+            findDevice: jest.fn(),
+          },
+        },
+        {
           provide: PrismaService,
           useValue: {
-            device: {
-              findUnique: jest.fn(),
-            },
             record: {
               create: jest.fn(),
               findMany: jest.fn(),
+              findFirst: jest.fn(),
             },
             event: {
               createMany: jest.fn(),
@@ -61,11 +67,13 @@ describe('RecordsService', () => {
     }).compile();
 
     recordsService = module.get<RecordsService>(RecordsService);
+    devicesService = module.get<DevicesService>(DevicesService);
     prismaService = module.get<PrismaService>(PrismaService);
   });
 
   it('should be defined', () => {
     expect(recordsService).toBeDefined();
+    expect(devicesService).toBeDefined();
     expect(prismaService).toBeDefined();
   });
 
@@ -74,17 +82,16 @@ describe('RecordsService', () => {
       const createRecordDto = mockCreateRecordDTO();
       const record = mockRecord();
 
-      jest
-        .spyOn(prismaService.device, 'findUnique')
-        .mockResolvedValue(mockDevice());
+      jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest.spyOn(recordsService, 'isAuditAvailable').mockResolvedValue(true);
       jest.spyOn(prismaService.record, 'create').mockResolvedValue(record);
 
       const result = await recordsService.storeUnauditedRecord(createRecordDto);
 
       expect(result).toEqual(record);
-      expect(prismaService.device.findUnique).toHaveBeenCalledWith({
-        where: { address: createRecordDto.deviceAddress },
-      });
+      expect(devicesService.findDevice).toHaveBeenCalledWith(
+        createRecordDto.deviceAddress,
+      );
       expect(prismaService.record.create).toHaveBeenCalledWith({
         data: {
           deviceAddress: createRecordDto.deviceAddress,
@@ -96,41 +103,33 @@ describe('RecordsService', () => {
       });
     });
 
-    it('should log and throw an error if the device is not registered', async () => {
+    it('should throw an error if the device is not registered', async () => {
       const createRecordDto = mockCreateRecordDTO();
 
-      jest.spyOn(prismaService.device, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(devicesService, 'findDevice').mockResolvedValue(null);
+      jest.spyOn(recordsService, 'isAuditAvailable').mockResolvedValue(true);
 
       await expect(
         recordsService.storeUnauditedRecord(createRecordDto),
       ).rejects.toThrow(new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code));
     });
 
-    it('should log and throw a database error if Prisma throws an error', async () => {
+    it('should throw an error if the audit is not available', async () => {
       const createRecordDto = mockCreateRecordDTO();
-      jest
-        .spyOn(prismaService.device, 'findUnique')
-        .mockRejectedValue(mockDatabaseError());
+
+      jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest.spyOn(recordsService, 'isAuditAvailable').mockResolvedValue(false);
 
       await expect(
         recordsService.storeUnauditedRecord(createRecordDto),
-      ).rejects.toThrow(mockDatabaseError());
-
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining(`Error retrieving device:`),
-        expect.objectContaining({
-          stack: expect.any(String),
-          device: createRecordDto.deviceAddress,
-        }),
-      );
+      ).rejects.toThrow(new Error(ErrorCodes.AUDIT_NOT_AVAILABLE.code));
     });
 
     it('should log and throw a database error if Prisma create throws an error', async () => {
       const createRecordDto = mockCreateRecordDTO();
 
-      jest
-        .spyOn(prismaService.device, 'findUnique')
-        .mockResolvedValue(mockDevice());
+      jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest.spyOn(recordsService, 'isAuditAvailable').mockResolvedValue(true);
       jest
         .spyOn(prismaService.record, 'create')
         .mockRejectedValue(mockDatabaseError());
@@ -163,7 +162,7 @@ describe('RecordsService', () => {
       expect(prismaService.record.findMany).toHaveBeenCalledWith({
         where: {
           permitDeadline: {
-            gt: Date.now(),
+            gt: expect.any(Number),
           },
           events: { none: {} },
         },
@@ -281,6 +280,72 @@ describe('RecordsService', () => {
           stack: expect.any(String),
           auditor: 'auditorAddress',
           device: null,
+        }),
+      );
+    });
+  });
+
+  describe('isAuditAvailable', () => {
+    it('should return true if no record with the specified device address is under audit', async () => {
+      const mockDeviceAddress = mockRecord().deviceAddress;
+
+      jest.spyOn(prismaService.record, 'findFirst').mockResolvedValue(null);
+
+      const result = await recordsService.isAuditAvailable(mockDeviceAddress);
+
+      expect(result).toBe(true);
+      expect(prismaService.record.findFirst).toHaveBeenCalledWith({
+        where: {
+          permitDeadline: {
+            gt: expect.any(Number),
+          },
+          events: {
+            none: {},
+          },
+          deviceAddress: mockDeviceAddress,
+        },
+      });
+    });
+
+    it('should return false if a record with the specified device address is under audit', async () => {
+      const record = mockRecord();
+
+      jest.spyOn(prismaService.record, 'findFirst').mockResolvedValue(record);
+
+      const result = await recordsService.isAuditAvailable(
+        record.deviceAddress,
+      );
+
+      expect(result).toBe(false);
+      expect(prismaService.record.findFirst).toHaveBeenCalledWith({
+        where: {
+          permitDeadline: {
+            gt: expect.any(Number),
+          },
+          events: {
+            none: {},
+          },
+          deviceAddress: record.deviceAddress,
+        },
+      });
+    });
+
+    it('should log error and throw an exception if there is a database error', async () => {
+      const mockDeviceAddress = mockRecord().deviceAddress;
+
+      jest
+        .spyOn(prismaService.record, 'findFirst')
+        .mockRejectedValue(mockDatabaseError());
+
+      await expect(
+        recordsService.isAuditAvailable(mockDeviceAddress),
+      ).rejects.toThrow(mockDatabaseError());
+
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        expect.stringContaining(`Error checking audit status:`),
+        expect.objectContaining({
+          stack: expect.any(String),
+          device: mockDeviceAddress,
         }),
       );
     });

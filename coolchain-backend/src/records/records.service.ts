@@ -5,32 +5,27 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Record } from './types/Record';
 import { ErrorCodes } from '../utils/errors';
 import { Prisma } from '@prisma/client';
-import { Device } from '../devices/types/Device';
+import { DevicesService } from '../devices/devices.service';
 
 @Injectable()
 export class RecordsService {
   private readonly logger: Logger = new Logger(RecordsService.name);
 
-  constructor(private readonly _prismaService: PrismaService) {}
+  constructor(
+    private readonly _prismaService: PrismaService,
+    private readonly _devicesService: DevicesService,
+  ) {}
 
   async storeUnauditedRecord(
     _record: CreateRecordDTO,
   ): Promise<CreateRecordDTO> {
-    let device: Device;
-    try {
-      device = await this._prismaService.device.findUnique({
-        where: { address: _record.deviceAddress },
-      });
-    } catch (error) {
-      this.logger.error(`Error retrieving device: ${error.message}`, {
-        stack: error.stack,
-        device: _record.deviceAddress,
-      });
-      throw new Error(ErrorCodes.DATABASE_ERROR.code);
-    }
-
+    const device = await this._devicesService.findDevice(_record.deviceAddress);
     if (!device) {
       throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code);
+    }
+
+    if (!(await this.isAuditAvailable(_record.deviceAddress))) {
+      throw new Error(ErrorCodes.AUDIT_NOT_AVAILABLE.code);
     }
 
     try {
@@ -121,7 +116,7 @@ export class RecordsService {
     }
   }
 
-  async checkAuditStatus(_deviceAddress: string): Promise<boolean> {
+  async isAuditAvailable(_deviceAddress: string): Promise<boolean> {
     try {
       const record = await this._prismaService.record.findFirst({
         where: {

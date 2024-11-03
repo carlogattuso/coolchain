@@ -21,10 +21,12 @@ import {
   ApiForbiddenResponse,
   ApiResponse,
   ApiTags,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ErrorCodes } from '../utils/errors';
 import { AuthGuard } from '../auth/auth.guard';
+import { ThrottlerException } from '@nestjs/throttler';
 
 @ApiTags('Records')
 @Controller('records')
@@ -41,6 +43,9 @@ export class RecordsController {
   @ApiForbiddenResponse({
     description: `The specified device is not registered in the system`,
   })
+  @ApiTooManyRequestsResponse({
+    description: 'Audit not available yet',
+  })
   @ApiBadRequestResponse({
     description: 'Invalid data',
   })
@@ -53,6 +58,8 @@ export class RecordsController {
     } catch (error) {
       if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
         throw new ForbiddenException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
+      } else if (error.message === ErrorCodes.AUDIT_NOT_AVAILABLE.code) {
+        throw new ThrottlerException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
       } else {
         throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
       }

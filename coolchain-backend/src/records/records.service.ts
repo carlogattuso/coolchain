@@ -120,6 +120,10 @@ export class RecordsService {
   }
 
   async getAuditStatus(_deviceAddress: string): Promise<AuditStatusDTO> {
+    if (!_deviceAddress) {
+      throw new Error(ErrorCodes.ADDRESS_REQUIRED.code);
+    }
+
     const device = await this._devicesService.findDevice(_deviceAddress);
     if (!device) {
       throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code);

@@ -12,7 +12,7 @@ export function getJsonRpcProvider(): JsonRpcProvider {
   });
 }
 
-export function parseAxiosError(error: unknown): string {
+export function parseAxiosError(error: unknown, url: string): string {
   if (isAxiosError(error)) {
     const response = error.response?.data;
     const status = error.response?.status;
@@ -22,13 +22,13 @@ export function parseAxiosError(error: unknown): string {
     }
 
     if (status) {
-      return `Request error: ${status} - ${response.message ?? error.message}`;
+      return `Request error for ${url}: ${status} - ${response.message ?? error.message}`;
     }
 
-    return `Axios error: ${error.code || 'Unknown error code'}`;
+    return `Axios error for ${url}: ${error.code || 'Unknown error code'}`;
   }
 
-  return `Unknown error: ${error}`;
+  return `Unknown error for ${url}: ${error}`;
 }
 
 export function getUnixTimeInSeconds(): number {

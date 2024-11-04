@@ -1,16 +1,9 @@
 import { AddressLike, ethers, TypedDataDomain, Wallet } from 'ethers';
 import { config } from '../config/config';
 import { RecordDTO } from '../types/dto/RecordDTO';
-import {
-  getCoolchainContract,
-  getJsonRpcProvider,
-  getNonce,
-  getUnixTimeInSeconds,
-  parseAxiosError,
-} from '../utils/utils';
+import { getCoolchainContract, getJsonRpcProvider, getNonce, getUnixTimeInSeconds } from '../utils/utils';
 import { ECDSASignature } from '../types/ECDSASignature';
 import { Record } from '../types/Record';
-import axios from 'axios';
 import { RecordService } from './record.service';
 import {
   DAY_IN_SECONDS,
@@ -36,6 +29,9 @@ export class BlockchainService {
   }
 
   public async storeRecord() {
+    const auditStatus = await this.recordService.getAuditStatus(this.wallet.address);
+    if (!auditStatus || auditStatus.isAuditPending) return;
+
     const nextSample: number | null = this.recordService.getRecordValue();
     //TODO: do not merge to master
     // if (!nextSample) return;
@@ -46,25 +42,10 @@ export class BlockchainService {
       timestamp: getUnixTimeInSeconds(),
     };
 
-    let recordWithPermit: RecordDTO;
-    try {
-      recordWithPermit = await this.requestPermit(record);
-      console.log('New Record: ', recordWithPermit);
-    } catch (error) {
-      console.error('Error requesting permit: ', error);
-      return;
-    }
-
-    try {
-      await axios.post(`${config.coolchainUrl}/records`, recordWithPermit, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      console.info('Record successfully sent to Coolchain');
-    } catch (error) {
-      console.error(parseAxiosError(error));
-    }
+    this.requestPermit(record).then(async (_recordDTO: RecordDTO) => {
+      console.log('New Record: ', _recordDTO);
+      await this.recordService.sendRecord(_recordDTO);
+    });
   }
 
   private async requestPermit(_record: Record): Promise<RecordDTO> {

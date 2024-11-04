@@ -115,7 +115,9 @@ export class RecordsController {
     try {
       return await this._recordsService.getAuditStatus(_deviceAddress);
     } catch (error) {
-      if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
+      if (error.message === ErrorCodes.ADDRESS_REQUIRED.code) {
+        throw new ForbiddenException(ErrorCodes.ADDRESS_REQUIRED.message);
+      } else if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
         throw new ForbiddenException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
       } else {
         throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);

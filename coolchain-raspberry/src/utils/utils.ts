@@ -31,6 +31,10 @@ export function parseAxiosError(error: unknown): string {
   return `Unknown error: ${error}`;
 }
 
+export function getUnixTimeInSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
 export function getOrCreateWallet(): { privateKey: string } {
   const walletFilePath = path.join(process.cwd(), '.wallet.json');
 

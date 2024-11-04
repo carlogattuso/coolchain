@@ -12,6 +12,7 @@ import { RecordDTO } from '../types/dto/RecordDTO';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '../../auth/auth.guard';
+import { ThrottlerException } from '@nestjs/throttler';
 
 const mockCreateRecordDTO = (): CreateRecordDTO => ({
   deviceAddress: '0xabc',
@@ -91,6 +92,17 @@ describe('RecordsController', () => {
       await expect(
         recordsController.storeRecord(createRecordDto),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ThrottlerException if audit is not available', async () => {
+      const createRecordDto: CreateRecordDTO = mockCreateRecordDTO();
+      jest.spyOn(recordsService, 'storeUnauditedRecord').mockRejectedValue({
+        message: ErrorCodes.AUDIT_NOT_AVAILABLE.code,
+      });
+
+      await expect(
+        recordsController.storeRecord(createRecordDto),
+      ).rejects.toThrow(ThrottlerException);
     });
 
     it('should return BadRequestException when validation fails', async () => {

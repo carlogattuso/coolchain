@@ -10,6 +10,7 @@ import {
   Query,
   RequestTimeoutException,
   UnauthorizedException,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -27,9 +28,11 @@ import {
 import { JwtDTO } from './types/dto/JwtDTO';
 import { SignInDTO } from './types/dto/SignInDTO';
 import { MessageDTO } from './types/dto/MessageDTO';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

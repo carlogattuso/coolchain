@@ -3,7 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { CreateEventDTO } from '../events/types/dto/CreateEventDTO';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { RecordsService } from '../records/records.service';
-import { EVERY_20_SECONDS, MAX_RECORD_BATCH_SIZE } from '../utils/constants';
+import { EVERY_30_SECONDS, MAX_RECORD_BATCH_SIZE } from '../utils/constants';
 import { Record } from '../records/types/Record';
 import { Event } from '../events/types/Event';
 import { EventsService } from '../events/events.service';
@@ -18,7 +18,7 @@ export class CronService {
     private readonly _blockchainService: BlockchainService,
   ) {}
 
-  @Cron(EVERY_20_SECONDS)
+  @Cron(EVERY_30_SECONDS)
   async blockchainChronicler() {
     this.logger.verbose('Blockchain Chronicler: Start');
 

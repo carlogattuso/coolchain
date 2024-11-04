@@ -36,7 +36,7 @@ export class DevicesController {
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse({
     status: 201,
-    description: 'Device created successfully',
+    description: 'Devices created successfully',
     type: CreateDeviceOutputDTO,
   })
   @ApiUnauthorizedResponse({

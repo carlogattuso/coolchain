@@ -1,7 +1,13 @@
 import { AddressLike, ethers, TypedDataDomain, Wallet } from 'ethers';
 import { config } from '../config/config';
 import { RecordDTO } from '../types/dto/RecordDTO';
-import { getCoolchainContract, getJsonRpcProvider, getNonce, parseAxiosError } from '../utils/utils';
+import {
+  getCoolchainContract,
+  getJsonRpcProvider,
+  getNonce,
+  getUnixTimeInSeconds,
+  parseAxiosError,
+} from '../utils/utils';
 import { ECDSASignature } from '../types/ECDSASignature';
 import { Record } from '../types/Record';
 import axios from 'axios';
@@ -37,7 +43,7 @@ export class BlockchainService {
     const record: Record = {
       deviceAddress: this.wallet.address,
       value: nextSample ?? Math.round(Math.random() * 100),
-      timestamp: Math.floor(Date.now() / 1000),
+      timestamp: getUnixTimeInSeconds(),
     };
 
     let recordWithPermit: RecordDTO;

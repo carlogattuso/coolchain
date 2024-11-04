@@ -31,6 +31,10 @@ export const ErrorCodes = {
     code: 'ERR007',
     message: 'Auditor with this address already exists',
   },
+  AUDIT_NOT_AVAILABLE: {
+    code: 'ERR008',
+    message: 'Audit is not available for this device. Please try again later',
+  },
   UNEXPECTED_ERROR: {
     code: 'ERR999',
     message: 'Unexpected error occurred',

@@ -17,6 +17,10 @@ export function createJsonRpcProvider(
   }
 }
 
+export function getUnixTimeInSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
 export function getCoolchainContract(): CompiledContract {
   const contractFilePath = join(process.cwd(), '.coolchain.json');
   if (!existsSync(contractFilePath)) {

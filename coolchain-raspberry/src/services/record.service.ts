@@ -1,9 +1,14 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { config } from '../config/config';
+import axios from 'axios';
+import { Record } from '../types/Record';
+import { parseAxiosError } from '../utils/utils';
+import { AuditStatusDTO } from '../types/dto/AuditStatusDTO';
 
 export class RecordService {
   private readonly recordsFilePath: string = config.recordsDir;
+  private readonly apiEndpoint: string = `${config.coolchainUrl}/records`;
 
   public getRecordValue(): number | null {
 
@@ -32,5 +37,36 @@ export class RecordService {
     }).reduce((acc, current) => acc + current, 0);
 
     return Math.trunc(total / sensors.length);
+  }
+
+  async sendRecord(_recordWithPermit: Record) {
+    const url = join(this.apiEndpoint, '/');
+    try {
+      await axios.post(url, _recordWithPermit, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.info('Record successfully sent to Coolchain');
+    } catch (error) {
+      console.error(parseAxiosError(error, url));
+    }
+  }
+
+  async getAuditStatus(_deviceAddress: string): Promise<AuditStatusDTO | undefined> {
+    const url = join(this.apiEndpoint, '/status');
+    try {
+      const response = await axios.get(url, {
+        params: {
+          deviceAddress: _deviceAddress,
+        },
+      });
+      
+      const auditStatus: AuditStatusDTO = response.data;
+      console.info(`Current audit status: ${auditStatus.isAuditPending ? 'Pending' : 'Available'}`);
+      return auditStatus;
+    } catch (error) {
+      console.error(parseAxiosError(error, url));
+    }
   }
 }

@@ -78,6 +78,7 @@ export class AuthService {
     }
 
     await this._auditorsService.refreshAuditor(auditorAddress);
+    await this._auditorsService.registerAuditor(auditorAddress);
 
     const payload = { address: auditorAddress };
     const token = this._jwtService.sign(payload);

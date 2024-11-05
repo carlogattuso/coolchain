@@ -35,6 +35,11 @@ export const ErrorCodes = {
     code: 'ERR008',
     message: 'Audit is not available for this device. Please try again later',
   },
+  AUDITOR_REGISTRATION_ERROR: {
+    code: 'ERR009',
+    message:
+      'An arror occurred during the auditor registration. Please try again later',
+  },
   UNEXPECTED_ERROR: {
     code: 'ERR999',
     message: 'Unexpected error occurred',

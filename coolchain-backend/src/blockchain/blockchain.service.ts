@@ -25,6 +25,7 @@ import {
   createJsonRpcProvider,
   getCoolchainContract,
 } from './blockchain.utils';
+import { RegisterAuditorDTO } from '../auditors/types/dto/RegisterAuditorDTO';
 
 @Injectable()
 export class BlockchainService {
@@ -93,6 +94,22 @@ export class BlockchainService {
         recordId: recordId,
       };
     });
+  }
+
+  async registerAuditor(
+    _auditor: RegisterAuditorDTO,
+  ): Promise<ContractTransactionReceipt> {
+    const coolchainContract = new Contract(
+      this.contractAddress,
+      getCoolchainContract().abi,
+      this.wallet,
+    );
+
+    const address = _auditor.address;
+
+    const transaction: ContractTransactionResponse =
+      await coolchainContract.registerAuditor(address);
+    return await transaction.wait();
   }
 
   private async mapRecordsToPermitCallData(

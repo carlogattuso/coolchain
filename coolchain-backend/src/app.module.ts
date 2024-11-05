@@ -13,6 +13,7 @@ import { EventsModule } from './events/events.module';
 import { AuditorsModule } from './auditors/auditors.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AUTH_THROTTLER_LIMIT, AUTH_THROTTLER_TTL } from './utils/constants';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   controllers: [AppController],
@@ -28,6 +29,12 @@ import { AUTH_THROTTLER_LIMIT, AUTH_THROTTLER_TTL } from './utils/constants';
         limit: AUTH_THROTTLER_LIMIT,
       },
     ]),
+    BullModule.forRoot({
+      connection: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
     AuthModule,
     BlockchainModule,
     RecordsModule,

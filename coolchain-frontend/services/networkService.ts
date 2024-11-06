@@ -7,6 +7,7 @@ import {DeviceDTO} from "@/helpers/types/dto/DeviceDTO";
 const handleResponse = async (response: Response, errorMap: Record<number, string>, defaultError: string) => {
     if (!response.ok) {
         const errorCode = errorMap[response.status] || defaultError;
+        console.log(errorCode);
     }
     return await response.json();
 };
@@ -41,6 +42,25 @@ export const registerDevice = async (regiserDeviceDTO: DeviceDTO, token: string)
         body: JSON.stringify({
             devices: [regiserDeviceDTO
             ]
+        }),
+        credentials: 'include',
+    });
+    return handleResponse(response, {
+        401: ErrorCodes.UNAUTHORIZED.code,
+        409: ErrorCodes.CONFLICT.code,
+    }, ErrorCodes.ERROR_ADD_DEVICE.code);
+};
+
+
+export const registerDevices = async (devices: DeviceDTO[], token: string): Promise<any> => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/devices`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            devices
         }),
         credentials: 'include',
     });

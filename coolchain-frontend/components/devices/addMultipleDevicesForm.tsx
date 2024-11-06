@@ -1,11 +1,11 @@
 'use client';
 import React, {useContext} from 'react';
-import {AddMultipleDevicesSchema} from "@/helpers/schemas";
+import {AddDeviceSchema, AddMultipleDevicesSchema} from "@/helpers/schemas";
 import {Button, ButtonGroup, Input} from "@nextui-org/react";
 import {FieldArray, Formik} from "formik";
 import {useRouter} from "next/navigation";
 import {AddDevicesHeader} from "@/components/devices/addDevicesHeader";
-import {registerDevices} from "@/services/networkService";
+import {registerDevice, registerDevices} from "@/services/networkService";
 import {UserContext} from "@/app/providers";
 import NextuiAlert from "nextui-alert";
 import {Divider} from "@nextui-org/divider";

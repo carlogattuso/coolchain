@@ -24,9 +24,6 @@ export const DevicesHeader = () => {
             <Button color="primary" variant="flat" size="sm" onClick={() => router.push('/devices/add-multiple')}>
                 Add devices
             </Button>
-            <Button color="primary" variant="flat" size="sm" onClick={() => router.push('/devices/add-multiple')}>
-                Add multiple devices
-            </Button>
         </div>
     </>;
 }

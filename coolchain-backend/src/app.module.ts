@@ -14,6 +14,8 @@ import { AuditorsModule } from './auditors/auditors.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AUTH_THROTTLER_LIMIT, AUTH_THROTTLER_TTL } from './utils/constants';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
 
 @Module({
   controllers: [AppController],
@@ -34,6 +36,10 @@ import { BullModule } from '@nestjs/bullmq';
         host: 'localhost',
         port: 6379,
       },
+    }),
+    BullBoardModule.forRoot({
+      route: '/queues',
+      adapter: ExpressAdapter
     }),
     AuthModule,
     BlockchainModule,

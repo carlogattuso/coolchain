@@ -4,6 +4,8 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
 import { BullModule } from '@nestjs/bullmq';
 import { AuditorsProcessor } from './auditors.processor';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 
 @Module({
   imports: [
@@ -11,6 +13,10 @@ import { AuditorsProcessor } from './auditors.processor';
     BlockchainModule,
     BullModule.registerQueue({
       name: 'auditor-queue',
+    }),
+    BullBoardModule.forFeature({
+      name: 'auditor-queue',
+      adapter: BullMQAdapter,
     }),
   ],
   providers: [AuditorsService, AuditorsProcessor],

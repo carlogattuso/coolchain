@@ -50,7 +50,7 @@ export class AuditorsService {
 
       // Create auditor
       const newNonce: Nonce = await this.generateNonce();
-      const storeDBResult = await this._prismaService.auditor.create({
+      return await this._prismaService.auditor.create({
         data: {
           address: _auditorAddress,
           ...newNonce,

@@ -43,7 +43,7 @@ export const SignIn = () => {
             if (signInData.isNew) {
                 router.replace('/devices/add');
             } else {
-                router.replace('/');
+                router.replace('/devices');
             }
         } catch (error) {
             const errorCode =

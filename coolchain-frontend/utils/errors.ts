@@ -47,6 +47,14 @@ export const ErrorCodes = {
     code: 'ERR011',
     message: 'Error fetching data from server',
   },
+  ERROR_ADD_DEVICE: {
+    code: 'ERR012',
+    message: 'Error adding device',
+  },
+  CONFLICT: {
+    code: 'ERR013',
+    message: 'This address already exists',
+  },
   UNEXPECTED_ERROR: {
     code: 'ERR999',
     message: 'Unexpected error occurred. Please contact us or try again later',

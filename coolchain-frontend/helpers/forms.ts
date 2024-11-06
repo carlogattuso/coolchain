@@ -8,3 +8,8 @@ export type RegisterFormType = {
   password: string;
   confirmPassword: string;
 };
+
+export type AddDeviceFormType = {
+  name: string;
+  address: string;
+};

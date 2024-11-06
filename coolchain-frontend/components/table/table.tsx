@@ -13,6 +13,7 @@ interface Column {
 interface Data {
   items: (Device | Record)[];
   columns: Column[];
+  emptyMessage: string;
 }
 
 interface TableWrapperProps {
@@ -26,7 +27,7 @@ export const TableWrapper = ({ data }: TableWrapperProps) => {
         <TableHeader columns={data.columns}>
           {(column) => <TableColumn key={column.key}>{column.name}</TableColumn>}
         </TableHeader>
-        <TableBody items={data.items}>
+        <TableBody items={data.items} emptyContent={data.emptyMessage}>
           {(item) => (
             <TableRow key={'address' in item ? item.address : item.id}>
               {(columnKey) => {

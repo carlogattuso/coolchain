@@ -11,6 +11,8 @@ export const createAuthCookie = async (accessToken: string) => {
   });
 };
 
+// TODO add cleanup context
+
 export const deleteAuthCookie = async () => {
   cookies().set('auth', 'value', { maxAge: 0 });
 };

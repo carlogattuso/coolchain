@@ -59,7 +59,9 @@ export const SignIn = () => {
 
     return (
         <div className="text-center">
-            <h1 className="text-[25px] font-bold mb-4">Sign In</h1>
+            
+            <h1 className="font-bold text-3xl mb-2">Welcome!</h1>
+            <p className="text-[22px] font-bold mb-4">Sign In</p>
 
             <Button
                 onPress={handleSignIn}

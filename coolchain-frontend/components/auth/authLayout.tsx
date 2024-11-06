@@ -24,21 +24,24 @@ export const AuthLayoutWrapper = ({ children }: Props) => {
       </div>
 
       <div className='hidden md:flex flex-1 relative flex items-center justify-center p-6'>
-        <div className='absolute left-0 right-0 bottom-0 top-0 z-0'>
-          <Image
-            className='w-full h-full'
-            src='https://nextui.org/gradients/docs-right.png'
-            alt='gradient'
-          />
-        </div>
+        <div
+          className="absolute w-[300px] h-[300px] rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-500"
+          style={{
+            filter: 'blur(100px)',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: '-1'
+          }}
+        />
 
         <div className='z-10'>
           <Image
-            className='w-full h-full'
+            className='w-[300px] h-auto mx-auto'
             src='/coolchain_logo.png'
             alt='coolchain_logo'
           />
-          <div className='text-[24px] font-semibold mt-4 text-center'>
+          <div className='text-gray-800 text-sm mt-4 text-center'>
             Protecting Health, Certifying Temperature
           </div>
         </div>

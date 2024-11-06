@@ -19,10 +19,13 @@ export const DevicesHeader = () => {
             <BreadcrumbItem>Devices</BreadcrumbItem>
         </Breadcrumbs>
 
-        <div className="flex  flex-wrap justify-between">
+        <div className="flex flex-wrap justify-between">
             <h3 className="text-xl font-semibold">All Devices</h3>
             <Button color="primary" variant="flat" size="sm" onClick={handleClick}>
                 Add devices
+            </Button>
+            <Button color="primary" variant="flat" size="sm" onClick={() => router.push('/devices/add-multiple')}>
+                Add multiple devices
             </Button>
         </div>
     </>;

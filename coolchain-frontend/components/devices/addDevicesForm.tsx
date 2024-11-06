@@ -19,8 +19,6 @@ export const AddDevicesForm = () => {
         address: '0x0000000000000000000000000000000000000000',
     };
 
-    // TODO: swith to an array and add multiple devices at once
-
     const handleAddDevice = async (values: AddDeviceFormType, {setStatus, setSubmitting}) => {
         try {
             const responseData = await registerDevice({address: values.address, name: values.name}, user.accessToken);

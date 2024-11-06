@@ -1,4 +1,4 @@
-import { object, ref, string } from 'yup';
+import {array, object, ref, string} from 'yup';
 
 export const RegisterSchema = object().shape({
   name: string().required('Name is required'),
@@ -22,3 +22,20 @@ export const AddDeviceSchema = object().shape({
       }
   ),
 });
+
+export const AddMultipleDevicesSchema = object().shape({
+    devices: array().of(
+        object().shape({
+            name: string().required('Name is required'),
+            address: string().required('Address is required').test(
+                'is-ethereum-address',
+                'Invalid address',
+                (value) => {
+                    if (!value) return true;
+                    return /^0x[a-fA-F0-9]{40}$/.test(value);
+                }
+            ),
+        })
+    ).required('Devices array is required').min(1, 'At least one device is required'),
+});
+

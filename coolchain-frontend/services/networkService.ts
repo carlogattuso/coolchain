@@ -46,8 +46,6 @@ export const registerDevice = async (regiserDeviceDTO: DeviceDTO, token: string)
         credentials: 'include',
     });
     return handleResponse(response, {
-        429: ErrorCodes.ERROR_TOO_MANY_REQUESTS.code,
-        408: ErrorCodes.ERROR_AUTH_TIMEOUT_EXPIRED.code,
         401: ErrorCodes.UNAUTHORIZED.code,
         409: ErrorCodes.CONFLICT.code,
     }, ErrorCodes.ERROR_ADD_DEVICE.code);

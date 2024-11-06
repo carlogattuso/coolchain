@@ -1,7 +1,7 @@
 'use client';
 
 import {Button, Image} from '@nextui-org/react';
-import React, {useCallback, useContext, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {useSDK} from '@metamask/sdk-react';
 import {ErrorMessage} from '@/components/errors/error-message';
 import {ErrorCodes} from '@/utils/errors';

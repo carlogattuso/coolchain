@@ -22,8 +22,6 @@ export const Register = () => {
   const handleRegister = useCallback(
     async (values: RegisterFormType) => {
       // `values` contains name, email & password. You can use provider to register user
-
-      // await createAuthCookie();
       router.replace('/');
     },
     [router],

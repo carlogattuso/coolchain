@@ -33,9 +33,13 @@ export const AuthLayoutWrapper = ({ children }: Props) => {
         </div>
 
         <div className='z-10'>
-          <h1 className='font-bold text-[45px]'>Coolchain</h1>
-          <div className='font-light text-slate-400 mt-4'>
-            Manage your measurements
+          <Image
+            className='w-full h-full'
+            src='/coolchain_logo.png'
+            alt='coolchain_logo'
+          />
+          <div className='text-[24px] font-semibold mt-4 text-center'>
+            Protecting Health, Certifying Temperature
           </div>
         </div>
       </div>

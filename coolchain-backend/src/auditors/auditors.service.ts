@@ -4,7 +4,6 @@ import { Nonce } from '../auth/types/Nonce';
 import { hexlify, randomBytes } from 'ethers';
 import { Auditor } from './types/Auditor';
 import { PrismaService } from '../prisma/prisma.service';
-import { BlockchainService } from '../blockchain/blockchain.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 
@@ -14,7 +13,6 @@ export class AuditorsService {
 
   constructor(
     private readonly _prismaService: PrismaService,
-    private readonly _blockchainService: BlockchainService,
     @InjectQueue('auditor-queue') private auditorQueue: Queue,
   ) {}
 

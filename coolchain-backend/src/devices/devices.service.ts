@@ -6,12 +6,17 @@ import { CreateDeviceInputDTO } from './types/dto/CreateDeviceInputDTO';
 import { DeviceAlreadyExistsError } from '../utils/types/DeviceAlreadyExistsError';
 import { CreateDeviceOutputDTO } from './types/dto/CreateDeviceOutputDTO';
 import { Device } from './types/Device';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class DevicesService {
   private readonly logger: Logger = new Logger(DevicesService.name);
 
-  constructor(private readonly _prismaService: PrismaService) {}
+  constructor(
+    private readonly _prismaService: PrismaService,
+    @InjectQueue('devices-queue') private devicesQueue: Queue,
+  ) {}
 
   async createDevices(
     _auditorAddress: string,
@@ -55,6 +60,13 @@ export class DevicesService {
           name: device.name,
         })),
       });
+      // Device registration in blockchain
+      await Promise.all(
+        _input.devices.map((device) => {
+          return this.registerDevice(_auditorAddress, device.address);
+        }),
+      );
+      // exit
       return { created: createdDevices.count };
     } catch (error) {
       this.logger.error(`Error creating devices: ${error.message}`, {
@@ -97,5 +109,15 @@ export class DevicesService {
       });
       throw new Error(ErrorCodes.DATABASE_ERROR.code);
     }
+  }
+
+  async registerDevice(
+    _auditorAddress: string,
+    _deviceAddress: string,
+  ): Promise<void> {
+    await this.devicesQueue.add('processRegisterDevice', {
+      auditorAddress: _auditorAddress,
+      deviceAddress: _deviceAddress,
+    });
   }
 }

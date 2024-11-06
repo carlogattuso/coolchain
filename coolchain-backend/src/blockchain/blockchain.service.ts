@@ -112,6 +112,21 @@ export class BlockchainService {
     return await transaction.wait();
   }
 
+  async registerDevice(
+    _auditorAddress: AddressLike,
+    _deviceAddress: AddressLike
+  ): Promise<ContractTransactionReceipt> {
+    const coolchainContract = new Contract(
+      this.contractAddress,
+      getCoolchainContract().abi,
+      this.wallet,
+    );
+
+    const transaction: ContractTransactionResponse =
+      await coolchainContract.registerDevice(_auditorAddress, _deviceAddress);
+    return await transaction.wait();
+  }
+
   private async mapRecordsToPermitCallData(
     _records: Record[],
   ): Promise<Awaited<string>[]> {

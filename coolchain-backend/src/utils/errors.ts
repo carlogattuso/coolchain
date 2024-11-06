@@ -38,7 +38,12 @@ export const ErrorCodes = {
   AUDITOR_REGISTRATION_ERROR: {
     code: 'ERR009',
     message:
-      'An arror occurred during the auditor registration. Please try again later',
+      'An error occurred during the auditor registration in the contract. Please try again later',
+  },
+  DEVICE_REGISTRATION_ERROR: {
+    code: 'ERR010',
+    message:
+      'An error occurred during the device registration in the contract. Please try again later',
   },
   UNEXPECTED_ERROR: {
     code: 'ERR999',

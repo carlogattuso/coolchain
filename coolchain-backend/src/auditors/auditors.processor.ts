@@ -22,6 +22,7 @@ export class AuditorsProcessor extends WorkerHost {
     switch (job.name) {
       case 'processRegisterAuditor':
         {
+          this.logger.log('Process auditor registration');
           await this.registerAuditor(job.data.auditorAddress);
         }
         break;
@@ -35,7 +36,7 @@ export class AuditorsProcessor extends WorkerHost {
         where: { address: _auditorAddress, isOnboardingPending: true },
       });
     } catch (error) {
-      this.logger.error(`Error updating nonce: ${error.message}`, {
+      this.logger.error(`Error finding auditor: ${error.message}`, {
         stack: error.stack,
         auditor: _auditorAddress,
       });
@@ -53,11 +54,14 @@ export class AuditorsProcessor extends WorkerHost {
           where: { address: _auditorAddress },
           data: { isOnboardingPending: false },
         });
+        this.logger.log('Successfully registered auditor ', _auditorAddress);
         return auditorResult;
       } catch (error) {
-        console.error(`Error registering auditor: ${error.message}`);
+        this.logger.error(`Error registering auditor: ${error.message}`);
         throw new Error(ErrorCodes.AUDITOR_REGISTRATION_ERROR.code);
       }
+    } else {
+      this.logger.error(`Error finding auditor: ${_auditorAddress}`);
     }
   }
 }

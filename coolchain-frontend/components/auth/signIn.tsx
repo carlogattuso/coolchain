@@ -41,7 +41,7 @@ export const SignIn = () => {
             await createAuthCookie(signInData.accessToken);
 
             if (signInData.isNew) {
-                router.replace('/devices/add');
+                router.replace('/devices/add-multiple');
             } else {
                 router.replace('/devices');
             }

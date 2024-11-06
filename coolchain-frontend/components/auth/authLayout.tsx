@@ -37,11 +37,11 @@ export const AuthLayoutWrapper = ({ children }: Props) => {
 
         <div className='z-10'>
           <Image
-            className='w-[300px] h-auto mx-auto'
+            className='w-[500px] h-auto mx-auto'
             src='/coolchain_logo.png'
             alt='coolchain_logo'
           />
-          <div className='text-gray-800 text-sm mt-4 text-center'>
+          <div className='text-gray-800 text-[22px] mt-4 text-center'>
             Protecting Health, Certifying Temperature
           </div>
         </div>

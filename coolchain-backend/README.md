@@ -179,6 +179,10 @@ mongod --replSet rs0 --config /usr/local/etc/mongod.conf --dbpath yourPathToCool
   prisma generate
 ```
 
+## Regis Installation
+
+Follow the steps in the documentation to [install and run Redis locally here](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/).
+
 ## Running the app
 
 ```bash

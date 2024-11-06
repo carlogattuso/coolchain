@@ -4,12 +4,17 @@ import { Nonce } from '../auth/types/Nonce';
 import { hexlify, randomBytes } from 'ethers';
 import { Auditor } from './types/Auditor';
 import { PrismaService } from '../prisma/prisma.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class AuditorsService {
   private readonly logger: Logger = new Logger(AuditorsService.name);
 
-  constructor(private readonly _prismaService: PrismaService) {}
+  constructor(
+    private readonly _prismaService: PrismaService,
+    @InjectQueue('auditor-queue') private auditorQueue: Queue,
+  ) {}
 
   async refreshAuditor(_auditorAddress: string): Promise<Auditor> {
     try {
@@ -43,6 +48,7 @@ export class AuditorsService {
         return auditor;
       }
 
+      // Create auditor
       const newNonce: Nonce = await this.generateNonce();
       return await this._prismaService.auditor.create({
         data: {
@@ -58,5 +64,11 @@ export class AuditorsService {
       });
       throw new Error(ErrorCodes.DATABASE_ERROR.code);
     }
+  }
+
+  async registerAuditor(_auditorAddress: string): Promise<void> {
+    await this.auditorQueue.add('processRegisterAuditor', {
+      auditorAddress: _auditorAddress,
+    });
   }
 }

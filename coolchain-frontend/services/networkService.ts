@@ -7,7 +7,6 @@ import {DeviceDTO} from "@/helpers/types/dto/DeviceDTO";
 const handleResponse = async (response: Response, errorMap: Record<number, string>, defaultError: string) => {
     if (!response.ok) {
         const errorCode = errorMap[response.status] || defaultError;
-        console.log(errorCode);
     }
     return await response.json();
 };

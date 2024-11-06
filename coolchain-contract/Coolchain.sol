@@ -10,13 +10,6 @@ contract Coolchain {
         uint64 timestamp;
     }
 
-    // Device record struct
-    struct Record {
-        address deviceAddress;
-        int64 value;
-        uint64 timestamp;
-    }
-
     // Auditor struct
     struct Auditor {
         address auditorAddress;

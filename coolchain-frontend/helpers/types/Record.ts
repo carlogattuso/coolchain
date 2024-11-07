@@ -4,6 +4,7 @@ export interface Record {
   timestamp: number;
   value: number;
   deviceAddress: string;
+  status: string;
   id: string;
   events: Event[];
 }

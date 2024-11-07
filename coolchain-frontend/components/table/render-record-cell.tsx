@@ -34,6 +34,10 @@ export const RenderRecordCell = ({record, columnKey}: Props) => {
             return (
                 <span>{((new Date(record.timestamp * 1000)).toLocaleString())}</span>
             )
+        case "status":
+            return (
+                <span>{((new Date(record.timestamp * 1000)).toLocaleString())}</span>
+            )
         default:
             return cellValue;
     }

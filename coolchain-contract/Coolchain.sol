@@ -94,7 +94,7 @@ contract Coolchain {
         _;
     }
 
-    function getDevice(address deviceAddress) public view returns (address) {
+    function getDevice(address deviceAddress) public view isDeviceRegistered(deviceAddress) returns (address) {
         return devices[deviceAddress];
     }
 }

@@ -45,6 +45,10 @@ export const ErrorCodes = {
     message:
       'An error occurred during the device registration in the contract. Please try again later',
   },
+  DEVICE_NOT_REGISTERED_IN_COOLCHAIN: {
+    code: 'ERR011',
+    message: 'The specified device is not registered in Coolchain contract.',
+  },
   UNEXPECTED_ERROR: {
     code: 'ERR999',
     message: 'Unexpected error occurred',

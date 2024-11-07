@@ -7,6 +7,7 @@ import {
   ContractTransactionResponse,
   EventLog,
   Interface,
+  isAddress,
   JsonRpcProvider,
   Signature,
   Wallet,
@@ -149,6 +150,19 @@ export class BlockchainService {
     const transaction: ContractTransactionResponse =
       await coolchainContract.registerDevice(_auditorAddress, _deviceAddress);
     return await transaction.wait();
+  }
+
+  async checkDevice(_deviceAddress: AddressLike): Promise<boolean> {
+    const coolchainContract = new Contract(
+      this.contractAddress,
+      getCoolchainContract().abi,
+      this.wallet,
+    );
+
+    const transactionResult: AddressLike =
+      await coolchainContract.getDevice(_deviceAddress);
+
+    return isAddress(transactionResult);
   }
 
   private async mapRecordsToPermitCallData(

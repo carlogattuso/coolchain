@@ -8,6 +8,7 @@ import { CreateDeviceOutputDTO } from './types/dto/CreateDeviceOutputDTO';
 import { Device } from './types/Device';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
 export class DevicesService {
@@ -15,6 +16,7 @@ export class DevicesService {
 
   constructor(
     private readonly _prismaService: PrismaService,
+    private readonly _blockchainService: BlockchainService,
     @InjectQueue('devices-queue') private devicesQueue: Queue,
   ) {}
 
@@ -119,5 +121,17 @@ export class DevicesService {
       auditorAddress: _auditorAddress,
       deviceAddress: _deviceAddress,
     });
+  }
+
+  async checkDeviceInContract(_deviceAddress: string): Promise<void> {
+    try {
+      await this._blockchainService.checkDevice(_deviceAddress);
+    } catch (error) {
+      this.logger.error(`Error checking device: ${error.message}`, {
+        stack: error.stack,
+        device: _deviceAddress,
+      });
+      throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.code);
+    }
   }
 }

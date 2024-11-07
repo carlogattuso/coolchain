@@ -1,6 +1,7 @@
 export interface Device {
   address: string;
   name: string;
+  auditorAddress: string;
 }
 
 export function isDevice(obj: any): obj is Device {

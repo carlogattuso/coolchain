@@ -59,6 +59,12 @@ export class RecordsController {
     } catch (error) {
       if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
         throw new ForbiddenException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
+      } else if (
+        error.message === ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.code
+      ) {
+        throw new ForbiddenException(
+          ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.message,
+        );
       } else if (error.message === ErrorCodes.AUDIT_NOT_AVAILABLE.code) {
         throw new ThrottlerException(ErrorCodes.AUDIT_NOT_AVAILABLE.message);
       } else {
@@ -119,6 +125,12 @@ export class RecordsController {
         throw new ForbiddenException(ErrorCodes.ADDRESS_REQUIRED.message);
       } else if (error.message === ErrorCodes.DEVICE_NOT_REGISTERED.code) {
         throw new ForbiddenException(ErrorCodes.DEVICE_NOT_REGISTERED.message);
+      } else if (
+        error.message === ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.code
+      ) {
+        throw new ForbiddenException(
+          ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.message,
+        );
       } else {
         throw new BadRequestException(ErrorCodes.UNEXPECTED_ERROR.message);
       }

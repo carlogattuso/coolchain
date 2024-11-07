@@ -22,14 +22,6 @@ export class RecordsService {
   async storeUnauditedRecord(
     _record: CreateRecordDTO,
   ): Promise<CreateRecordDTO> {
-    const device = await this._devicesService.findDevice(_record.deviceAddress);
-    if (!device) {
-      throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code);
-    }
-
-    // Check in contract: transaction will fail if device is not recorded
-    await this._devicesService.checkDeviceInContract(_record.deviceAddress);
-
     const auditStatus = await this.getAuditStatus(_record.deviceAddress);
     if (auditStatus.isAuditPending && arePermitFieldsPresent(_record)) {
       throw new Error(ErrorCodes.AUDIT_NOT_AVAILABLE.code);

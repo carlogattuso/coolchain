@@ -124,11 +124,13 @@ export class DevicesService {
   }
 
   async checkDeviceInContract(_deviceAddress: string): Promise<void> {
-    // Check in contract: transaction will fail if device is not recorded
     try {
       await this._blockchainService.checkDevice(_deviceAddress);
     } catch (error) {
-      this.logger.error(`Error checking device: ${error.message}`);
+      this.logger.error(`Error checking device: ${error.message}`, {
+        stack: error.stack,
+        device: _deviceAddress,
+      });
       throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.code);
     }
   }

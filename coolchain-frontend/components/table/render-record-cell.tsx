@@ -1,8 +1,7 @@
 import {Chip, Tooltip} from "@nextui-org/react";
 import React from "react";
-import {Auditor} from "@/helpers/types/Auditor";
 import {copyTextToClipboard} from "@/helpers/copy";
-import {Record} from "@/helpers/types/Record";
+import {Record, Status} from "@/helpers/types/Record";
 
 interface Props {
     record: Record;
@@ -36,8 +35,20 @@ export const RenderRecordCell = ({record, columnKey}: Props) => {
             )
         case "status":
             return (
-                <span>{((new Date(record.timestamp * 1000)).toLocaleString())}</span>
-            )
+                <Chip
+                    size="sm"
+                    variant="flat"
+                    color={
+                        cellValue === Status.Audited
+                            ? "success"
+                            : cellValue === Status.Pending
+                                ? "default"
+                                : "warning"
+                    }
+                >
+                    <span className="capitalize text-xs">{cellValue}</span>
+                </Chip>
+            );
         default:
             return cellValue;
     }

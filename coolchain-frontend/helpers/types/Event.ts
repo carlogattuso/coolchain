@@ -8,6 +8,7 @@ export interface Event {
     index: number[];
     transactionIndex: number;
     recordId: string;
+    eventType: string;
 }
 
 export function isEvent(obj: any): obj is Event {

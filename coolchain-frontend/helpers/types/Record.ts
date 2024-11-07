@@ -1,4 +1,4 @@
-import { isEvent } from '@/helpers/types/Event';
+import { isEvent, Event } from '@/helpers/types/Event';
 
 export enum Status {
   Pending = "Pending",
@@ -9,7 +9,7 @@ export interface Record {
   timestamp: number;
   value: number;
   deviceAddress: string;
-  status?: Status;
+  status?: Status | void;
   id: string;
   events: Event[];
 }

@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { CreateEventDTO } from '../events/types/dto/CreateEventDTO';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { RecordsService } from '../records/records.service';
 import { EVERY_30_SECONDS, MAX_RECORD_BATCH_SIZE } from '../utils/constants';
@@ -30,20 +29,21 @@ export class CronService {
         `Blockchain Chronicler: Records ${unauditedRecords.map((record: Record) => record.id)} under audit`,
       );
 
-      const auditResult: CreateEventDTO[] =
+      const auditResult =
         await this._blockchainService.auditRecords(unauditedRecords);
 
-      auditResult.forEach((event: Event) => {
+      if (auditResult) {
+        auditResult.forEach((event: Event) => {
+          this.logger.verbose(
+            `Blockchain Chronicler: Record ${event.recordId} - ${event.eventType} - Tx Hash ${event.transactionHash}`,
+          );
+        });
+
+        await this._eventsService.storeEvents(auditResult);
         this.logger.verbose(
-          `Blockchain Chronicler: Record ${event.recordId} - ${event.eventType} - Tx Hash ${event.transactionHash}`,
+          `Blockchain Chronicler: End - ${auditResult.length} records audited`,
         );
-      });
-
-      await this._eventsService.storeEvents(auditResult);
+      }
     }
-
-    this.logger.verbose(
-      `Blockchain Chronicler: End - ${unauditedRecords.length} records audited`,
-    );
   }
 }

@@ -1,8 +1,8 @@
-import type { NextPage } from "next";
-import { Content } from "@/components/home/content";
+import React from 'react';
 
-const Home: NextPage = () => {
-  return <Content />;
+const HomePage = () => {
+
+    return <div/>;
 };
 
-export default Home;
+export default HomePage;

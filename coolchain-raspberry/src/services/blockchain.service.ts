@@ -3,7 +3,6 @@ import { config } from '../config/config';
 import { RecordDTO } from '../types/dto/RecordDTO';
 import { getCoolchainContract, getJsonRpcProvider, getNonce, getUnixTimeInSeconds } from '../utils/utils';
 import { ECDSASignature } from '../types/ECDSASignature';
-import { Record } from '../types/Record';
 import { RecordService } from './record.service';
 import {
   DAY_IN_SECONDS,
@@ -29,26 +28,29 @@ export class BlockchainService {
   }
 
   public async storeRecord() {
+    console.log(`Attempting to audit device ${this.wallet.address}`);
     const auditStatus = await this.recordService.getAuditStatus(this.wallet.address);
-    if (!auditStatus || auditStatus.isAuditPending) return;
+    if (!auditStatus) return;
 
     const nextSample: number | null = this.recordService.getRecordValue();
     //TODO: do not merge to master
     // if (!nextSample) return;
 
-    const record: Record = {
+    let record: RecordDTO = {
       deviceAddress: this.wallet.address,
       value: nextSample ?? Math.round(Math.random() * 100),
       timestamp: getUnixTimeInSeconds(),
     };
 
-    this.requestPermit(record).then(async (_recordDTO: RecordDTO) => {
-      console.log('New Record: ', _recordDTO);
-      await this.recordService.sendRecord(_recordDTO);
-    });
+    if (!auditStatus.isAuditPending) {
+      record = await this.requestPermit(record);
+    }
+
+    console.log('New Record: ', record);
+    await this.recordService.sendRecord(record);
   }
 
-  private async requestPermit(_record: Record): Promise<RecordDTO> {
+  private async requestPermit(_record: RecordDTO): Promise<RecordDTO> {
     const typedData = await this.buildPermitTypedData(_record);
 
     const signedPermitRequest: string = await this.wallet.signTypedData(
@@ -70,7 +72,7 @@ export class BlockchainService {
     };
   }
 
-  private async buildPermitTypedData(_record: Record) {
+  private async buildPermitTypedData(_record: RecordDTO) {
     const from = this.wallet.address as AddressLike;
     const contractInterface: ethers.Interface = new ethers.Interface(
       getCoolchainContract().abi,

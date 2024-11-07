@@ -36,7 +36,7 @@ export function getUnixTimeInSeconds(): number {
 }
 
 export function getOrCreateWallet(): { privateKey: string } {
-  const walletFilePath = path.join(process.cwd(), '.wallet.json');
+  const walletFilePath = path.join(process.cwd(), '.wallet-2.json');
 
   if (existsSync(walletFilePath)) {
     return JSON.parse(readFileSync(walletFilePath, 'utf8'));

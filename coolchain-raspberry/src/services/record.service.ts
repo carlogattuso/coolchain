@@ -2,9 +2,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { config } from '../config/config';
 import axios from 'axios';
-import { Record } from '../types/Record';
 import { parseAxiosError } from '../utils/utils';
 import { AuditStatusDTO } from '../types/dto/AuditStatusDTO';
+import { RecordDTO } from '../types/dto/RecordDTO';
 
 export class RecordService {
   private readonly recordsFilePath: string = config.recordsDir;
@@ -39,7 +39,7 @@ export class RecordService {
     return Math.trunc(total / sensors.length);
   }
 
-  async sendRecord(_recordWithPermit: Record) {
+  async sendRecord(_recordWithPermit: RecordDTO) {
     const url = join(this.apiEndpoint, '/');
     try {
       await axios.post(url, _recordWithPermit, {
@@ -61,9 +61,9 @@ export class RecordService {
           deviceAddress: _deviceAddress,
         },
       });
-      
+
       const auditStatus: AuditStatusDTO = response.data;
-      console.info(`Current audit status: ${auditStatus.isAuditPending ? 'Pending' : 'Available'}`);
+      console.warn(`Current audit status: ${auditStatus.isAuditPending ? 'Pending' : 'Available'}`);
       return auditStatus;
     } catch (error) {
       console.error(parseAxiosError(error, url));

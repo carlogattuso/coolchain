@@ -5,6 +5,7 @@ import {
   IsEthereumAddress,
   IsInt,
   IsNumber,
+  IsOptional,
   IsPositive,
   ValidateNested,
 } from 'class-validator';
@@ -42,18 +43,23 @@ export class Record {
   @ApiProperty({
     description:
       'Unix timestamp indicating when the permit for that record expires',
+    required: false,
+    example: 1672525800,
   })
   @IsInt()
   @IsPositive()
-  permitDeadline: number;
+  @IsOptional()
+  permitDeadline?: number;
 
   @ApiProperty({
     description: 'Digital signature for permit verification',
+    required: false,
     type: () => ECDSASignature,
   })
   @ValidateNested()
+  @IsOptional()
   @Type(() => ECDSASignature)
-  permitSignature: ECDSASignature;
+  permitSignature?: ECDSASignature;
 
   @ApiProperty({
     description: 'List of events associated with this record',

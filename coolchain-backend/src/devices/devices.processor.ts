@@ -58,7 +58,7 @@ export class DevicesProcessor extends WorkerHost {
             deviceInDB.auditorAddress,
             deviceInDB.address,
           );
-        this.logger.log('Device registered successfully');
+        this.logger.log('Successfully registered device ', _deviceAddress);
         return deviceResult;
       } catch (error) {
         this.logger.error(`Error registering device: ${error.message}`);

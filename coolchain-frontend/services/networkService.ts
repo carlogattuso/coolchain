@@ -7,6 +7,7 @@ import {DeviceDTO} from "@/helpers/types/dto/DeviceDTO";
 const handleResponse = async (response: Response, errorMap: Record<number, string>, defaultError: string) => {
     if (!response.ok) {
         const errorCode = errorMap[response.status] || defaultError;
+        console.log(errorCode);
     }
     return await response.json();
 };
@@ -31,7 +32,7 @@ export const signIn = async (signInDTO: SignInDTO): Promise<JwtDTO> => {
     }, ErrorCodes.ERROR_SIGN_IN.code);
 };
 
-export const registerDevice = async (regiserDeviceDTO: DeviceDTO, token: string): Promise<any> => {
+export const registerDevices = async (devices: DeviceDTO[], token: string): Promise<any> => {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/devices`, {
         method: 'POST',
         headers: {
@@ -39,8 +40,7 @@ export const registerDevice = async (regiserDeviceDTO: DeviceDTO, token: string)
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            devices: [regiserDeviceDTO
-            ]
+            devices
         }),
         credentials: 'include',
     });

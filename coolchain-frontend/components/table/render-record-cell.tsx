@@ -39,7 +39,7 @@ export const RenderRecordCell = ({record, columnKey}: Props) => {
                     size="sm"
                     variant="flat"
                     color={
-                        cellValue === Status.Audited
+                        cellValue === Status.Registered
                             ? "success"
                             : cellValue === Status.Pending
                                 ? "default"

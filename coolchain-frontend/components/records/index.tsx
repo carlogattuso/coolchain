@@ -14,7 +14,7 @@ export const Records = ({data}: RecordsProps) => {
         <div className="my-10 px-4 lg:px-6 max-w-[95rem] mx-auto w-full flex flex-col gap-4">
             <Breadcrumbs>
                 <BreadcrumbItem>Home</BreadcrumbItem>
-                <BreadcrumbItem>Devices</BreadcrumbItem>
+                <BreadcrumbItem>Records</BreadcrumbItem>
             </Breadcrumbs>
 
             <h3 className="text-xl font-semibold">All Records</h3>

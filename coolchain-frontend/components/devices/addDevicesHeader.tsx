@@ -20,7 +20,7 @@ export const AddDevicesHeader = () => {
 
         <div className="flex  flex-wrap justify-between">
             <h3 className="text-xl font-semibold">Add device</h3>
-            <Button color="primary" variant="faded" size="sm" onPress={handleBack}>
+            <Button color="primary" variant="bordered" size="sm" onPress={handleBack}>
                Back
             </Button>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 import React, { useContext } from 'react';
 import { AddMultipleDevicesSchema } from '@/helpers/schemas';
-import { Button, ButtonGroup, Input } from '@nextui-org/react';
+import { Button, Input } from '@nextui-org/react';
 import { FieldArray, Formik } from 'formik';
 import { useRouter } from 'next/navigation';
 import { AddDevicesHeader } from '@/components/devices/addDevicesHeader';
@@ -78,11 +78,11 @@ export const AddMultipleDevicesForm = () => {
                           errorMessage={errors?.devices?.[index]?.address}
                           onChange={handleChange(`devices.${index}.address`)}
                         />
-                        <ButtonGroup className="justify-end">
+                        <div className="flex justify-end space-x-2">
                           {(index !== 0) && (
                             <Button
                               variant="flat"
-                              color="secondary"
+                              color="warning"
                               size="sm"
                               onPress={() => remove(index)}>
                               Remove
@@ -91,13 +91,13 @@ export const AddMultipleDevicesForm = () => {
                           {(index === values.devices.length - 1) && (
                             <Button
                               variant="flat"
-                              color="secondary"
+                              color="warning"
                               size="sm"
                               onPress={() => push({ name: '', address: '' })}>
                               Add Device
                             </Button>
                           )}
-                        </ButtonGroup>
+                        </div>
                         <Divider></Divider>
                       </div>
                     ))}

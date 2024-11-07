@@ -26,6 +26,7 @@ export const Records = ({data}: RecordsProps) => {
                         {name: 'Id', key: 'id'},
                         {name: 'Value', key: 'value'},
                         {name: 'Timestamp', key: 'timestamp'},
+                        {name: 'Status', key: 'status'},
                         {name: 'Device', key: 'deviceAddress'},
                     ],
                     emptyMessage: 'No records found',

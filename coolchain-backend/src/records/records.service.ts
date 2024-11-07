@@ -8,7 +8,7 @@ import { Prisma } from '@prisma/client';
 import { DevicesService } from '../devices/devices.service';
 import { getUnixTimeInSeconds } from '../blockchain/blockchain.utils';
 import { AuditStatusDTO } from './types/dto/AuditStatusDTO';
-import { isPermitFieldsPresent } from './records.utils';
+import { arePermitFieldsPresent } from './records.utils';
 
 @Injectable()
 export class RecordsService {
@@ -28,7 +28,7 @@ export class RecordsService {
     }
 
     const auditStatus = await this.getAuditStatus(_record.deviceAddress);
-    if (auditStatus.isAuditPending && isPermitFieldsPresent(_record)) {
+    if (auditStatus.isAuditPending && arePermitFieldsPresent(_record)) {
       throw new Error(ErrorCodes.AUDIT_NOT_AVAILABLE.code);
     }
 

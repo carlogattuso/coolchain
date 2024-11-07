@@ -62,7 +62,7 @@ export class DevicesProcessor extends WorkerHost {
         return deviceResult;
       } catch (error) {
         this.logger.error(`Error registering device: ${error.message}`);
-        throw new Error(ErrorCodes.AUDITOR_REGISTRATION_ERROR.code);
+        throw new Error(ErrorCodes.DEVICE_REGISTRATION_ERROR.code);
       }
     }
   }

@@ -1,10 +1,15 @@
 import { isEvent } from '@/helpers/types/Event';
 
+export enum Status {
+  Pending = "Pending",
+  Audited = "Audited"
+}
+
 export interface Record {
   timestamp: number;
   value: number;
   deviceAddress: string;
-  status: string;
+  status?: Status;
   id: string;
   events: Event[];
 }

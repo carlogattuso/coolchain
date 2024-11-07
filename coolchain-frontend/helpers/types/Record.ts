@@ -2,7 +2,7 @@ import { isEvent } from '@/helpers/types/Event';
 
 export enum Status {
   Pending = "Pending",
-  Audited = "Audited"
+  Registered = "Registered"
 }
 
 export interface Record {

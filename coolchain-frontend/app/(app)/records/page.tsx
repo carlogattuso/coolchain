@@ -6,11 +6,11 @@ import {Records} from '@/components/records';
 import {Record, Status} from "@/helpers/types/Record";
 
 
-const calculateStatus = (record: Record): string => {
+const calculateStatus = (record: Record): Status => {
     if (!record.events.length) {
         return Status.Pending;
     }
-    return Status.Audited;
+    return Status.Registered;
 };
 
 const transformData = (data: Record[]): Record[] => {

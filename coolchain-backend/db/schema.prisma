@@ -28,14 +28,14 @@ model Device {
 }
 
 model Record {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
   timestamp       Int
   value           Int
-  permitDeadline  Int
-  permitSignature ECDSASignature
-  events          Event[]        @relation("RecordEvents")
+  permitDeadline  Int?
+  permitSignature ECDSASignature?
+  events          Event[]         @relation("RecordEvents")
   deviceAddress   String
-  device          Device         @relation("DeviceRecords", fields: [deviceAddress], references: [address])
+  device          Device          @relation("DeviceRecords", fields: [deviceAddress], references: [address])
 
   @@index([deviceAddress, timestamp(sort: Desc)])
   @@map("Records")

@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   AddressLike,
   Contract,
@@ -14,6 +14,7 @@ import {
 import {
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
+  DEFAULT_SOLIDITY_ERROR_ABI,
   PERMIT_PRECOMPILE_ABI,
   PERMIT_PRECOMPILE_ADDRESS,
   PERMIT_PRECOMPILE_GAS_LIMIT,
@@ -29,9 +30,17 @@ import { RegisterAuditorDTO } from '../auditors/types/dto/RegisterAuditorDTO';
 
 @Injectable()
 export class BlockchainService {
+  private readonly logger: Logger = new Logger(BlockchainService.name);
+
   private readonly provider: JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;
+  private readonly contractInterface = new Interface(
+    getCoolchainContract().abi,
+  );
+  private readonly permitPrecompileInterface = new Interface(
+    PERMIT_PRECOMPILE_ABI,
+  );
   private readonly chainId: number;
   private readonly chainName: string;
   private readonly chainRpcUrl: string;
@@ -55,7 +64,9 @@ export class BlockchainService {
     this.wallet = new Wallet(this.accountFrom.privateKey, this.provider);
   }
 
-  async auditRecords(_unsignedRecords: Record[]): Promise<CreateEventDTO[]> {
+  async auditRecords(
+    _unsignedRecords: Record[],
+  ): Promise<CreateEventDTO[] | null> {
     const batchPrecompiled = new Contract(
       BATCH_PRECOMPILE_ADDRESS,
       BATCH_PRECOMPILE_ABI,
@@ -70,11 +81,24 @@ export class BlockchainService {
 
     const callData = await this.mapRecordsToPermitCallData(_unsignedRecords);
 
-    const transaction: ContractTransactionResponse =
-      await batchPrecompiled.batchSome(addresses, values, callData, gasLimit);
+    let transaction: ContractTransactionResponse;
+    try {
+      transaction = await batchPrecompiled.batchSome(
+        addresses,
+        values,
+        callData,
+        gasLimit,
+      );
+    } catch (error) {
+      const errorInterface = new Interface(DEFAULT_SOLIDITY_ERROR_ABI);
+      this.logger.error(
+        'Some error encountered while auditing:',
+        errorInterface.parseError(error.data),
+      );
+      return null;
+    }
 
     const receipt: ContractTransactionReceipt = await transaction.wait();
-
     const recordMap = new Map<number, string>(
       _unsignedRecords.map((record, index) => [index, record.id]),
     );
@@ -114,7 +138,7 @@ export class BlockchainService {
 
   async registerDevice(
     _auditorAddress: AddressLike,
-    _deviceAddress: AddressLike
+    _deviceAddress: AddressLike,
   ): Promise<ContractTransactionReceipt> {
     const coolchainContract = new Contract(
       this.contractAddress,
@@ -143,20 +167,12 @@ export class BlockchainService {
 
     const { v, r, s } = Signature.from(_record.permitSignature);
 
-    const coolchainContractInterface: Interface = new Interface(
-      getCoolchainContract().abi,
-    );
-
-    const permitPrecompileInteface: Interface = new Interface(
-      PERMIT_PRECOMPILE_ABI,
-    );
-
-    const recordCallData = coolchainContractInterface.encodeFunctionData(
+    const recordCallData = this.contractInterface.encodeFunctionData(
       'storeRecord',
       [_record.deviceAddress, _record.value, _record.timestamp],
     );
 
-    return permitPrecompileInteface.encodeFunctionData('dispatch', [
+    return this.permitPrecompileInterface.encodeFunctionData('dispatch', [
       from,
       to,
       value,

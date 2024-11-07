@@ -95,6 +95,7 @@ export class BlockchainService {
         'Some error encountered while auditing:',
         errorInterface.parseError(error.data),
       );
+      this.logger.error(error);
       return null;
     }
 

@@ -61,7 +61,7 @@ export const useMetamask = ({ provider }: MetamaskProps) => {
         });
       };
     }
-  }, [provider]);
+  }, [provider, handleLogout]);
 
   return { requestAccounts, signMessage };
 };

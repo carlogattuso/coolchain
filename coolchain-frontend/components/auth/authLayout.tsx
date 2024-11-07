@@ -8,25 +8,31 @@ interface Props {
 
 export const AuthLayoutWrapper = ({ children }: Props) => {
   return (
-    <div className="flex h-screen">
-      <div className="flex-1 flex-col flex items-center justify-center p-6">
-        <div className="md:hidden absolute left-0 right-0 bottom-0 top-0 z-0">
+    <div className="flex h-screen relative">
+
+      {/* Left Section - Content */}
+      <div className="flex flex-1 flex-col items-center justify-center p-6 relative">
+        {/* Background Gradient Image (Visible on Mobile) */}
+        <div className="md:hidden absolute inset-0 z-0">
           <Image
-            className="w-full h-full"
+            className="w-full h-full object-cover"
             src="https://nextui.org/gradients/docs-right.png"
             alt="gradient"
           />
         </div>
-        {children}
+        <div className="relative z-10">{children}</div>
       </div>
 
-      <div className="hidden my-10 md:block">
-        <Divider orientation="vertical" />
+      {/* Vertical Divider (Visible on Medium screens and above) */}
+      <div className="hidden md:block">
+        <Divider orientation="vertical" className="my-10" />
       </div>
 
-      <div className="hidden md:flex flex-1 relative items-center justify-center p-6">
+      {/* Right Section - Logo and Text */}
+      <div className="hidden md:flex flex-1 items-center justify-center p-6 relative">
+        {/* Background Glow Effect */}
         <div
-          className="absolute w-[300px] h-[300px] rounded-full bg-gradient-to-r from-white-400 via-white-500 to-white-500"
+          className="absolute w-[300px] h-[300px] bg-gradient-to-r from-white-400 via-white-500 to-white-500 rounded-full"
           style={{
             filter: 'blur(100px)',
             top: '50%',
@@ -36,11 +42,12 @@ export const AuthLayoutWrapper = ({ children }: Props) => {
           }}
         />
 
-        <div className="z-10">
+        {/* Logo and Text Content */}
+        <div className="flex flex-col items-center justify-center z-10 text-center">
           <Image
-            className="w-[300px] h-auto mx-auto"
+            className="w-[300px] h-auto"
             src="/coolchain_logo.png"
-            alt="coolchain_logo"
+            alt="Coolchain Logo"
           />
           <p className="text-[22px] mt-4">
             Protecting Health, Certifying Temperature

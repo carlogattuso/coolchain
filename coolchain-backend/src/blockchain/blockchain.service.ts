@@ -93,8 +93,10 @@ export class BlockchainService {
     } catch (error) {
       const errorInterface = new Interface(DEFAULT_SOLIDITY_ERROR_ABI);
       this.logger.error(
-        'Some error encountered while auditing:',
-        errorInterface.parseError(error.data),
+        `Some error encountered while auditing: ${error.reason}`,
+        {
+          detail: errorInterface.parseError(error.data),
+        },
       );
       return null;
     }

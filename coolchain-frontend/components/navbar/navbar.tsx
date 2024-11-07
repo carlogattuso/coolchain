@@ -1,8 +1,7 @@
-import {Input, Navbar, NavbarContent} from "@nextui-org/react";
-import React from "react";
-import {SearchIcon} from "../icons/searchicon";
-import {BurguerButton} from "./burguer-button";
-import {UserDropdown} from "./user-dropdown";
+import { Navbar, NavbarContent } from '@nextui-org/react';
+import React from 'react';
+import { BurguerButton } from './burguer-button';
+import { UserDropdown } from './user-dropdown';
 
 interface Props {
   children: React.ReactNode;
@@ -15,7 +14,7 @@ export const NavbarWrapper = ({ children }: Props) => {
         isBordered
         className="w-full"
         classNames={{
-          wrapper: "w-full max-w-full",
+          wrapper: 'w-full max-w-full',
         }}
       >
         <NavbarContent className="md:hidden">

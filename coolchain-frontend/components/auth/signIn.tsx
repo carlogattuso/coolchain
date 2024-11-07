@@ -20,8 +20,7 @@ export const SignIn = () => {
   const { requestAccounts, signMessage } = useMetamask({ provider });
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  // @ts-ignore
-  const { user, setUser } = useContext(UserContext);
+  const { setUser } = useContext(UserContext);
 
   const handleSignIn = async () => {
     setErrorMessage('');

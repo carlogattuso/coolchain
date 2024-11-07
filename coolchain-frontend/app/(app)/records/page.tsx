@@ -34,7 +34,7 @@ const RecordsPage = () => {
     data,
     error,
     isLoading,
-  } = useSWR(`/records`);
+  } = useSWR(`/records`, { refreshInterval: Number(process.env.NEXT_PUBLIC_FETCH_INTERVAL) ?? 10000 });
 
   if (error) return <p>Failed to load.</p>;
   if (isLoading) return <p>Loading...</p>;

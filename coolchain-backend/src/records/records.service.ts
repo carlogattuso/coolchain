@@ -94,6 +94,7 @@ export class RecordsService {
         deviceAddress: true,
         timestamp: true,
         value: true,
+        permitDeadline: true,
         events: true,
       },
       orderBy: {

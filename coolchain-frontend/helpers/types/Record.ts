@@ -1,8 +1,10 @@
-import { isEvent, Event } from '@/helpers/types/Event';
+import { Event, isEvent } from '@/helpers/types/Event';
 
 export enum Status {
-  Pending = "Pending",
-  Registered = "Registered"
+  Pending = 'Pending',
+  Registered = 'Registered',
+  Failed = 'Failed',
+  NotAudited = 'Not Audited'
 }
 
 export interface Record {
@@ -10,6 +12,7 @@ export interface Record {
   value: number;
   deviceAddress: string;
   status?: Status | void;
+  permitDeadline?: number;
   id: string;
   events: Event[];
 }

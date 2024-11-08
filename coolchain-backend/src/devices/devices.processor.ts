@@ -45,7 +45,6 @@ export class DevicesProcessor extends WorkerHost {
       this.logger.error(`Error finding device: ${error.message}`, {
         stack: error.stack,
         device: _deviceAddress,
-        auditorAddress: _auditorAddress,
       });
       throw new Error(ErrorCodes.DATABASE_ERROR.code);
     }
@@ -64,6 +63,8 @@ export class DevicesProcessor extends WorkerHost {
         this.logger.error(`Error registering device: ${error.message}`);
         throw new Error(ErrorCodes.DEVICE_REGISTRATION_ERROR.code);
       }
+    } else {
+      this.logger.error(`Error finding device: ${_deviceAddress}`);
     }
   }
 }

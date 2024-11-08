@@ -4,6 +4,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ErrorCodes } from '../../utils/errors';
 import { AuditorsService } from '../auditors.service';
 import { Nonce } from '../../auth/types/Nonce';
+import { getQueueToken } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 const mockDatabaseError = (): Error =>
   new Error(ErrorCodes.DATABASE_ERROR.code);
@@ -24,9 +26,14 @@ const mockUpdatedAuditor = {
 describe('AuditorsService', () => {
   let auditorsService: AuditorsService;
   let prismaService: PrismaService;
+  let auditorQueueMock: jest.Mocked<Queue>;
 
   beforeEach(async () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation(jest.fn());
+    auditorQueueMock = {
+      add: jest.fn(),
+    } as unknown as jest.Mocked<Queue>;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuditorsService,
@@ -39,6 +46,10 @@ describe('AuditorsService', () => {
               create: jest.fn(),
             },
           },
+        },
+        {
+          provide: getQueueToken('auditor-queue'),
+          useValue: auditorQueueMock,
         },
       ],
     }).compile();
@@ -156,12 +167,41 @@ describe('AuditorsService', () => {
       await expect(
         auditorsService.findOrCreateAuditor(mockAuditorAddress),
       ).rejects.toThrow(mockDatabaseError());
+
       expect(Logger.prototype.error).toHaveBeenCalledWith(
         expect.stringContaining('Error finding or creating auditor'),
         expect.objectContaining({
           stack: expect.any(String),
           auditor: mockAuditorAddress,
         }),
+      );
+    });
+  });
+
+  describe('registerAuditor', () => {
+    it('should add a job to the queue with the correct parameters', async () => {
+      await auditorsService.registerAuditor(mockAuditorAddress);
+
+      expect(auditorQueueMock.add).toHaveBeenCalledWith(
+        'processRegisterAuditor',
+        {
+          auditorAddress: mockAuditorAddress,
+        },
+      );
+    });
+
+    it('should handle errors when add fails', async () => {
+      auditorQueueMock.add.mockRejectedValue(new Error('Queue error'));
+
+      await expect(
+        auditorsService.registerAuditor(mockAuditorAddress),
+      ).rejects.toThrow(new Error('Queue error'));
+
+      expect(auditorQueueMock.add).toHaveBeenCalledWith(
+        'processRegisterAuditor',
+        {
+          auditorAddress: mockAuditorAddress,
+        },
       );
     });
   });

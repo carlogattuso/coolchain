@@ -43,7 +43,11 @@ export class CronService {
         this.logger.verbose(
           `Blockchain Chronicler: End - ${auditResult.length} records audited`,
         );
+      } else {
+        this.logger.verbose(`Blockchain Chronicler: End - 0 records audited`);
       }
+    } else {
+      this.logger.verbose(`Blockchain Chronicler: End - 0 records audited`);
     }
   }
 }

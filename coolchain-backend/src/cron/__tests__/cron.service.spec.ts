@@ -132,4 +132,19 @@ describe('CronService', () => {
     expect(blockchainService.auditRecords).not.toHaveBeenCalled();
     expect(eventsService.storeEvents).not.toHaveBeenCalled();
   });
+
+  it('should not call storeEvents when audit fails', async () => {
+    jest
+      .spyOn(recordsService, 'getUnauditedRecords')
+      .mockResolvedValue(mockRecords());
+    jest.spyOn(blockchainService, 'auditRecords').mockResolvedValue(null);
+
+    await cronService.blockchainChronicler();
+
+    expect(recordsService.getUnauditedRecords).toHaveBeenCalledWith(
+      MAX_RECORD_BATCH_SIZE,
+    );
+    expect(blockchainService.auditRecords).toHaveBeenCalledWith(mockRecords());
+    expect(eventsService.storeEvents).not.toHaveBeenCalled();
+  });
 });

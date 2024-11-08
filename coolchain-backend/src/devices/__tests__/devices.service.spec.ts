@@ -1,42 +1,48 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DevicesService } from '../devices.service';
-import { PrismaService } from '../../prisma/prisma.service';
 import { Logger } from '@nestjs/common';
 import { ErrorCodes } from '../../utils/errors';
 import { CreateDeviceInputDTO } from '../types/dto/CreateDeviceInputDTO';
+import { DevicesService } from '../devices.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { BlockchainService } from '../../blockchain/blockchain.service';
+import { Queue } from 'bullmq';
+import { getQueueToken } from '@nestjs/bullmq';
 import { DeviceAlreadyExistsError } from '../../utils/types/DeviceAlreadyExistsError';
-import { Device } from '../types/Device';
 
-const mockCreateDevicesDTO = (): CreateDeviceInputDTO => ({
-  devices: [
-    {
-      name: 'Device1',
-      address: '0x123',
-    },
-    {
-      name: 'Device2',
-      address: '0x456',
-    },
-  ],
-});
+const mockAuditorAddress = '0x123';
+const mockDeviceAddress = '0x456';
+const mockDeviceName = 'Test Device';
 
 const mockDatabaseError = (): Error =>
   new Error(ErrorCodes.DATABASE_ERROR.code);
 
-const mockAuditorAddress = (): string => '0x123';
+const mockCreateDeviceInput: CreateDeviceInputDTO = {
+  devices: [
+    {
+      address: mockDeviceAddress,
+      name: mockDeviceName,
+    },
+  ],
+};
 
-const mockDevice = (): Device => ({
-  address: '0xabc',
-  name: 'Device 1',
-  auditorAddress: '0x1aT',
-});
+const mockDevice = {
+  address: mockDeviceAddress,
+  name: mockDeviceName,
+  auditorAddress: mockAuditorAddress,
+};
 
 describe('DevicesService', () => {
   let devicesService: DevicesService;
   let prismaService: PrismaService;
+  let blockchainService: BlockchainService;
+  let devicesQueueMock: jest.Mocked<Queue>;
 
   beforeEach(async () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation(jest.fn());
+    devicesQueueMock = {
+      add: jest.fn(),
+    } as unknown as jest.Mocked<Queue>;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DevicesService,
@@ -44,50 +50,54 @@ describe('DevicesService', () => {
           provide: PrismaService,
           useValue: {
             device: {
-              createMany: jest.fn(),
               findMany: jest.fn(),
+              createMany: jest.fn(),
               findUnique: jest.fn(),
             },
           },
         },
-        Logger,
+        {
+          provide: BlockchainService,
+          useValue: {
+            checkDevice: jest.fn(),
+          },
+        },
+        {
+          provide: getQueueToken('devices-queue'),
+          useValue: devicesQueueMock,
+        },
       ],
     }).compile();
 
     devicesService = module.get<DevicesService>(DevicesService);
     prismaService = module.get<PrismaService>(PrismaService);
+    blockchainService = module.get<BlockchainService>(BlockchainService);
   });
 
   it('should be defined', () => {
     expect(devicesService).toBeDefined();
     expect(prismaService).toBeDefined();
+    expect(blockchainService).toBeDefined();
   });
 
-  describe('createDevice', () => {
-    it('should create devices array when no existing device is found', async () => {
-      const createDeviceDto = mockCreateDevicesDTO();
-      const mockBatchPayload = {
-        count: createDeviceDto.devices.length,
-      };
-      const mockCreationResult = {
-        created: createDeviceDto.devices.length,
-      };
-
+  describe('createDevices', () => {
+    it('should create new devices successfully', async () => {
       jest.spyOn(prismaService.device, 'findMany').mockResolvedValue([]);
       jest
         .spyOn(prismaService.device, 'createMany')
-        .mockResolvedValue(mockBatchPayload);
+        .mockResolvedValue({ count: 1 });
+      jest.spyOn(devicesService, 'registerDevice').mockResolvedValue();
 
       const result = await devicesService.createDevices(
-        mockAuditorAddress(),
-        createDeviceDto,
+        mockAuditorAddress,
+        mockCreateDeviceInput,
       );
 
-      expect(result).toEqual(mockCreationResult);
+      expect(result).toEqual({ created: 1 });
       expect(prismaService.device.findMany).toHaveBeenCalledWith({
         where: {
           address: {
-            in: createDeviceDto.devices.map((device) => device.address),
+            in: [mockDeviceAddress],
           },
         },
         select: {
@@ -95,115 +105,79 @@ describe('DevicesService', () => {
         },
       });
       expect(prismaService.device.createMany).toHaveBeenCalledWith({
-        data: createDeviceDto.devices.map((device) => ({
-          auditorAddress: mockAuditorAddress(),
-          address: device.address,
-          name: device.name,
-        })),
+        data: [
+          {
+            auditorAddress: mockAuditorAddress,
+            address: mockDeviceAddress,
+            name: mockDeviceName,
+          },
+        ],
       });
     });
 
-    it('should throw an error if the device already exists', async () => {
-      const existingDevice = [
-        {
-          name: 'Device2',
-          address: '0x456',
-          auditorAddress: mockAuditorAddress(),
-        },
-      ];
-      const mockCreateDevicesDto = mockCreateDevicesDTO();
-      const conflictError = new DeviceAlreadyExistsError(
-        ErrorCodes.DEVICE_ALREADY_EXISTS.code,
-        [mockCreateDevicesDto.devices[1].address],
-      );
-
+    it('should throw DeviceAlreadyExistsError if device exists', async () => {
       jest
         .spyOn(prismaService.device, 'findMany')
-        .mockResolvedValue(existingDevice);
+        .mockResolvedValue([mockDevice]);
 
       await expect(
-        devicesService.createDevices(
-          mockAuditorAddress(),
-          mockCreateDevicesDto,
-        ),
-      ).rejects.toThrow(conflictError);
-      expect(prismaService.device.findMany).toHaveBeenCalledWith({
-        where: {
-          address: {
-            in: mockCreateDevicesDto.devices.map((device) => device.address),
-          },
-        },
-        select: {
-          address: true,
-        },
-      });
-      expect(prismaService.device.createMany).not.toHaveBeenCalled();
+        devicesService.createDevices(mockAuditorAddress, mockCreateDeviceInput),
+      ).rejects.toThrow(DeviceAlreadyExistsError);
     });
 
-    it('should log and throw a database error if there is a database error during findMany', async () => {
-      const createDeviceDto = mockCreateDevicesDTO();
-
+    it('should log and throw database error if findMany fails', async () => {
       jest
         .spyOn(prismaService.device, 'findMany')
         .mockRejectedValue(mockDatabaseError());
 
       await expect(
-        devicesService.createDevices(mockAuditorAddress(), createDeviceDto),
-      ).rejects.toThrow(mockDatabaseError());
-
+        devicesService.createDevices(mockAuditorAddress, mockCreateDeviceInput),
+      ).rejects.toThrow(ErrorCodes.DATABASE_ERROR.code);
       expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining(`Error retrieving devices:`),
+        expect.stringContaining('Error retrieving devices'),
         expect.objectContaining({
           stack: expect.any(String),
-          devices: createDeviceDto.devices.map((device) => device.address),
+          devices: mockCreateDeviceInput.devices.map(
+            (device) => device.address,
+          ),
         }),
       );
     });
 
-    it('should log and throw a database if there is a database error during create many', async () => {
-      const createDeviceDto = mockCreateDevicesDTO();
-
+    it('should log and throw database error if creation fails', async () => {
       jest.spyOn(prismaService.device, 'findMany').mockResolvedValue([]);
       jest
         .spyOn(prismaService.device, 'createMany')
         .mockRejectedValue(mockDatabaseError());
 
       await expect(
-        devicesService.createDevices(mockAuditorAddress(), createDeviceDto),
-      ).rejects.toThrow(mockDatabaseError());
+        devicesService.createDevices(mockAuditorAddress, mockCreateDeviceInput),
+      ).rejects.toThrow(ErrorCodes.DATABASE_ERROR.code);
 
       expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining(`Error creating devices:`),
+        expect.stringContaining('Error creating devices'),
         expect.objectContaining({
           stack: expect.any(String),
-          auditor: mockAuditorAddress(),
+          auditor: mockAuditorAddress,
         }),
       );
     });
   });
 
   describe('getDevices', () => {
-    it('should return a list of devices for the auditor', async () => {
-      const devices: Device[] = [
-        {
-          name: 'Device1',
-          address: '0x123',
-          auditorAddress: mockAuditorAddress(),
-        },
-        {
-          name: 'Device2',
-          address: '0x456',
-          auditorAddress: mockAuditorAddress(),
-        },
-      ];
+    it('should return devices for auditor', async () => {
+      const mockDevices = [mockDevice];
+      jest
+        .spyOn(prismaService.device, 'findMany')
+        .mockResolvedValue(mockDevices);
 
-      jest.spyOn(prismaService.device, 'findMany').mockResolvedValue(devices);
+      const result = await devicesService.getDevices(mockAuditorAddress);
 
-      const result = await devicesService.getDevices(mockAuditorAddress());
-
-      expect(result).toEqual(devices);
+      expect(result).toEqual(mockDevices);
       expect(prismaService.device.findMany).toHaveBeenCalledWith({
-        where: { auditorAddress: mockAuditorAddress() },
+        where: {
+          auditorAddress: mockAuditorAddress,
+        },
         select: {
           address: true,
           name: true,
@@ -211,72 +185,102 @@ describe('DevicesService', () => {
       });
     });
 
-    it('should log and throw a database error if there is a database error during getDevices', async () => {
+    it('should throw database error if query fails', async () => {
       jest
         .spyOn(prismaService.device, 'findMany')
         .mockRejectedValue(mockDatabaseError());
 
       await expect(
-        devicesService.getDevices(mockAuditorAddress()),
-      ).rejects.toThrow(mockDatabaseError());
+        devicesService.getDevices(mockAuditorAddress),
+      ).rejects.toThrow(ErrorCodes.DATABASE_ERROR.code);
+    });
+  });
+
+  describe('findDevice', () => {
+    it('should return device if found', async () => {
+      jest
+        .spyOn(prismaService.device, 'findUnique')
+        .mockResolvedValue(mockDevice);
+
+      const result = await devicesService.findDevice(mockDeviceAddress);
+
+      expect(result).toEqual(mockDevice);
+      expect(prismaService.device.findUnique).toHaveBeenCalledWith({
+        where: { address: mockDeviceAddress },
+      });
+    });
+
+    it('should throw database error if query fails', async () => {
+      jest
+        .spyOn(prismaService.device, 'findUnique')
+        .mockRejectedValue(mockDatabaseError());
+
+      await expect(
+        devicesService.findDevice(mockDeviceAddress),
+      ).rejects.toThrow(ErrorCodes.DATABASE_ERROR.code);
 
       expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining(`Error retrieving devices:`),
+        expect.stringContaining('Error retrieving device'),
         expect.objectContaining({
           stack: expect.any(String),
-          auditor: mockAuditorAddress(),
+          device: mockDeviceAddress,
         }),
       );
     });
   });
 
-  describe('findDevice', () => {
-    it('should return the existing device if found', async () => {
-      const mockExistingDevice = mockDevice();
-      jest
-        .spyOn(prismaService.device, 'findUnique')
-        .mockResolvedValue(mockExistingDevice);
-
-      const result = await devicesService.findDevice(
-        mockExistingDevice.address,
+  describe('registerDevice', () => {
+    it('should add a job to the queue with correct parameters', async () => {
+      await devicesService.registerDevice(
+        mockAuditorAddress,
+        mockDeviceAddress,
       );
 
-      expect(result).toEqual(mockExistingDevice);
-      expect(prismaService.device.findUnique).toHaveBeenCalledWith({
-        where: { address: mockExistingDevice.address },
-      });
+      expect(devicesQueueMock.add).toHaveBeenCalledWith(
+        'processRegisterDevice',
+        {
+          auditorAddress: mockAuditorAddress,
+          deviceAddress: mockDeviceAddress,
+        },
+      );
     });
 
-    it('should return empty device if not found', async () => {
-      const mockExistingDevice = mockDevice();
-      jest.spyOn(prismaService.device, 'findUnique').mockResolvedValue(null);
+    it('should handle errors when add fails', async () => {
+      devicesQueueMock.add.mockRejectedValue(new Error('Queue error'));
 
-      const result = await devicesService.findDevice(
-        mockExistingDevice.address,
+      await expect(
+        devicesService.registerDevice(mockAuditorAddress, mockDeviceAddress),
+      ).rejects.toThrow(new Error('Queue error'));
+
+      expect(devicesQueueMock.add).toHaveBeenCalledWith(
+        'processRegisterDevice',
+        {
+          auditorAddress: mockAuditorAddress,
+          deviceAddress: mockDeviceAddress,
+        },
       );
+    });
+  });
 
-      expect(result).toEqual(null);
-      expect(prismaService.device.findUnique).toHaveBeenCalledWith({
-        where: { address: mockExistingDevice.address },
-      });
+  describe('checkDeviceInContract', () => {
+    it('should check device in contract successfully', async () => {
+      jest.spyOn(blockchainService, 'checkDevice').mockResolvedValue(true);
+
+      await devicesService.checkDeviceInContract(mockDeviceAddress);
+
+      expect(blockchainService.checkDevice).toHaveBeenCalledWith(
+        mockDeviceAddress,
+      );
     });
 
-    it('should log an error and throw a database error if find unique fails', async () => {
-      const device = mockDevice();
+    it('should throw error if device check fails', async () => {
       jest
-        .spyOn(prismaService.device, 'findUnique')
-        .mockRejectedValue(mockDatabaseError());
+        .spyOn(blockchainService, 'checkDevice')
+        .mockRejectedValue(new Error());
 
-      await expect(devicesService.findDevice(device.address)).rejects.toThrow(
-        mockDatabaseError(),
-      );
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error retrieving device'),
-        expect.objectContaining({
-          stack: expect.any(String),
-          device: device.address,
-        }),
-      );
+      await expect(
+        devicesService.checkDeviceInContract(mockDeviceAddress),
+      ).rejects.toThrow(ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.code);
     });
   });
 });

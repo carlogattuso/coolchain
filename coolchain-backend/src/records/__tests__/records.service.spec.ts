@@ -16,6 +16,12 @@ const mockCreateRecordDTO = (): CreateRecordDTO => ({
   permitSignature: { v: 27, r: '0x12a', s: '0x4b6' },
 });
 
+const mockCreateUnsignedRecordDTO = (): CreateRecordDTO => ({
+  deviceAddress: '0xabc',
+  timestamp: 1234,
+  value: 3,
+});
+
 const mockRecord = (): Record => ({
   id: '1',
   deviceAddress: '0xabc',
@@ -23,6 +29,15 @@ const mockRecord = (): Record => ({
   value: 3,
   permitDeadline: Date.now() + 24 * 60 * 60,
   permitSignature: { v: 27, r: '0x12a', s: '0x4b6' },
+});
+
+const mockUnsignedRecord = (): Record => ({
+  id: '1',
+  deviceAddress: '0xabc',
+  timestamp: 1234,
+  value: 3,
+  permitDeadline: null,
+  permitSignature: null,
 });
 
 const mockDevice = (): Device => ({
@@ -48,6 +63,7 @@ describe('RecordsService', () => {
           provide: DevicesService,
           useValue: {
             findDevice: jest.fn(),
+            checkDeviceInContract: jest.fn(),
           },
         },
         {
@@ -78,7 +94,7 @@ describe('RecordsService', () => {
   });
 
   describe('storeUnauditedRecord', () => {
-    it('should store a record successfully', async () => {
+    it('should store a signed record successfully', async () => {
       const createRecordDto = mockCreateRecordDTO();
       const record = mockRecord();
 
@@ -91,9 +107,6 @@ describe('RecordsService', () => {
       const result = await recordsService.storeUnauditedRecord(createRecordDto);
 
       expect(result).toEqual(record);
-      expect(devicesService.findDevice).toHaveBeenCalledWith(
-        createRecordDto.deviceAddress,
-      );
       expect(prismaService.record.create).toHaveBeenCalledWith({
         data: {
           deviceAddress: createRecordDto.deviceAddress,
@@ -101,6 +114,50 @@ describe('RecordsService', () => {
           value: createRecordDto.value,
           permitDeadline: createRecordDto.permitDeadline,
           permitSignature: createRecordDto.permitSignature,
+        },
+      });
+    });
+
+    it('should store an unsigned record successfully', async () => {
+      const createRecordDto = mockCreateUnsignedRecordDTO();
+      const record = mockUnsignedRecord();
+
+      jest
+        .spyOn(recordsService, 'getAuditStatus')
+        .mockResolvedValue({ isAuditPending: false });
+
+      jest.spyOn(prismaService.record, 'create').mockResolvedValue(record);
+
+      const result = await recordsService.storeUnauditedRecord(createRecordDto);
+
+      expect(result).toEqual(record);
+      expect(prismaService.record.create).toHaveBeenCalledWith({
+        data: {
+          deviceAddress: createRecordDto.deviceAddress,
+          timestamp: createRecordDto.timestamp,
+          value: createRecordDto.value,
+        },
+      });
+    });
+
+    it('should store an unsigned record successfully even if audit is pending', async () => {
+      const createRecordDto = mockCreateUnsignedRecordDTO();
+      const record = mockUnsignedRecord();
+
+      jest
+        .spyOn(recordsService, 'getAuditStatus')
+        .mockResolvedValue({ isAuditPending: true });
+
+      jest.spyOn(prismaService.record, 'create').mockResolvedValue(record);
+
+      const result = await recordsService.storeUnauditedRecord(createRecordDto);
+
+      expect(result).toEqual(record);
+      expect(prismaService.record.create).toHaveBeenCalledWith({
+        data: {
+          deviceAddress: createRecordDto.deviceAddress,
+          timestamp: createRecordDto.timestamp,
+          value: createRecordDto.value,
         },
       });
     });
@@ -212,6 +269,7 @@ describe('RecordsService', () => {
         select: {
           id: true,
           deviceAddress: true,
+          permitDeadline: true,
           timestamp: true,
           value: true,
           events: true,
@@ -241,6 +299,7 @@ describe('RecordsService', () => {
         select: {
           id: true,
           deviceAddress: true,
+          permitDeadline: true,
           timestamp: true,
           value: true,
           events: true,
@@ -291,6 +350,14 @@ describe('RecordsService', () => {
   });
 
   describe('getAuditStatus', () => {
+    it('should throw an error if the address is not present', async () => {
+      jest.spyOn(devicesService, 'findDevice').mockResolvedValue(null);
+
+      await expect(recordsService.getAuditStatus(null)).rejects.toThrow(
+        new Error(ErrorCodes.ADDRESS_REQUIRED.code),
+      );
+    });
+
     it('should throw an error if the device is not registered', async () => {
       const mockDeviceAddress = mockDevice().address;
 
@@ -301,10 +368,30 @@ describe('RecordsService', () => {
       ).rejects.toThrow(new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code));
     });
 
+    it('should throw an error if the device is not registered in blockchain', async () => {
+      const mockDeviceAddress = mockDevice().address;
+
+      jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest
+        .spyOn(devicesService, 'checkDeviceInContract')
+        .mockRejectedValue(
+          new Error(ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.code),
+        );
+
+      await expect(
+        recordsService.getAuditStatus(mockDeviceAddress),
+      ).rejects.toThrow(
+        new Error(ErrorCodes.DEVICE_NOT_REGISTERED_IN_COOLCHAIN.code),
+      );
+    });
+
     it('should return available status if no record is under audit for the device', async () => {
       const mockDeviceAddress = mockRecord().deviceAddress;
 
       jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest
+        .spyOn(devicesService, 'checkDeviceInContract')
+        .mockResolvedValue(undefined);
       jest.spyOn(prismaService.record, 'findFirst').mockResolvedValue(null);
 
       const result = await recordsService.getAuditStatus(mockDeviceAddress);
@@ -327,6 +414,9 @@ describe('RecordsService', () => {
       const record = mockRecord();
 
       jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest
+        .spyOn(devicesService, 'checkDeviceInContract')
+        .mockResolvedValue(undefined);
       jest.spyOn(prismaService.record, 'findFirst').mockResolvedValue(record);
 
       const result = await recordsService.getAuditStatus(record.deviceAddress);
@@ -349,6 +439,9 @@ describe('RecordsService', () => {
       const mockDeviceAddress = mockRecord().deviceAddress;
 
       jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest
+        .spyOn(devicesService, 'checkDeviceInContract')
+        .mockResolvedValue(undefined);
 
       jest
         .spyOn(prismaService.record, 'findFirst')

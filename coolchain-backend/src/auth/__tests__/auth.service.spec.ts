@@ -63,6 +63,7 @@ describe('AuthService', () => {
           useValue: {
             refreshAuditor: jest.fn(),
             findOrCreateAuditor: jest.fn(),
+            registerAuditor: jest.fn(),
           },
         },
         JwtService,
@@ -176,6 +177,9 @@ describe('AuthService', () => {
 
       expect(result.accessToken).toBe('jwt-token');
       expect(auditorsService.refreshAuditor).toHaveBeenCalledWith(
+        mockSignInDTO().auditorAddress,
+      );
+      expect(auditorsService.registerAuditor).toHaveBeenCalledWith(
         mockSignInDTO().auditorAddress,
       );
     });

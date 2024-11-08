@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export const createAuthCookie = async (accessToken: string) => {
   cookies().set('auth', accessToken, {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     maxAge: 60 * 60 * 24,
     path: '/',
     httpOnly: true,

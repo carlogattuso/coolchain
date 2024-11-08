@@ -27,7 +27,6 @@ export const AddMultipleDevicesForm = () => {
   // @ts-ignore
   const handleAddDevice = async (values: { devices: DeviceType[] }, { setStatus, setSubmitting }) => {
     try {
-      console.log('devices', values);
       // @ts-ignore
       const responseData = await registerDevices(values.devices, user.accessToken);
       if (responseData.error) {

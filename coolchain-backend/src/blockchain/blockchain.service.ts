@@ -200,4 +200,14 @@ export class BlockchainService {
       s,
     ]);
   }
+
+  async getBlockTimestamp(blockNumber) {
+    try {
+      // Get the block details
+      const block = await this.provider.getBlock(blockNumber);
+      return block.timestamp;
+    } catch (error) {
+      console.error('Error fetching block:', error);
+    }
+  }
 }

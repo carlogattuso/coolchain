@@ -8,6 +8,7 @@ export const PERMIT_PRECOMPILE_ADDRESS =
   '0x000000000000000000000000000000000000080a';
 export const PERMIT_PRECOMPILE_GAS_LIMIT = 100000;
 export const EVERY_30_SECONDS = '*/30 * * * * *';
+export const AUDIT_SAFETY_OFFSET = 40;
 export const DEFAULT_SOLIDITY_ERROR_ABI = ['function Error(string)'];
 export const BATCH_PRECOMPILE_ABI = [
   {

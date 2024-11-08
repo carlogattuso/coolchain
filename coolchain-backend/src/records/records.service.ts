@@ -9,6 +9,8 @@ import { DevicesService } from '../devices/devices.service';
 import { getUnixTimeInSeconds } from '../blockchain/blockchain.utils';
 import { AuditStatusDTO } from './types/dto/AuditStatusDTO';
 import { arePermitFieldsPresent } from './records.utils';
+import { BlockchainService } from '../blockchain/blockchain.service';
+import { AUDIT_SAFETY_OFFSET } from '../utils/constants';
 
 @Injectable()
 export class RecordsService {
@@ -17,6 +19,7 @@ export class RecordsService {
   constructor(
     private readonly _prismaService: PrismaService,
     private readonly _devicesService: DevicesService,
+    private readonly _blockchainService: BlockchainService,
   ) {}
 
   async storeUnauditedRecord(
@@ -131,7 +134,8 @@ export class RecordsService {
     await this._devicesService.checkDeviceInContract(_deviceAddress);
 
     try {
-      const record = await this._prismaService.record.findFirst({
+      // Record without events: pending audit
+      const recordWithoutEvents = await this._prismaService.record.findFirst({
         where: {
           permitDeadline: {
             gt: getUnixTimeInSeconds(),
@@ -142,7 +146,48 @@ export class RecordsService {
           deviceAddress: _deviceAddress,
         },
       });
-      return { isAuditPending: record !== null };
+
+      if (recordWithoutEvents) {
+        return { isAuditPending: true };
+      }
+
+      // Record with success call
+      const recordWithSuccessfulCall =
+        await this._prismaService.record.findFirst({
+          where: {
+            permitDeadline: {
+              gt: getUnixTimeInSeconds(),
+            },
+            events: {
+              some: {
+                eventType: {
+                  equals: 'SubcallSucceeded',
+                },
+              },
+            },
+            deviceAddress: _deviceAddress,
+          },
+          select: {
+            id: true,
+            deviceAddress: true,
+            timestamp: true,
+            events: true,
+          },
+          orderBy: {
+            timestamp: 'desc',
+          },
+        });
+      // No record with successful audit, then no audit is pending
+      if (!recordWithSuccessfulCall) {
+        return { isAuditPending: false };
+      }
+      const event = recordWithSuccessfulCall.events.pop();
+      const blockTimeStamp = await this._blockchainService.getBlockTimestamp(
+        event.blockNumber,
+      );
+      const isAuditDone =
+        Math.round(Date.now() / 1000) >= AUDIT_SAFETY_OFFSET + blockTimeStamp;
+      return { isAuditPending: !isAuditDone };
     } catch (error) {
       this.logger.error(`Error checking audit status: ${error.message}`, {
         stack: error.stack,

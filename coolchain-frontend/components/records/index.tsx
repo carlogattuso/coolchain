@@ -21,7 +21,7 @@ export const Records = ({data}: RecordsProps) => {
 
             <div className="max-w-[95rem] mx-auto w-full">
                 <TableWrapper data={{
-                    items: data.map((record: Record) => ({...record, value: record.value / 100})),
+                    items: data.map((record: Record) => ({...record, value: record.value / 1000})),
                     columns: [
                         {name: 'Id', key: 'id'},
                         {name: 'Value', key: 'value'},

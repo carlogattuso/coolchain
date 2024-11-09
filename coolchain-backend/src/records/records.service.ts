@@ -10,7 +10,6 @@ import { getUnixTimeInSeconds } from '../blockchain/blockchain.utils';
 import { AuditStatusDTO } from './types/dto/AuditStatusDTO';
 import { arePermitFieldsPresent } from './records.utils';
 import { BlockchainService } from '../blockchain/blockchain.service';
-import { AUDIT_SAFETY_OFFSET } from '../utils/constants';
 
 @Injectable()
 export class RecordsService {
@@ -124,70 +123,27 @@ export class RecordsService {
       throw new Error(ErrorCodes.ADDRESS_REQUIRED.code);
     }
 
-    // Check in DB
-    const device = await this._devicesService.findDevice(_deviceAddress);
-    if (!device) {
-      throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code);
-    }
-
-    // Check in contract: transaction will fail if device is not recorded
-    await this._devicesService.checkDeviceInContract(_deviceAddress);
+    await this.validateDevice(_deviceAddress);
 
     try {
-      // Record without events: pending audit
-      const recordWithoutEvents = await this._prismaService.record.findFirst({
-        where: {
-          permitDeadline: {
-            gt: getUnixTimeInSeconds(),
-          },
-          events: {
-            none: {},
-          },
-          deviceAddress: _deviceAddress,
-        },
-      });
-
-      if (recordWithoutEvents) {
+      // Check for pending audit first
+      if (await this.hasPendingAudit(_deviceAddress)) {
         return { isAuditPending: true };
       }
 
-      // Record with success call
-      const recordWithSuccessfulCall =
-        await this._prismaService.record.findFirst({
-          where: {
-            permitDeadline: {
-              gt: getUnixTimeInSeconds(),
-            },
-            events: {
-              some: {
-                eventType: {
-                  equals: 'SubcallSucceeded',
-                },
-              },
-            },
-            deviceAddress: _deviceAddress,
-          },
-          select: {
-            id: true,
-            deviceAddress: true,
-            timestamp: true,
-            events: true,
-          },
-          orderBy: {
-            timestamp: 'desc',
-          },
-        });
-      // No record with successful audit, then no audit is pending
-      if (!recordWithSuccessfulCall) {
+      // If not pending events, search for succeeded ones
+      const lastSuccessfulAudit =
+        await this.getLastSuccessfulAudit(_deviceAddress);
+      if (!lastSuccessfulAudit) {
         return { isAuditPending: false };
       }
-      const event = recordWithSuccessfulCall.events.pop();
-      const blockTimeStamp = await this._blockchainService.getBlockTimestamp(
-        event.blockNumber,
-      );
-      const isAuditDone =
-        Math.round(Date.now() / 1000) >= AUDIT_SAFETY_OFFSET + blockTimeStamp;
-      return { isAuditPending: !isAuditDone };
+
+      return {
+        isAuditPending:
+          await this._blockchainService.isAuditStillPending(
+            lastSuccessfulAudit,
+          ),
+      };
     } catch (error) {
       this.logger.error(`Error checking audit status: ${error.message}`, {
         stack: error.stack,
@@ -195,5 +151,45 @@ export class RecordsService {
       });
       throw new Error(ErrorCodes.DATABASE_ERROR.code);
     }
+  }
+
+  private async validateDevice(_deviceAddress: string): Promise<void> {
+    const device = await this._devicesService.findDevice(_deviceAddress);
+    if (!device) {
+      throw new Error(ErrorCodes.DEVICE_NOT_REGISTERED.code);
+    }
+    await this._devicesService.checkDeviceInContract(_deviceAddress);
+  }
+
+  private async hasPendingAudit(_deviceAddress: string): Promise<boolean> {
+    const record = await this._prismaService.record.findFirst({
+      where: {
+        permitDeadline: { gt: getUnixTimeInSeconds() },
+        events: { none: {} },
+        deviceAddress: _deviceAddress,
+      },
+    });
+    return !!record;
+  }
+
+  private async getLastSuccessfulAudit(_deviceAddress: string) {
+    return this._prismaService.record.findFirst({
+      where: {
+        permitDeadline: { gt: getUnixTimeInSeconds() },
+        events: {
+          some: {
+            eventType: { equals: 'SubcallSucceeded' },
+          },
+        },
+        deviceAddress: _deviceAddress,
+      },
+      select: {
+        id: true,
+        deviceAddress: true,
+        timestamp: true,
+        events: true,
+      },
+      orderBy: { timestamp: 'desc' },
+    });
   }
 }

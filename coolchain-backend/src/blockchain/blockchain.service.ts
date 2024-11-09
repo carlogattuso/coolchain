@@ -168,7 +168,7 @@ export class BlockchainService {
     return isAddress(transactionResult);
   }
 
-  async isAuditStillPending(_record: Record): Promise<boolean> {
+  async isAuditStillPending(_record: Partial<Record>): Promise<boolean> {
     const event = _record.events[_record.events.length - 1];
     const block = await this.provider.getBlock(event.blockNumber);
     return getUnixTimeInSeconds() < AUDIT_SAFETY_OFFSET + block.timestamp;

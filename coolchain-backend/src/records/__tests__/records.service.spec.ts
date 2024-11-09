@@ -7,6 +7,7 @@ import { Device, Record } from '@prisma/client';
 import { Logger } from '@nestjs/common';
 import { MAX_RECORD_BATCH_SIZE } from '../../utils/constants';
 import { DevicesService } from '../../devices/devices.service';
+import { BlockchainService } from '../../blockchain/blockchain.service';
 
 const mockCreateRecordDTO = (): CreateRecordDTO => ({
   deviceAddress: '0xabc',
@@ -53,6 +54,7 @@ describe('RecordsService', () => {
   let recordsService: RecordsService;
   let devicesService: DevicesService;
   let prismaService: PrismaService;
+  let blockchainService: BlockchainService;
 
   beforeEach(async () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation(jest.fn());
@@ -79,12 +81,19 @@ describe('RecordsService', () => {
             },
           },
         },
+        {
+          provide: BlockchainService,
+          useValue: {
+            isAuditStillPending: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     recordsService = module.get<RecordsService>(RecordsService);
     devicesService = module.get<DevicesService>(DevicesService);
     prismaService = module.get<PrismaService>(PrismaService);
+    blockchainService = module.get<BlockchainService>(BlockchainService);
   });
 
   it('should be defined', () => {
@@ -385,7 +394,7 @@ describe('RecordsService', () => {
       );
     });
 
-    it('should return available status if no record is under audit for the device', async () => {
+    it('should return available status if no record is under audit', async () => {
       const mockDeviceAddress = mockRecord().deviceAddress;
 
       jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
@@ -397,42 +406,68 @@ describe('RecordsService', () => {
       const result = await recordsService.getAuditStatus(mockDeviceAddress);
 
       expect(result.isAuditPending).toBe(false);
-      expect(prismaService.record.findFirst).toHaveBeenCalledWith({
-        where: {
-          permitDeadline: {
-            gt: expect.any(Number),
-          },
-          events: {
-            none: {},
-          },
-          deviceAddress: mockDeviceAddress,
-        },
-      });
+      expect(prismaService.record.findFirst).toHaveBeenCalledTimes(2);
     });
 
-    it('should return pending status if a record is under audit for the device', async () => {
+    it('should return pending status if a record is under audit', async () => {
       const record = mockRecord();
+      const mockDeviceAddress = mockRecord().deviceAddress;
 
       jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
       jest
         .spyOn(devicesService, 'checkDeviceInContract')
         .mockResolvedValue(undefined);
+
       jest.spyOn(prismaService.record, 'findFirst').mockResolvedValue(record);
 
-      const result = await recordsService.getAuditStatus(record.deviceAddress);
+      const result = await recordsService.getAuditStatus(mockDeviceAddress);
 
       expect(result.isAuditPending).toBe(true);
-      expect(prismaService.record.findFirst).toHaveBeenCalledWith({
-        where: {
-          permitDeadline: {
-            gt: expect.any(Number),
-          },
-          events: {
-            none: {},
-          },
-          deviceAddress: record.deviceAddress,
-        },
-      });
+      expect(prismaService.record.findFirst).toHaveBeenCalledTimes(1);
+    });
+
+    it('should still return pending status if last audited record is not surely confirmed', async () => {
+      const record = mockRecord();
+      const mockDeviceAddress = mockRecord().deviceAddress;
+
+      jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest
+        .spyOn(devicesService, 'checkDeviceInContract')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(prismaService.record, 'findFirst')
+        .mockResolvedValueOnce(null)
+        .mockResolvedValue(record);
+      jest
+        .spyOn(blockchainService, 'isAuditStillPending')
+        .mockResolvedValue(true);
+
+      const result = await recordsService.getAuditStatus(mockDeviceAddress);
+
+      expect(result.isAuditPending).toBe(true);
+      expect(prismaService.record.findFirst).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return available status if last audited record is confirmed yet', async () => {
+      const record = mockRecord();
+      const mockDeviceAddress = mockRecord().deviceAddress;
+
+      jest.spyOn(devicesService, 'findDevice').mockResolvedValue(mockDevice());
+      jest
+        .spyOn(devicesService, 'checkDeviceInContract')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(prismaService.record, 'findFirst')
+        .mockResolvedValueOnce(null)
+        .mockResolvedValue(record);
+      jest
+        .spyOn(blockchainService, 'isAuditStillPending')
+        .mockResolvedValue(false);
+
+      const result = await recordsService.getAuditStatus(mockDeviceAddress);
+
+      expect(result.isAuditPending).toBe(false);
+      expect(prismaService.record.findFirst).toHaveBeenCalledTimes(2);
     });
 
     it('should log error and throw an exception if there is a database error', async () => {

@@ -13,6 +13,7 @@ import {
   Wallet,
 } from 'ethers';
 import {
+  AUDIT_SAFETY_OFFSET,
   BATCH_PRECOMPILE_ABI,
   BATCH_PRECOMPILE_ADDRESS,
   DEFAULT_SOLIDITY_ERROR_ABI,
@@ -26,6 +27,7 @@ import { EventType } from '@prisma/client';
 import {
   createJsonRpcProvider,
   getCoolchainContract,
+  getUnixTimeInSeconds,
 } from './blockchain.utils';
 import { RegisterAuditorDTO } from '../auditors/types/dto/RegisterAuditorDTO';
 
@@ -106,9 +108,9 @@ export class BlockchainService {
       _unsignedRecords.map((record, index) => [index, record.id]),
     );
 
-    return receipt.logs.map((log: EventLog) => {
-      const recordId = recordMap.get(log.index);
-      return {
+    return receipt.logs
+      .filter((log: EventLog) => recordMap.has(log.index))
+      .map((log: EventLog) => ({
         transactionHash: log.transactionHash,
         blockHash: log.blockHash,
         blockNumber: log.blockNumber,
@@ -118,9 +120,8 @@ export class BlockchainService {
         index: log.index,
         transactionIndex: log.transactionIndex,
         eventType: log.fragment.name as EventType,
-        recordId: recordId,
-      };
-    });
+        recordId: recordMap.get(log.index),
+      }));
   }
 
   async registerAuditor(
@@ -165,6 +166,12 @@ export class BlockchainService {
       await coolchainContract.getDevice(_deviceAddress);
 
     return isAddress(transactionResult);
+  }
+
+  async isAuditStillPending(_record: Record): Promise<boolean> {
+    const event = _record.events[_record.events.length - 1];
+    const block = await this.provider.getBlock(event.blockNumber);
+    return getUnixTimeInSeconds() < AUDIT_SAFETY_OFFSET + block.timestamp;
   }
 
   private async mapRecordsToPermitCallData(

@@ -23,24 +23,21 @@ import {
 } from '../utils/constants';
 import { CreateEventDTO } from '../events/types/dto/CreateEventDTO';
 import { Record } from '../records/types/Record';
-import { EventType } from '@prisma/client';
 import {
   createJsonRpcProvider,
   getCoolchainContract,
   getUnixTimeInSeconds,
 } from './blockchain.utils';
 import { RegisterAuditorDTO } from '../auditors/types/dto/RegisterAuditorDTO';
+import { EventType } from '@prisma/client';
 
 @Injectable()
 export class BlockchainService {
   private readonly logger: Logger = new Logger(BlockchainService.name);
-
   private readonly provider: JsonRpcProvider;
   private accountFrom: { privateKey: string };
   private readonly contractAddress: string;
-  private readonly contractInterface = new Interface(
-    getCoolchainContract().abi,
-  );
+  private readonly contract: Contract;
   private readonly permitPrecompileInterface = new Interface(
     PERMIT_PRECOMPILE_ABI,
   );
@@ -65,6 +62,12 @@ export class BlockchainService {
     );
 
     this.wallet = new Wallet(this.accountFrom.privateKey, this.provider);
+
+    this.contract = new Contract(
+      this.contractAddress,
+      getCoolchainContract().abi,
+      this.wallet,
+    );
   }
 
   async auditRecords(
@@ -83,6 +86,9 @@ export class BlockchainService {
     const gasLimit = [];
 
     const callData = await this.mapRecordsToPermitCallData(_unsignedRecords);
+    const recordMap = new Map<number, string>(
+      _unsignedRecords.map((record, index) => [index, record.id]),
+    );
 
     let transaction: ContractTransactionResponse;
     try {
@@ -92,6 +98,22 @@ export class BlockchainService {
         callData,
         gasLimit,
       );
+
+      const receipt: ContractTransactionReceipt = await transaction.wait();
+      return receipt.logs.map((rawEvent: EventLog) => {
+        return {
+          transactionHash: rawEvent.transactionHash,
+          blockHash: rawEvent.blockHash,
+          blockNumber: rawEvent.blockNumber,
+          address: rawEvent.address,
+          data: rawEvent.data,
+          topics: [...rawEvent.topics],
+          index: rawEvent.index,
+          transactionIndex: rawEvent.transactionIndex,
+          eventType: rawEvent.fragment.name as EventType,
+          recordId: recordMap.get(Number(rawEvent.args)),
+        };
+      });
     } catch (error) {
       const errorInterface = new Interface(DEFAULT_SOLIDITY_ERROR_ABI);
       this.logger.error(
@@ -102,41 +124,13 @@ export class BlockchainService {
       );
       return null;
     }
-
-    const receipt: ContractTransactionReceipt = await transaction.wait();
-    const recordMap = new Map<number, string>(
-      _unsignedRecords.map((record, index) => [index, record.id]),
-    );
-
-    return receipt.logs
-      .filter((log: EventLog) => recordMap.has(log.index))
-      .map((log: EventLog) => ({
-        transactionHash: log.transactionHash,
-        blockHash: log.blockHash,
-        blockNumber: log.blockNumber,
-        address: log.address,
-        data: log.data,
-        topics: [...log.topics],
-        index: log.index,
-        transactionIndex: log.transactionIndex,
-        eventType: log.fragment.name as EventType,
-        recordId: recordMap.get(log.index),
-      }));
   }
 
   async registerAuditor(
     _auditor: RegisterAuditorDTO,
   ): Promise<ContractTransactionReceipt> {
-    const coolchainContract = new Contract(
-      this.contractAddress,
-      getCoolchainContract().abi,
-      this.wallet,
-    );
-
-    const address = _auditor.address;
-
     const transaction: ContractTransactionResponse =
-      await coolchainContract.registerAuditor(address);
+      await this.contract.registerAuditor(_auditor.address);
     return await transaction.wait();
   }
 
@@ -144,32 +138,19 @@ export class BlockchainService {
     _auditorAddress: AddressLike,
     _deviceAddress: AddressLike,
   ): Promise<ContractTransactionReceipt> {
-    const coolchainContract = new Contract(
-      this.contractAddress,
-      getCoolchainContract().abi,
-      this.wallet,
-    );
-
     const transaction: ContractTransactionResponse =
-      await coolchainContract.registerDevice(_auditorAddress, _deviceAddress);
+      await this.contract.registerDevice(_auditorAddress, _deviceAddress);
     return await transaction.wait();
   }
 
   async checkDevice(_deviceAddress: AddressLike): Promise<boolean> {
-    const coolchainContract = new Contract(
-      this.contractAddress,
-      getCoolchainContract().abi,
-      this.wallet,
-    );
-
     const transactionResult: AddressLike =
-      await coolchainContract.getDevice(_deviceAddress);
-
+      await this.contract.getDevice(_deviceAddress);
     return isAddress(transactionResult);
   }
 
   async isAuditStillPending(_record: Partial<Record>): Promise<boolean> {
-    const event = _record.events[_record.events.length - 1];
+    const event = _record.events.at(-1);
     const block = await this.provider.getBlock(event.blockNumber);
     return getUnixTimeInSeconds() < AUDIT_SAFETY_OFFSET + block.timestamp;
   }
@@ -190,7 +171,7 @@ export class BlockchainService {
 
     const { v, r, s } = Signature.from(_record.permitSignature);
 
-    const recordCallData = this.contractInterface.encodeFunctionData(
+    const recordCallData = this.contract.interface.encodeFunctionData(
       'storeRecord',
       [_record.deviceAddress, _record.value, _record.timestamp],
     );

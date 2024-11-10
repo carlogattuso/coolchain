@@ -33,12 +33,12 @@ export class BlockchainService {
     if (!auditStatus) return;
 
     const nextSample: number | null = this.recordService.getRecordValue();
-    //TODO: do not merge to master
-    // if (!nextSample) return;
+    // TODO: delete when real deployment
+    //if (!nextSample) return;
 
     let record: RecordDTO = {
       deviceAddress: this.wallet.address,
-      value: nextSample ?? Math.round(Math.random() * 100),
+      value: nextSample ?? Math.round(Math.random() * 1000),
       timestamp: getUnixTimeInSeconds(),
     };
 

@@ -6,8 +6,6 @@ transactions.
 
 This project is a submodule of the broader CoolChain ecosystem.
 
----
-
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -17,8 +15,6 @@ This project is a submodule of the broader CoolChain ecosystem.
 5. [Running the Application](#running-the-application)
 6. [Building the Application](#building-the-application)
 7. [Common issues](#common-issues)
-
----
 
 ## Overview
 
@@ -31,16 +27,12 @@ This project integrates seamlessly with other CoolChain modules:
 - **CoolChain backend**: For centralized data processing and API interactions.
 - **CoolChain contract**: A Solidity smart contract for decentralized storage of device and user data.
 
----
-
 ## Key Features
 
 - **Sensor Data Collection**: Reads data from temperature sensors connected via GPIO or I2C interfaces.
 - **Blockchain Integration**: Signs and stores data on an Ethereum-compatible blockchain.
 - **Lightweight and Scalable**: Optimized for Raspberry Pi devices running ARM-based architectures.
 - **Secure Wallet Management**: Uses `ethers` for wallet creation and transaction signing.
-
----
 
 ## Technologies Used
 
@@ -59,8 +51,6 @@ This project integrates seamlessly with other CoolChain modules:
 
 - **Raspberry Pi**: Compatible with models supporting Node.js.
 - **Sensors**: Temperature sensors (e.g., DHT11, DHT22, or DS18B20).
-
----
 
 ## Setup and Installation
 

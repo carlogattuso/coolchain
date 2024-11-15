@@ -23,8 +23,6 @@
 The CoolChain backend is a server-side application built using [NestJS](https://nestjs.com/) and TypeScript. It serves
 as the core of the CoolChain ecosystem, handling business logic, database interactions, and API endpoints.
 
----
-
 ## Table of Contents
 
 1. [Description](#description)
@@ -36,14 +34,10 @@ as the core of the CoolChain ecosystem, handling business logic, database intera
 7. [Support](#support)
 8. [License](#license)
 
----
-
 ## Description
 
 The backend is responsible for managing business logic, interacting with MongoDB, and connecting to Ethereum-compatible
 networks via a smart contract.
-
----
 
 ## Technologies Used
 
@@ -53,8 +47,6 @@ networks via a smart contract.
 - **Blockchain**: Ethereum-compatible smart contract interaction
 - **Testing**: Jest, ts-jest
 - **Task Queues**: BullMQ for job scheduling
-
----
 
 ## Setup and Installation
 
@@ -151,8 +143,6 @@ npm run start:backend:prod
 
 > **Note**: Running production mode from package.json will load environment variables from the project root
 
----
-
 ## Building the application
 
 ```bash
@@ -160,8 +150,6 @@ npm run build:backend
 ```
 
 > **Note**: Your production build can be found in the dist/ folder.
-
----
 
 ## Testing
 
@@ -175,8 +163,6 @@ npm run test:e2e
 # coverage
 npm run test:cov
 ```
-
----
 
 ## Support
 

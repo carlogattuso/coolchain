@@ -18,8 +18,6 @@
 <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
 </p>
 
----
-
 # CoolChain Backend
 
 The CoolChain backend is a server-side application built using [NestJS](https://nestjs.com/) and TypeScript. It serves

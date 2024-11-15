@@ -2,12 +2,9 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+<p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
 
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
+<p align="center">
 <a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
 <a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
 <a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
@@ -16,197 +13,155 @@
 <a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
 <a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
 <a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
+<a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
+<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
+<a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+
+# CoolChain Backend
+
+The CoolChain backend is a server-side application built using [NestJS](https://nestjs.com/) and TypeScript. It serves
+as the core of the CoolChain ecosystem, handling business logic, database interactions, and API endpoints.
+
+## Table of Contents
+
+1. [Description](#description)
+2. [Technologies Used](#technologies-used)
+3. [Setup and Installation](#setup-and-installation)
+4. [Running the Application](#running-the-application)
+5. [Building the Application](#building-the-application)
+6. [Testing](#testing)
+7. [Support](#support)
+8. [License](#license)
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The backend is responsible for managing business logic, interacting with MongoDB, and connecting to Ethereum-compatible
+networks via a smart contract.
 
-## Installation
+## Technologies Used
 
-```bash
-$ npm install
-```
+- **Language**: TypeScript
+- **Framework**: [NestJS](https://nestjs.com)
+- **Database**: MongoDB with Prisma as ORM
+- **Blockchain**: Ethereum-compatible smart contract interaction
+- **Testing**: Jest, ts-jest
+- **Task Queues**: BullMQ for job scheduling
 
-## Setup local blockchain
+## Setup and Installation
 
-```bash
-$ docker pull moonbeamfoundation/moonbeam:latest
-
-$ docker run -d --rm --name moonbeam_development -p 9944:9944 moonbeamfoundation/moonbeam:latest --dev --rpc-external --sealing 6000
-```
-
-## Prepare the contract
-
-1. First set the Private Key of the deploying wallet in ./contract/.wallet.json
+### Install Dependencies
 
 ```bash
-# 2. Access the contract folder
-
-$ cd contract
-
-# 3. Compile the contract
-
-$ node compileContract
-
-# 4. Deploy the contract
-
-# development
-$ node deployContract --dev
-
-# test net mode
-$ node deployContract
+npm install
 ```
 
-Save the contract address for future reference
+### Setup local blockchain (optional)
 
-## Set environment variables
+```bash
+docker pull moonbeamfoundation/moonbeam:latest
 
-Set the local environment variables. Use .envExample, change it to .env and set your own variables
+docker run -d --rm --name moonbeam_development -p 9944:9944 moonbeamfoundation/moonbeam:latest --dev --rpc-external --sealing 6000
+```
 
-## Database Installation
+### Configure environment variables
+
+Set the local environment variables. Use .envExample, change it to .env (.env.dev) and set your own variables
+
+### Database Installation
 
 Follow these steps to setup the MongoDB local database environment
 
-### Windows
-
-#### Installation
-
-1. [Install MongoDB client](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-windows/#install-mongodb-community-edition-on-windows)
-2. Add `yourPathToMongoDB\MongoDB\Server\yourVersion\bin` to PATH environment variable
-
-> **Note**: When installing MongoDB, make sure to check that the database does not start as a service. To verify this,
-> you need to
-> go to the Windows Services and disable/deactivate it.
->
->`MongoDB Database Server (MongoDB)`
-
-#### Initialisation
-
-1. Create data folder
+#### Install MongoDB client
 
 ```bash
-mkdir yourPathToCoolchain/coolchain/coolchain-backend/db/data
+brew tap mongodb/brew
+brew update
+brew install mongodb-community
 ```
 
-2. Create replica set
+#### Create the Replica Set**
+
+Initialize the MongoDB replica set to enable replication and data consistency.
 
 ```bash
-  Start-Process powershell -ArgumentList "-NoProfile -WindowStyle Hidden -Command `"mongod.exe --replSet rs0 --dbpath 'yourPathToCoolchain\coolchain\coolchain-backend\db\data' --port 27017 --bind_ip_all`""
+cd db
+./coolchain_db_start_locally.sh
 ```
 
-> **Note**: To shutdown the current MongoDB process, you can use these two commands
->```bash
->  Get-Process mongod
->  Stop-Process -Name mongod
->```
+> **Note**: To stop the current MongoDB process, use the following command:
+> ```bash
+> cd db
+> ./coolchain_db_stop_locally.sh
+> ```
 
-3. [Install MongoDB Shell](https://www.mongodb.com/try/download/shell)
-4. Initiate replica set transactions
+#### Seed the Database
+
+Populate the database with the required collections and initial data versions.
 
 ```bash
-  mongosh --port 27017
-  rs.initiate()
+cd db
+./coolchain_db_seed.sh
 ```
 
-5. Execute database initialisation scripts
+#### Generate the Prisma Schema
+
+Generate the Prisma client based on the database schema.
 
 ```bash
-  .\yourPathToCoolchain\coolchain\coolchain-backend\db\data\coolchain_db_seed.sh
+cd db
+prisma generate
 ```
 
-6. Generate prisma scheme
+### Redis Installation
+
+Follow the steps in the documentation
+to [install and run Redis locally here](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/).
+
+---
+
+## Running the application
+
+### Setup contract
 
 ```bash
-  cd yourPathToCoolchain\coolchain\coolchain-backend\db
-  prisma generate
+npm run compile-contract
 ```
 
-## Linux
-
-### Installation
-
-1. Install MongoDB client
-
-```bash
-  brew tap mongodb/brew
-  brew update
-  brew install mongodb-community
-```
-
-### Initialisation
-
-1. Create data folder
-
-```bash
-mkdir yourPathToCoolchain/coolchain/coolchain-backend/db/data
-```
-
-2. Create replica set
-
-```bash
-mongod --replSet rs0 --config /usr/local/etc/mongod.conf --dbpath yourPathToCoolchain/coolchain/coolchain-backend/db/data --port 27017 --bind_ip_all --fork
-```
-
-> **Note**: To shutdown the current MongoDB process, you can use these two commands
->```bash
->  ps aux | grep -v grep | grep mongod
->  kill <mongod pid>
->```
-
-3. Initiate replica set transactions
-
-```bash
-  mongosh --port 27017
-  rs.initiate()
-```
-
-4. Execute database initialisation scripts
-
-```bash
-  .\yourPathToCoolchain\coolchain\coolchain-backend\db\data\coolchain_db_seed.sh
-```
-
-5. Generate prisma scheme
-
-```bash
-  cd yourPathToCoolchain\coolchain\coolchain-backend\db
-  prisma generate
-```
-
-## Regis Installation
-
-Follow the steps in the documentation to [install and run Redis locally here](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/).
-
-## Running the app
+### Launch NestJS App
 
 ```bash
 # development
-$ npm run start
+npm run start:backend:dev
 
 # watch mode
-$ npm run start:dev
+npm run start:backend:debug
 
 # production mode
-$ npm run start:prod
+npm run start:backend:prod
 ```
 
-## Test
+> **Note**: Running production mode from package.json will load environment variables from the project root
+
+## Building the application
+
+```bash
+npm run build:backend
+```
+
+> **Note**: Your production build can be found in the dist/ folder.
+
+## Testing
 
 ```bash
 # unit tests
-$ npm run test
+npm run test
 
-# e2e tests
-$ npm run test:e2e
+# e2e
+npm run test:e2e
 
-# test coverage
-$ npm run test:cov
+# coverage
+npm run test:cov
 ```
 
 ## Support

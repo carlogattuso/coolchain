@@ -1,6 +1,8 @@
 # CoolChain
 
-This project includes a variety of frameworks, libraries, and tools to create a robust and scalable application. It is
+This project is a blockchain-based traceability system designed to securely and transparently record temperature measurements for various use cases, such as supply chain monitoring, healthcare environments, and industrial processes. By leveraging the immutability and distributed nature of blockchain technology, this system ensures that temperature data is trustworthy, tamper-proof, and easily auditable.
+
+Coolchain includes a variety of frameworks, libraries, and tools to create a robust and scalable application. It is
 structured into four subprojects:
 
 1. **CoolChain backend**: The main application.
